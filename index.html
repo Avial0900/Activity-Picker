@@ -25,7 +25,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 .why{font-size:.85rem;margin:4px 0}.deal{font-size:.8rem;background:#fff4d6;color:#6b4e00;border-radius:8px;padding:4px 8px;margin:4px 0}
 @media(prefers-color-scheme:dark){.deal{background:#3a321b;color:#f3d98a}}
 .links a{font-size:.82rem;margin-right:10px;color:var(--acc2)}.links,.meta,.near,.why{overflow-wrap:anywhere}.status{font-size:.85rem;color:var(--mut)}.err{color:#d33}
-.pick{border:2px solid var(--acc)}.cnt{font-size:.8rem;color:var(--mut);font-weight:400}.more{width:100%;margin-top:6px}.hol{background:#efe3ff;color:#4b2a7a;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.9rem}.evimg{float:right;width:72px;height:72px;object-fit:cover;border-radius:10px;margin-left:8px}.near{font-size:.82rem;margin:3px 0}.linkgrid a{display:inline-block;margin:4px 6px 4px 0;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:.85rem}@media(prefers-color-scheme:dark){.hol{background:#2f2540;color:#d9c6ff}}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
+.pick{border:2px solid var(--acc)}.cnt{font-size:.8rem;color:var(--mut);font-weight:400}.more{width:100%;margin-top:6px}.badge{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:9px;background:var(--acc);color:#fff;vertical-align:middle}.badge.free{background:#2e8b57}.subh{font-size:1rem;margin:14px 0 4px}details.unv{margin:6px 0;font-size:.88rem}details.unv summary{cursor:pointer;color:var(--mut)}.unvi{padding:5px 0;border-bottom:1px solid rgba(128,128,128,.2)}details.tmset{margin-top:10px;font-size:.85rem;color:var(--mut)}details.tmset input{width:100%;margin:6px 0;font-size:16px}.hol{background:#efe3ff;color:#4b2a7a;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.9rem}.evimg{float:right;width:72px;height:72px;object-fit:cover;border-radius:10px;margin-left:8px}.near{font-size:.82rem;margin:3px 0}.linkgrid a{display:inline-block;margin:4px 6px 4px 0;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:.85rem}@media(prefers-color-scheme:dark){.hol{background:#2f2540;color:#d9c6ff}}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
 </style></head><body>
 <header><h1>🎲 Dilly-<span>Dally</span></h1><p>What should we do?</p></header>
 <main>
@@ -47,7 +47,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <section class="card" id="pickCard" hidden></section>
 <section class="card" id="secPlaces"><h2>📍 Places of interest <span class="cnt" id="plCount"></span></h2><div class="status" id="plStatus"></div><div id="results"></div><button class="more" id="plMore" hidden>Show more</button></section>
 <section class="card" id="secIdeas"><h2 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">💡 Date night ideas <span class="cnt" id="idCount"></span><button type="button" id="shuffle" style="padding:6px 10px;font-size:.85rem">🔀 Shuffle</button></h2><div id="ideas"></div><button class="more" id="idMore" hidden>Show more</button></section>
-<section class="card" id="secEvents"><h2>🎉 <span id="evTitle">Happening nearby</span> <span class="cnt" id="evCount"></span></h2><div class="status" id="evStatus"></div><div id="events"></div><button class="more" id="evMore" hidden>Show more</button><div id="evLinks"></div></section>
+<section class="card" id="secEvents"><h2>🎉 <span id="evTitle">Happening nearby</span> <span class="cnt" id="evCount"></span></h2><div class="status" id="evStatus"></div><div id="events"></div><button class="more" id="evMore" hidden>Show more</button><div id="evLinks"></div><div id="tmSet"></div></section>
 <p style="text-align:center"><small id="attrib">Data: Open-Meteo, OpenStreetMap.</small><br><small> Deals shown are <b>typical patterns — always verify</b>.</small></p>
 </main>
 <script>
@@ -56,6 +56,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 // Optional: paste a free Ticketmaster Discovery API consumer key here to show real ticketed events (concerts, sports, theater...).
 // Leave empty to hide that feature. Get one at https://developer.ticketmaster.com (free, no credit card).
 const TICKETMASTER_KEY="";
+function tmKey(){if(TICKETMASTER_KEY)return TICKETMASTER_KEY;try{return (localStorage.getItem("dd_tm_key")||"").trim()}catch(e){return ""}}
 const $=id=>document.getElementById(id);
 const MOODS=["chill","adventurous","social","creative","romantic","active","cozy","nerdy","family","foodie"];
 // category: [label, emoji, io (in/out/both), moods, minPpl, maxPpl, cost 0-3]
@@ -352,7 +353,7 @@ function score(item,ctx){const [label,,io,moods,mn,mx,cost]=item.meta;let s=0,wh
  if(item.dist!=null){s-=item.dist/ctx.radius*1.5}
  if(item.tags&&(item.tags.website||item.tags.opening_hours))s+=.3;
  return {s,why,miss}}
-let ranked=[],ideaPicks=[],evItems=[];state.show={pl:5,id:5,ev:5};state.ideaSeed=1;
+let ranked=[],ideaPicks=[],evItems=[];state.show={pl:5,id:5,ev:5,mk:5};state.ideaSeed=1;
 function mkCtx(){const w=curW();const dow=new Date(state.date+"T12:00").getDay();
  return {setting:wantSetting(),auto:$("setting").value==="auto",wx:w,wxWord:w?(w.cls==="nice"?`${w.hi}° and nice`:w.cls==="indoor"?"rough weather":w.cls==="unknown"?"unknown weather":"mixed weather"):"",
   moods:state.moods,people:+$("people").value,budget:+$("budget").value,radius:+$("radius").value,dow,date:state.date,lat:+state.loc.lat}}
@@ -393,16 +394,17 @@ const holCache={};
 async function getHolidays(cc,yr){const k=cc+yr;if(holCache[k])return holCache[k];const j=await fetchJ(`https://date.nager.at/api/v3/PublicHolidays/${yr}/${cc}`,{},10000);holCache[k]=j;return j}
 let evGen=0;state.ev={key:"",hol:[],tm:[],holErr:"",tmErr:"",tmBusy:false,holBusy:false};
 async function loadEvents(){if(!state.loc)return;const pp=placeParts();const key=locKey()+"|"+state.date;if(state.ev.key===key)return;const g=++evGen;
- state.ev={key,hol:[],tm:[],holErr:"",tmErr:"",holBusy:!!pp.cc,tmBusy:!!TICKETMASTER_KEY};state.show.ev=5;render();
+ state.ev={key,hol:[],tm:[],free:[],holErr:"",tmErr:"",holBusy:!!pp.cc,tmBusy:!!tmKey()};state.show.ev=5;render();
  if(pp.cc){getHolidays(pp.cc,state.date.slice(0,4)).then(list=>{if(g!==evGen)return;const d=state.date;
    state.ev.hol=(list||[]).filter(h=>Math.abs((new Date(h.date+"T12:00")-new Date(d+"T12:00"))/864e5)<=3&&(h.global||!h.counties)).map(h=>({date:h.date,name:h.name,local:h.localName,same:h.date===d}))},
    e=>{if(g===evGen)state.ev.holErr="Holidays (date.nager.at): "+e.message}).then(()=>{if(g!==evGen)return;state.ev.holBusy=false;render()})}
- if(TICKETMASTER_KEY){loadTM(g).then(()=>{},()=>{}).then(()=>{if(g!==evGen)return;state.ev.tmBusy=false;render()})}}
+ loadMarkets();loadFree(g);
+ if(tmKey()){loadTM(g).then(()=>{},()=>{}).then(()=>{if(g!==evGen)return;state.ev.tmBusy=false;render()})}}
 const TM_MOOD=[[/rock|pop|alternative|indie|country|r&b|hip-hop|rap|dance|electronic/i,["social","adventurous"]],[/jazz|blues|classical|folk|acoustic|world/i,["romantic","chill","cozy"]],
  [/comedy/i,["social","chill"]],[/theatre|theater|musical|opera|ballet|dance/i,["romantic","creative"]],[/family|children|circus|ice shows|magic/i,["family"]],[/sports|basketball|football|hockey|baseball|soccer|wrestling|running|marathon/i,["active","social"]],
  [/film|cinema/i,["chill","cozy"]],[/fair|festival|expo|convention|comic|gaming|lecture|science/i,["nerdy","adventurous","family"]],[/art|craft|workshop/i,["creative"]]];
 async function loadTM(g){const {lat,lon}=state.loc;const d=state.date;
- const url=`https://app.ticketmaster.com/discovery/v2/events.json?apikey=${encodeURIComponent(TICKETMASTER_KEY)}&latlong=${(+lat).toFixed(4)},${(+lon).toFixed(4)}&radius=${Math.max(5,Math.min(100,+$("radius").value*2))}&unit=miles&localStartDateTime=${d}T00:00:00,${d}T23:59:59&size=60&sort=relevance,desc`;
+ const url=`https://app.ticketmaster.com/discovery/v2/events.json?apikey=${encodeURIComponent(tmKey())}&latlong=${(+lat).toFixed(4)},${(+lon).toFixed(4)}&radius=${Math.max(5,Math.min(100,+$("radius").value*2))}&unit=miles&localStartDateTime=${d}T00:00:00,${d}T23:59:59&size=60&sort=relevance,desc`;
  try{const j=await fetchJ(url,{},15000);if(g!==evGen)return;const evs=(j._embedded&&j._embedded.events)||[];
   state.ev.tm=evs.map(e=>{const cl=(e.classifications&&e.classifications[0])||{};const txt=[e.name,cl.segment&&cl.segment.name,cl.genre&&cl.genre.name,cl.subGenre&&cl.subGenre.name].filter(Boolean).join(" ");
    let moods=[];TM_MOOD.forEach(m=>{if(m[0].test(txt))moods=moods.concat(m[1])});if(!moods.length)moods=["social"];
@@ -411,9 +413,9 @@ async function loadTM(g){const {lat,lon}=state.loc;const d=state.date;
    const img=(e.images||[]).filter(x=>x.ratio==="1_1"||x.width<=400).sort((a,b)=>a.width-b.width)[0]||(e.images||[])[0];
    const vl=v.location?{lat:+v.location.latitude,lon:+v.location.longitude}:null;
    return {name:e.name,event:true,url:e.url,time:e.dates&&e.dates.start&&(e.dates.start.localTime||"").slice(0,5),venue:v.name||"",city:v.city&&v.city.name,
-    price:pr?`${pr.currency==="USD"?"$":pr.currency+" "}${Math.round(pr.min)}${pr.max&&pr.max!==pr.min?"–"+Math.round(pr.max):""}`:"",img:img&&img.url,genre:(cl.genre&&cl.genre.name)||(cl.segment&&cl.segment.name)||"Event",
+    free:!!pr&&pr.min<=0&&(!pr.max||pr.max<=0),price:pr&&!(pr.min<=0&&(!pr.max||pr.max<=0))?`${pr.currency==="USD"?"$":pr.currency+" "}${Math.round(pr.min)}${pr.max&&pr.max!==pr.min?"–"+Math.round(pr.max):""}`:"",img:img&&img.url,genre:(cl.genre&&cl.genre.name)||(cl.segment&&cl.segment.name)||"Event",
     lat:vl&&vl.lat,lon:vl&&vl.lon,dist:vl?hav(+lat,+lon,vl.lat,vl.lon):null,meta:[e.name,"🎟",io,Array.from(new Set(moods)),1,20,cost],deal:[]}})}
- catch(e){if(g===evGen)state.ev.tmErr="Ticketmaster: "+e.message}}
+ catch(e){if(g===evGen){const m=e.message||"";state.ev.tmErr=/HTTP 401|HTTP 403/.test(m)?"Ticketmaster rejected the key (401). Check the Consumer Key in ⚙️ settings below.":/HTTP 429/.test(m)?"Ticketmaster rate limit hit (429) — try again in a minute.":"Ticketmaster: "+m}}}
 function evLinks(){const pp=placeParts();const d=new Date(state.date+"T12:00");const dn=d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
  let kws=[];state.moods.forEach(m=>{kws=kws.concat((MOOD_KW[m]||[]).slice(0,1))});const kw=kws.slice(0,3).join(" ");const where=[pp.city,pp.st?pp.st.toUpperCase():pp.region].filter(Boolean).join(" ");
  const L=[["🔎 Google",`https://www.google.com/search?q=${encodeURIComponent("events in "+where+" on "+dn+(kw?" "+kw:""))}`]];
@@ -425,19 +427,125 @@ function evLinks(){const pp=placeParts();const d=new Date(state.date+"T12:00");c
  L.push(["🎟 Ticketmaster",`https://www.ticketmaster.com/search?q=${encodeURIComponent(pp.city)}&startDate=${state.date}&endDate=${state.date}`]);
  if(pp.cc==="US"&&pp.st)L.push(["🎸 Bandsintown",`https://www.bandsintown.com/c/${slugC}-${pp.st}?date=${state.date}`]);
  return `<div class="status" style="margin-top:8px">Find events on ${esc(dn)}${kw?` — vibe: ${esc(kw)}`:""}:</div><div class="linkgrid">`+L.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${x[0]}</a>`).join("")+`</div>`}
+// ===== small opening_hours parser (subset of OSM spec). Returns {open:true|false|null, hours:""}
+const OH_D=["Su","Mo","Tu","We","Th","Fr","Sa"],OH_M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function ohEval(str,ds,isHol){try{if(!str||typeof str!=="string")return {open:null,hours:""};
+ let s=str.trim();if(/^24\/7$/.test(s))return {open:true,hours:"24 hours"};
+ const d=new Date(ds+"T12:00");const dow=d.getDay(),mon=d.getMonth(),day=d.getDate(),md=mon*100+day;
+ const nth=Math.floor((day-1)/7)+1,last=day+7>new Date(d.getFullYear(),mon+1,0).getDate();
+ s=s.replace(/\|\|/g,";");let rules=[];s.split(";").forEach(r=>{r=r.trim();if(!r)return;
+  // Split "Mo-Fr 08:00-12:00, Sa 09:00-11:00" after a time, but keep "We,Sa 08:00-13:00" as one selector so both days get the hours.
+  const bits=r.split(/,\s*(?=(?:Mo|Tu|We|Th|Fr|Sa|Su|PH|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b)/),merged=[];let cur="";
+  bits.forEach(bit=>{bit=bit.trim();if(!bit)return;if(cur&&/\d\s*:|\b(?:off|closed|open)\b/i.test(cur)){merged.push(cur);cur=bit}else cur=cur?cur+", "+bit:bit});
+  if(cur)merged.push(cur);merged.forEach((x,i)=>rules.push({t:x.trim(),add:i>0}))});
+ let result=null,hours=[],matchedAny=false;
+ for(const rr of rules){let t=rr.t.replace(/"[^"]*"/g,"").trim();if(!t)continue;
+  // month selector
+  let monOk=true;const mm=t.match(/^((?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:\s+\d{1,2})?(?:\s*-\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)?(?:\s*\d{1,2})?)?\s*,?\s*)+)(?::\s*)?/);
+  if(mm){monOk=false;mm[1].split(",").forEach(part=>{part=part.trim();if(!part)return;const m=part.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:\s+(\d{1,2}))?(?:\s*-\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)?\s*(\d{1,2})?)?$/);if(!m)throw 0;
+    const m1=OH_M.indexOf(m[1]),d1=m[2]?+m[2]:1;let m2,d2;const hasRange=/-/.test(part);
+    if(!hasRange){m2=m1;d2=m[2]?d1:31}else{m2=m[3]?OH_M.indexOf(m[3]):m1;d2=m[4]?+m[4]:31}
+    const a=m1*100+d1,b=m2*100+d2;if(a<=b?(md>=a&&md<=b):(md>=a||md<=b))monOk=true});t=t.slice(mm[0].length).trim()}
+  // weekday selector
+  let dayOk=true;const dm=t.match(/^((?:(?:Mo|Tu|We|Th|Fr|Sa|Su|PH|SH)(?:\[[-\d,]+\])?(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?\s*,?\s*)+)/);
+  if(dm){dayOk=false;dm[1].split(",").forEach(part=>{part=part.trim();if(!part)return;if(part==="PH"){if(isHol)dayOk=true;return}if(part==="SH")return;
+    const m=part.match(/^(Mo|Tu|We|Th|Fr|Sa|Su)(?:\[([-\d,]+)\])?(?:\s*-\s*(Mo|Tu|We|Th|Fr|Sa|Su))?$/);if(!m)throw 0;
+    const a=OH_D.indexOf(m[1]),b=m[3]?OH_D.indexOf(m[3]):a;let ok=a<=b?(dow>=a&&dow<=b):(dow>=a||dow<=b);
+    if(ok&&m[2]){ok=m[2].split(",").some(n=>+n===nth||(+n===-1&&last))}if(ok)dayOk=true});t=t.slice(dm[0].length).trim()}
+  if(!mm&&!dm&&!/^\d/.test(t)&&!/^(off|closed|open)$/i.test(t))throw 0;
+  if(!(monOk&&dayOk))continue;matchedAny=true;
+  if(/^(off|closed)$/i.test(t)){result=false;hours=[];continue}
+  if(!t||/^open$/i.test(t)){if(!rr.add)hours=[];result=true;if(!t)hours.push("open");continue}
+  const times=t.split(",").map(x=>x.trim());const hs=[];for(const x of times){const m=x.match(/^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})\+?$/);if(!m)throw 0;hs.push(m[1].padStart(2,"0")+":"+m[2]+"–"+m[3].padStart(2,"0")+":"+m[4])}
+  if(!rr.add)hours=[];hours=hours.concat(hs);result=true}
+ if(!matchedAny)return {open:false,hours:""};
+ return {open:result,hours:result?hours.join(", "):""}}catch(e){return {open:null,hours:""}}}
+
+// ===== Farmers markets (Photon + Nominatim + Overpass opportunistic; hours via Nominatim lookup)
+state.mk={key:"",list:[],busy:false,err:""};let mkGen=0;
+function nomSlot(){const at=Math.max(Date.now(),nomLast+1100);nomLast=at;return sleep(at-Date.now())}
+const MK_RE=/farm(er)?s?'?’?\s*market|market|marché|mercado|markt|mercato|市場|マルシェ|greenmarket|bazaar/i;
+function isFarmers(m){return m.farmers||/farm|growers|produce|green ?market|marché|マルシェ/i.test(m.name)}
+function mkAdd(key,els){if(state.mk.key!==key)return;const L=state.mk.list;
+ for(const e of els){if(!e.name||e.lat==null)continue;const id=e.id||"";let x=L.filter(m=>(id&&m.id===id)||(m.name.toLowerCase()===e.name.toLowerCase()&&hav(m.lat,m.lon,e.lat,e.lon)<0.3))[0];
+  if(!x){x={id,name:e.name,lat:e.lat,lon:e.lon,oh:"",farmers:false,web:""};L.push(x)}if(e.oh&&!x.oh)x.oh=e.oh;if(e.farmers)x.farmers=true;if(e.web&&!x.web)x.web=e.web;if(id&&!x.id)x.id=id}}
+async function loadMarkets(){if(!state.loc)return;const key=locKey();if(state.mk.key===key&&(state.mk.busy||state.mk.list.length))return;const g=++mkGen;
+ const {lat,lon}=state.loc;const mi=Math.max(+$("radius").value,5);state.mk={key,list:[],busy:true,err:""};
+ const cached=LS("dd_mk_"+key+"_"+mi);if(cached&&cached.t>Date.now()-36e5&&cached.list&&cached.list.length){state.mk.list=cached.list;state.mk.busy=false;render();return}
+ const live=()=>g===mkGen&&state.mk.key===key;const deadline=Date.now()+25000;let errs=[];const rr=()=>{if(live())render()};
+ const kmr=Math.max(1,Math.min(mi*1.609,50)).toFixed(1);
+ const pPhoton=fetchJ(`https://photon.komoot.io/reverse?lat=${(+lat).toFixed(5)}&lon=${(+lon).toFixed(5)}&radius=${kmr}&limit=50&lang=default&osm_tag=amenity:marketplace&osm_tag=shop:farm`,{},12000).then(j=>{if(!live())return;
+   const els=[];(j.features||[]).forEach(f=>{const p=f.properties||{},xy=f.geometry&&f.geometry.coordinates;if(!p.name||!xy)return;if(p.osm_key==="shop"&&!MK_RE.test(p.name))return;
+    els.push({id:(p.osm_type||"N")+p.osm_id,name:p.name,lat:xy[1],lon:xy[0],farmers:p.osm_key==="shop"})});mkAdd(key,els);rr()},e=>errs.push("Photon: "+e.message));
+ const dl=mi/69,dn=mi/(69*Math.cos(lat*Math.PI/180));const vb=[lon-dn,lat+dl,lon+dn,lat-dl].map(x=>(+x).toFixed(4)).join(",");
+ const pNom=(async()=>{for(const q of ["farmers market","market"]){if(!live()||Date.now()>deadline-4000)return;await nomSlot();
+   try{const j=await fetchJ(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&viewbox=${vb}&bounded=1&limit=40&extratags=1`,{},10000);if(!live())return;
+    const els=[];(Array.isArray(j)?j:[]).forEach(x=>{const c=x.category||x.class;if(!x.name)return;const ok=(c==="amenity"&&x.type==="marketplace")||(c==="shop"&&x.type==="farm"&&MK_RE.test(x.name));if(!ok)return;const et=x.extratags||{};
+     els.push({id:(x.osm_type||"n")[0].toUpperCase()+x.osm_id,name:x.name,lat:+x.lat,lon:+x.lon,oh:et.opening_hours||"",farmers:et.marketplace==="farmers"||c==="shop",web:et.website||et["contact:website"]||""})});mkAdd(key,els);rr()}
+   catch(e){errs.push("Nominatim: "+e.message);if(/HTTP 429|HTTP 403/.test(e.message))return}}})();
+ let ovFails=0;try{ovFails=+sessionStorage.getItem("dd_ov_fail")||0}catch(e){}
+ const pOv=ovFails>=2?Promise.resolve():(()=>{const r=Math.round(mi*1609),A=`(around:${r},${lat},${lon})`;const q=`[out:json][timeout:8];(nwr${A}[amenity=marketplace][name];nwr${A}[shop=farm][name~"market",i];);out center tags 200;`;
+  return fetchJ("https://overpass-api.de/api/interpreter?data="+encodeURIComponent(q),{},8000).then(j=>{if(!live())return;const els=[];(j.elements||[]).forEach(e=>{const t=e.tags||{};const la=e.lat!=null?e.lat:e.center&&e.center.lat,lo=e.lon!=null?e.lon:e.center&&e.center.lon;if(la==null)return;
+   els.push({id:e.type[0].toUpperCase()+e.id,name:t.name,lat:la,lon:lo,oh:t.opening_hours||"",farmers:t.marketplace==="farmers"||t.shop==="farm"||/farmer/i.test(t.produce||""),web:t.website||""})});mkAdd(key,els);rr()},e=>{errs.push("Overpass: "+e.message);try{sessionStorage.setItem("dd_ov_fail",ovFails+1)}catch(x){}})})();
+ await Promise.all([pPhoton,pNom,pOv].map(p=>p.catch(()=>{})));
+ // fill missing hours with one Nominatim lookup (by OSM id)
+ if(live()&&Date.now()<deadline-3000){const need=state.mk.list.filter(m=>!m.oh&&/^[NWR]\d+$/.test(m.id)).slice(0,50);
+  if(need.length){await nomSlot();try{const j=await fetchJ(`https://nominatim.openstreetmap.org/lookup?format=jsonv2&extratags=1&osm_ids=${need.map(m=>m.id).join(",")}`,{},Math.max(3000,deadline-Date.now()));
+   if(live())(Array.isArray(j)?j:[]).forEach(x=>{const id=(x.osm_type||"n")[0].toUpperCase()+x.osm_id;const m=state.mk.list.filter(y=>y.id===id)[0];const et=x.extratags||{};if(m){if(et.opening_hours)m.oh=et.opening_hours;if(et.marketplace==="farmers")m.farmers=true;if(!m.web)m.web=et.website||""}})}catch(e){errs.push("Hours lookup: "+e.message)}}}
+ if(!live())return;state.mk.busy=false;if(!state.mk.list.length&&errs.length)state.mk.err=errs.join("; ");
+ if(state.mk.list.length)save("dd_mk_"+key+"_"+mi,{t:Date.now(),list:state.mk.list});render()}
+function marketsFor(ctx){const out={open:[],unk:[],closed:0};if(state.mk.key!==locKey())return out;const {lat,lon}=state.loc;const rad=Math.max(+$("radius").value,5);
+ const hol=state.ev.hol.some(h=>h.same);
+ state.mk.list.forEach(m=>{const dist=hav(+lat,+lon,m.lat,m.lon);if(dist>rad*1.2)return;const r=ohEval(m.oh,state.date,hol);const fm=isFarmers(m);
+  if(r.open===false){out.closed++;return}
+  if(r.open===true){const it={name:m.name,event:true,market:true,url:"",lat:m.lat,lon:m.lon,dist,time:r.hours,venue:"",genre:fm?"Farmers market":"Market",price:"",free:true,
+    meta:[fm?"Farmers market":"Market","🧺","out",["family","chill","cozy","social","foodie"],1,12,0],deal:[],farmers:fm};Object.assign(it,score(it,ctx));it.why.unshift("open "+r.hours);out.open.push(it)}
+  else out.unk.push({name:m.name,lat:m.lat,lon:m.lon,dist,oh:m.oh,farmers:fm})});
+ const srt=(a,b)=>(b.farmers-a.farmers)||a.dist-b.dist;out.open.sort((a,b)=>(a.miss-b.miss)||srt(a,b));out.unk.sort(srt);return out}
+// ===== Free local events feed (./data/free-events.json, maintained separately). Missing/invalid => silently ignored.
+const FREE_CAT={festival:["social","adventurous","family"],market:["family","chill","cozy","foodie"],concert:["romantic","social","chill"],library:["nerdy","cozy","chill","family"],kids:["family"],
+ community:["social","family"],arts:["creative","romantic"],sports:["active","social"],outdoors:["active","adventurous","chill"],holiday:["family","cozy","social"],other:["social"]};
+const FREE_TAG=[[/music|concert|jazz/i,"romantic"],[/kid|child|family|story/i,"family"],[/art|craft|paint/i,"creative"],[/run|walk|hike|bike|sport|yoga/i,"active"],[/read|book|lecture|science|tech/i,"nerdy"],[/food|market|taste/i,"foodie"]];
+let freeFeed=null;
+function loadFree(g){const p=freeFeed?Promise.resolve(freeFeed):fetchJ("./data/free-events.json?cb="+Math.floor(Date.now()/6e5),{},5000).then(j=>{if(j&&Array.isArray(j.events)){freeFeed=j;return j}return null});
+ p.then(j=>{if(!j||g!==evGen||!state.loc)return;const d=state.date,{lat,lon}=state.loc,rad=+$("radius").value;
+  state.ev.free=j.events.filter(e=>{try{if(!e||!e.title||e.lat==null||e.lon==null||!e.start)return false;const s=String(e.start).slice(0,10),en=e.end?String(e.end).slice(0,10):s;
+   return s<=d&&d<=en&&hav(+lat,+lon,+e.lat,+e.lon)<=rad}catch(x){return false}}).map(e=>{let moods=(FREE_CAT[e.category]||FREE_CAT.other).slice();const tg=(e.tags||[]).join(" ")+" "+e.title;
+   FREE_TAG.forEach(t=>{if(t[0].test(tg)&&moods.indexOf(t[1])<0)moods.push(t[1])});if(e.kid_friendly&&moods.indexOf("family")<0)moods.push("family");
+   const st=String(e.start),tm=/T(\d\d:\d\d)/.exec(st),te=e.end&&/T(\d\d:\d\d)/.exec(String(e.end));
+   return {name:e.title,event:true,freeEv:true,free:true,url:e.url||"",lat:+e.lat,lon:+e.lon,dist:hav(+lat,+lon,+e.lat,+e.lon),time:tm?tm[1]+(te?"–"+te[1]:""):"",venue:e.venue||"",genre:(e.category||"event").replace(/^./,c=>c.toUpperCase())+" · free",price:"",
+    meta:[e.title,"🆓",e.indoor===true?"in":e.indoor===false?"out":"any",moods,1,20,0],deal:[],notes:e.notes||""}});render()},()=>{})}
+function tmSettings(){const k=tmKey(),site=!!TICKETMASTER_KEY;
+ return `<details class="tmset"><summary>⚙️ Ticketmaster key ${k?"(set ✓)":"(optional)"}</summary>`+(site?`<div>A site-wide key is built in — live Ticketmaster events are on.</div>`:
+ `<div>Paste a free Ticketmaster <b>Consumer Key</b> to list real ticketed events for this date. It's free: <a href="https://developer-acct.ticketmaster.com/user/register" target="_blank" rel="noopener">register here</a>, open “My Apps”, and copy the Consumer Key. Stored only in this browser.</div>
+ <input id="tmKeyIn" type="text" autocomplete="off" spellcheck="false" placeholder="Consumer Key" value="${esc(k)}"><button onclick="tmSave(1)">Save</button> ${k?'<button onclick="tmSave(0)">Remove</button>':""}`)+`</details>`}
+function paintTm(){const box=$("tmSet");if(!box)return;const k=tmKey();if(box.getAttribute("data-k")===k&&box.firstChild)return;if(document.activeElement&&document.activeElement.id==="tmKeyIn")return;box.setAttribute("data-k",k);box.innerHTML=tmSettings()}
+function moreMk(){state.show.mk+=10;render()}
+function tmSave(on){try{if(on){const v=($("tmKeyIn").value||"").trim();if(v)localStorage.setItem("dd_tm_key",v);else localStorage.removeItem("dd_tm_key")}else localStorage.removeItem("dd_tm_key")}catch(e){}state.ev.key="";loadEvents()}
 function renderEvents(ctx){const ev=state.ev;$("evTitle").textContent="Happening on "+niceDate(state.date);
  if(!state.loc||ev.key!==locKey()+"|"+state.date){$("events").innerHTML="";return}
  let h="";const same=ev.hol.filter(x=>x.same),near=ev.hol.filter(x=>!x.same);
  same.forEach(x=>{h+=`<div class="hol">🎌 <b>${esc(x.name)}</b>${x.local&&x.local!==x.name?` (${esc(x.local)})`:""} — public holiday. Expect parades/festivities; some places may close or have holiday hours.</div>`});
  near.forEach(x=>{h+=`<div class="status">📆 Nearby holiday: ${esc(x.name)} on ${esc(niceDate(x.date))}</div>`});
  const tm=ev.tm.map(e=>Object.assign(e,score(e,ctx)));tm.sort((a,b)=>a.miss-b.miss||b.s-a.s);evItems=tm;
- h+=tm.slice(0,state.show.ev).map(evCard).join("");
+ const fr=(ev.free||[]).map(e=>Object.assign(e,score(e,ctx)));fr.sort((a,b)=>a.miss-b.miss||b.s-a.s);
+ const mk=marketsFor(ctx);const dup=m=>fr.some(f=>hav(f.lat,f.lon,m.lat,m.lon)<0.5&&(f.name.toLowerCase().indexOf(m.name.toLowerCase())>=0||m.name.toLowerCase().indexOf(f.name.toLowerCase())>=0));
+ mk.open=mk.open.filter(m=>!dup(m));mk.unk=mk.unk.filter(m=>!dup(m));
+ const all=fr.concat(tm);evItems=all.concat(mk.open);
+ h+=all.slice(0,state.show.ev).map(evCard).join("");
+ if(mk.open.length||mk.unk.length||state.mk.busy||state.mk.err){h+=`<h3 class="subh">🧺 Markets open that day ${mk.open.length?`<span class="cnt">(${mk.open.length})</span>`:""}</h3>`;
+  if(state.mk.busy&&!mk.open.length&&!mk.unk.length)h+=`<div class="status">Looking for farmers markets…</div>`;
+  if(!mk.open.length&&!state.mk.busy)h+=`<div class="status">No markets with confirmed hours for this date${mk.closed?` (${mk.closed} nearby closed that day)`:""}.</div>`;
+  h+=mk.open.slice(0,state.show.mk).map(evCard).join("");if(mk.open.length>state.show.mk)h+=`<button class="more" onclick="moreMk()">Show more markets (${mk.open.length-state.show.mk})</button>`;
+  if(mk.open.length&&mk.closed)h+=`<div class="status">${mk.closed} other nearby market${mk.closed>1?"s":""} closed that day.</div>`;
+  if(mk.unk.length)h+=`<details class="unv"><summary>Hours unverified (${mk.unk.length}) — check before going</summary>`+mk.unk.slice(0,15).map(m=>`<div class="unvi">🧺 <b>${esc(m.name)}</b> · ${m.dist.toFixed(1)} mi${m.oh?` · listed hours: ${esc(m.oh)}`:" · no hours listed"} · <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.name)}%20${m.lat},${m.lon}" target="_blank" rel="noopener">Maps</a></div>`).join("")+`</details>`;
+  if(state.mk.err&&!mk.open.length&&!mk.unk.length)h+=`<div class="status">Markets: ${esc(state.mk.err)}</div>`}
  const st=[];if(ev.holBusy||ev.tmBusy)st.push("Loading events…");if(ev.holErr)st.push(ev.holErr);if(ev.tmErr)st.push(ev.tmErr);
- if(TICKETMASTER_KEY&&!ev.tmBusy&&!ev.tmErr&&!tm.length)st.push("No ticketed events found for this date nearby.");
+ if(tmKey()&&!ev.tmBusy&&!ev.tmErr&&!tm.length)st.push("No ticketed events found for this date nearby.");
  $("evStatus").innerHTML=st.map(esc).join("<br>")+(ev.holErr||ev.tmErr?' <button onclick="state.ev.key=\'\';loadEvents()">Retry</button>':"");
- $("evCount").textContent=(tm.length+same.length)?`(${tm.length+same.length})`:"";$("events").innerHTML=h;moreBtn("evMore",state.show.ev,tm.length,"ev");$("evLinks").innerHTML=evLinks()}
-function evCard(e){return `<div class="res">${e.img?`<img class="evimg" src="${esc(e.img)}" alt="" loading="lazy">`:""}<h3>🎟 ${esc(e.name)}</h3><div class="meta">${esc(e.genre)}${e.time?" · 🕒 "+esc(e.time):""}${e.venue?" · 📍 "+esc(e.venue):""}${e.dist!=null?` · ${e.dist.toFixed(1)} mi`:""}${e.price?" · "+esc(e.price):""}</div>
- <div class="why">✅ ${esc(e.why.join(" · ")||"happening that day")}</div><div class="links"><a href="${esc(e.url)}" target="_blank" rel="noopener">🎫 Tickets</a>${e.lat?`<a href="https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lon}" target="_blank" rel="noopener">🗺 Maps</a>`:""}</div><div style="clear:both"></div></div>`}
+ const nEv=all.length+same.length+mk.open.length;$("evCount").textContent=nEv?`(${nEv})`:"";$("events").innerHTML=h;moreBtn("evMore",state.show.ev,all.length,"ev");$("evLinks").innerHTML=evLinks();paintTm()}
+function evCard(e){return `<div class="res">${e.img?`<img class="evimg" src="${esc(e.img)}" alt="" loading="lazy">`:""}<h3>${e.market?"🧺":e.freeEv?"🆓":"🎟"} ${esc(e.name)}</h3><div class="meta">${esc(e.genre)}${e.time?" · 🕒 "+esc(e.time):""}${e.venue?" · 📍 "+esc(e.venue):""}${e.dist!=null?` · ${e.dist.toFixed(1)} mi`:""}${e.price?" · "+esc(e.price):""}${e.free?' <span class="badge free">Free</span>':""}</div>
+ <div class="why">✅ ${esc(e.why.join(" · ")||"happening that day")}</div><div class="links">${e.url?`<a href="${esc(e.url)}" target="_blank" rel="noopener">${e.freeEv?"ℹ️ Details":"🎫 Tickets"}</a>`:""}${e.lat?`<a href="https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lon}" target="_blank" rel="noopener">🗺 Maps</a>`:""}</div><div style="clear:both"></div></div>`}
 function card(i,isPick){const [label,emo,io]=i.meta;const city=(state.loc.name||"").replace(/^📡 /,"").split(",")[0];
  const t=i.tags||{};let links="";
  if(!i.anywhere){const g=`https://www.google.com/maps/search/?api=1&query=${i.lat},${i.lon}`;
@@ -452,6 +560,6 @@ $("go").onclick=()=>resolveTyped();
 $("surprise").onclick=()=>{const pool=[];ranked.filter(i=>i.miss===0).slice(0,10).forEach(i=>pool.push(i));ideaPicks.slice(0,8).forEach(i=>pool.push(i));evItems.filter(i=>i.miss===0).slice(0,6).forEach(i=>pool.push(i));
  if(!pool.length){ranked.slice(0,6).concat(ideaPicks.slice(0,6)).forEach(i=>pool.push(i))}if(!pool.length)return;const p=pool[Math.floor(Math.random()*pool.length)];
  const c=$("pickCard");c.hidden=false;c.className="card pick";c.innerHTML="<h2>🎲 Surprise pick</h2>"+(p.event?evCard(p):card(p,true));c.scrollIntoView({behavior:"smooth",block:"center"})};
-(function(){const _sl=setLoc,_sd=selectDate;setLoc=function(p){state.show={pl:5,id:5,ev:5};state.ev.key="";_sl(p);loadEvents()};selectDate=function(d,u){_sd(d,u);if(state.loc)loadEvents()}})();
+(function(){const _sl=setLoc,_sd=selectDate;setLoc=function(p){state.show={pl:5,id:5,ev:5,mk:5};state.ev.key="";state.mk.key="";_sl(p);loadEvents()};selectDate=function(d,u){_sd(d,u);if(state.loc)loadEvents()}})();
 (function(){const l=LS("dd_loc");if(l&&l.lat!=null)setLoc(l);else{drawDays();$("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”.";$("wxStatus").textContent="Pick a location to see the weather.";$("plStatus").textContent="Pick a location to find places nearby."}})();
 </script></body></html>

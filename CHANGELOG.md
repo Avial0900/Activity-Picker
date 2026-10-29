@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.5 — 2026-10-28
+- 🧺 Markets open that day (in the events section): OSM marketplaces and farmers markets from Photon, Nominatim (with opening hours)
+  and Overpass when it responds. Missing hours are filled in with one Nominatim lookup. Hard timeouts (25s total), never blocks
+  other sections, never caches empty results.
+- Built-in opening_hours parser (no 1.3 MB library): month/date ranges (e.g. "May-Oct Sa 07:30-12:20", "Apr 15-Nov 15: ..."),
+  weekday ranges, nth weekday (Sa[1]), PH (uses the holiday data), off/closed, 24/7. Shows the hours for that day.
+  Unparseable or missing hours are listed under "Hours unverified". Closed markets are only counted.
+- Markets are free and family-friendly in vibe matching, and appear in Surprise me.
+- Ticketmaster: keeps the built-in TICKETMASTER_KEY, plus a "⚙️ Ticketmaster key" setting at the bottom of the events section
+  (stored in localStorage, with a link to the free registration). "Free" badge for $0 events; clear 401/429 messages.
+- Free local events feed: reads ./data/free-events.json (5s timeout, cache-bust) and shows events within the radius on the chosen date with a
+  Free badge, vibe-matched via category and tags, deduped against OSM markets. Missing or invalid file is ignored silently.
+  Test file: data/free-events.sample.json (fake SAMPLE events, not shipped as free-events.json).
+
 ## v1.4.1 — 2026-10-28
 - Places of interest ranking now uses category tiers that outrank mood and distance:
   1) museums, parks, libraries, galleries, gardens, nature, zoos/aquariums, historic sites/landmarks, viewpoints, trails, beaches, theaters, cinemas;
