@@ -1,5 +1,21 @@
 # Changelog
 
+## v1.8 — 2026-10-29 (weather/geocoding sources, footer, privacy draft)
+- **Open-Meteo removed everywhere.** Its free tier is non-commercial.
+- **Forecast, US:** the National Weather Service (api.weather.gov `/points` → `forecast` + `forecastHourly`), called straight from the browser (CORS `*`, no key). It covers about 7 days.
+- **Forecast, worldwide and beyond NWS:** MET Norway Locationforecast 2.0 compact, through the Worker's `/weather/met`. The Worker sets an identifying User-Agent, rounds coordinates to 4 decimals and caches 30–60 min (respecting Expires). It covers about 9–10 days. For US locations, MET fills the days NWS doesn't cover. If NWS fails, MET covers everything.
+- **Dates past the forecast:** the Visual Crossing Timeline through the Worker's `/weather/history` (secret `VC_KEY`). Each call is 1 record (`include=days` with minimal elements). Climate-stats answers are cached 14 days and real long-range forecasts 6 h. Without a key the route returns a JSON 503 "not configured", and the app shows "Forecast not available this far out yet" without filtering outdoor options.
+- **Weather mapping:** NWS `shortForecast` and MET `symbol_code` are mapped onto the existing weather codes, so the nice/mixed/indoor, rough-weather and best-outdoor-window logic is unchanged. MET has no rain probability in compact, so it is estimated from the symbol and the precipitation amount.
+- **Location search:** Photon (Komoot) first, then Nominatim (1 req/s, kept). Local-script and diacritic names work (São Paulo, Kraków, Ōsaka, Wānaka).
+- **Worker caching for Nominatim and Overpass:** `/osm/nominatim/{search,reverse,lookup}` (24 h) and `/osm/overpass` (1 h, two mirrors, 12 s per mirror). The app goes through them when the Worker has them, and calls the services directly if the proxy errors.
+- **Every weather source fails soft and loads independently.** The Places, Date night and Events tabs never wait on weather.
+- **Footer:** OpenStreetMap copyright; NWS, MET Norway (CC BY 4.0) and Visual Crossing; Wikipedia; Ticketmaster; the free-events source; the commission note.
+  - The Privacy link is hidden behind `SHOW_PRIVACY_LINK=false` until `privacy.html` ships.
+  - No tips or donations button (Alex decided against one).
+  - No analytics script or affiliate links were added.
+- **`privacy.html`:** a draft, delivered separately and not linked yet.
+- **Worker:** the CORS allowlist is unchanged. `deploy.sh` now also sets `VC_KEY` from env when present. **The Worker has not been redeployed.**
+
 ## v1.7 — 2026-10-29
 - Results are now one card with tabs: 📍 Places of interest, 💕 Date night, 🎉 Events. Only the selected section shows, so no more scrolling past one section to reach the next.
   - Each tab shows a live count and a small spinner while it is still loading. The Events tab gets a dot when there are vibe-matched events for the date.
