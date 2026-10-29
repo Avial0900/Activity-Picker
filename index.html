@@ -239,8 +239,8 @@ nwr${A}[craft=brewery];nwr${A}[shop=farm][name];nwr${A}[natural=beach][name];rel
 nwr${A}[leisure=playground][name];
 );out center tags 800;`;
  const urls=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"];let j=null,errs=[];
- const ph=photon(lat,lon,r/1609.34).then(v=>({v}),e=>({e}));
  const cached=LS("dd_pl_"+key);if(cached&&Date.now()-cached.t<36e5){state.places=cached.p;state.src=cached.s;$("plStatus").textContent=`${state.places.length} places within ${$("radius").value} mi (${cached.s}, cached).`;updAttrib();render();return}
+ const ph=photon(lat,lon,r/1609.34).then(v=>({v}),e=>({e}));
  let ui=0;for(const u of urls){try{j=await fetchJ(u+"?data="+encodeURIComponent(q),{},ui++?12000:22000);break}catch(e){errs.push(e.message)}}
  if(state.placesFor!==key)return;
  let src="OpenStreetMap via Overpass";
