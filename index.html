@@ -25,7 +25,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 .why{font-size:.85rem;margin:4px 0}.deal{font-size:.8rem;background:#fff4d6;color:#6b4e00;border-radius:8px;padding:4px 8px;margin:4px 0}
 @media(prefers-color-scheme:dark){.deal{background:#3a321b;color:#f3d98a}}
 .links a{font-size:.82rem;margin-right:10px;color:var(--acc2)}.links,.meta,.near,.why{overflow-wrap:anywhere}.status{font-size:.85rem;color:var(--mut)}.err{color:#d33}
-.pick{border:2px solid var(--acc)}.cnt{font-size:.8rem;color:var(--mut);font-weight:400}.more{width:100%;margin-top:6px}.badge{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:9px;background:var(--acc);color:#fff;vertical-align:middle}.badge.free{background:#2e8b57}.subh{font-size:1rem;margin:14px 0 4px}details.unv{margin:6px 0;font-size:.88rem}details.unv summary{cursor:pointer;color:var(--mut)}.unvi{padding:5px 0;border-bottom:1px solid rgba(128,128,128,.2)}details.tmset{margin-top:10px;font-size:.85rem;color:var(--mut)}details.tmset input{width:100%;margin:6px 0;font-size:16px}.hol{background:#efe3ff;color:#4b2a7a;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.9rem}.evimg{float:right;width:72px;height:72px;object-fit:cover;border-radius:10px;margin-left:8px}.near{font-size:.82rem;margin:3px 0}.linkgrid a{display:inline-block;margin:4px 6px 4px 0;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:.85rem}@media(prefers-color-scheme:dark){.hol{background:#2f2540;color:#d9c6ff}}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
+.pick{border:2px solid var(--acc)}.cnt{font-size:.8rem;color:var(--mut);font-weight:400}.more{width:100%;margin-top:6px}.badge{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:9px;background:var(--acc);color:#fff;vertical-align:middle}.badge.free{background:#2e8b57}.subh{font-size:1rem;margin:14px 0 4px}details.unv{margin:6px 0;font-size:.88rem}details.unv summary{cursor:pointer;color:var(--mut)}.unvi{padding:5px 0;border-bottom:1px solid rgba(128,128,128,.2)}details.tmset{margin-top:10px;font-size:.85rem;color:var(--mut)}details.tmset input{width:100%;margin:6px 0;font-size:16px}.holn{font-size:.82rem;color:#7a4b00;background:#fff3d6;border-radius:6px;padding:2px 8px;display:inline-block;margin:3px 0}.hol{background:#efe3ff;color:#4b2a7a;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.9rem}.evimg{float:right;width:72px;height:72px;object-fit:cover;border-radius:10px;margin-left:8px}.near{font-size:.82rem;margin:3px 0}.linkgrid a{display:inline-block;margin:4px 6px 4px 0;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:.85rem}@media(prefers-color-scheme:dark){.hol{background:#2f2540;color:#d9c6ff}}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
 </style></head><body>
 <header><h1>🎲 Dilly-<span>Dally</span></h1><p>What should we do?</p></header>
 <main>
@@ -207,7 +207,7 @@ function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"
 function todayStr(){return ymd(new Date())}
 function addDays(str,n){const d=new Date(str+"T12:00");d.setDate(d.getDate()+n);return ymd(d)}
 function niceDate(str){return new Date(str+"T12:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:str.slice(0,4)!==todayStr().slice(0,4)?"numeric":undefined})}
-state.date=(function(){const d=LS("dd_date");return d&&d>=todayStr()?d:todayStr()})();state.typ={};state.typErr={};
+state.date=(function(){const d=LS("dd_date");return d&&d>=todayStr()?d:todayStr()})();state.typ={};state.typErr={};const typPend={};
 function curW(){const d=state.date;if(state.wx){for(const w of state.wx)if(w.date===d)return w}const k=locKey()+"|"+d;return state.typ[k]||null}
 function locKey(){return state.loc?(+state.loc.lat).toFixed(3)+","+(+state.loc.lon).toFixed(3):""}
 async function loadWx(){if(!state.loc)return;const {lat,lon}=state.loc;const lk=locKey();state.wx=null;state.wxErr="";$("wxStatus").textContent="Loading forecast…";
@@ -218,7 +218,7 @@ async function loadWx(){if(!state.loc)return;const {lat,lon}=state.loc;const lk=
  catch(e){if(locKey()!==lk)return;state.wx=null;state.wxErr="Forecast failed: "+e.message}
  if(locKey()!==lk)return;selectDate(state.date)}
 function forecastEnd(){return state.wx&&state.wx.length?state.wx[state.wx.length-1].date:addDays(todayStr(),15)}
-async function loadTypical(date){if(!state.loc)return;const k=locKey()+"|"+date;if(state.typ[k])return;const {lat,lon}=state.loc;
+async function loadTypical(date){if(!state.loc)return;const k=locKey()+"|"+date;if(state.typ[k]||typPend[k])return;typPend[k]=1;const {lat,lon}=state.loc;
  $("wxStatus").textContent="Loading typical weather for this date (10-year history)…";
  const end=addDays(todayStr(),-7),start=(+todayStr().slice(0,4)-11)+"-01-01";
  try{const j=await fetchJ(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`,{},30000);
@@ -229,6 +229,7 @@ async function loadTypical(date){if(!state.loc)return;const k=locKey()+"|"+date;
   const w={kind:"typical",date,hi:Math.round(hi/n),lo:Math.round(lo/n),pp:Math.round(wet/n*100),wind:Math.round(wind/n),code:-1,hourly:[],n};
   w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,0);state.typ[k]=w;delete state.typErr[k]}
  catch(e){state.typErr[k]=e.message}
+ delete typPend[k];
  if(state.date===date&&locKey()+"|"+date===k){drawDays();render()}}
 function selectDate(d,user){if(!d||d<todayStr())d=todayStr();const bump=!!(state.wx&&state.wx.length)&&d<state.wx[0].date;if(bump)d=state.wx[0].date;state.date=d;if(user&&!bump)save("dd_date",d);drawDays();render();
  if(state.loc&&(d>forecastEnd()||(!state.wx&&d>addDays(todayStr(),15))))loadTypical(d)}
@@ -357,7 +358,7 @@ let ranked=[],ideaPicks=[],evItems=[];state.show={pl:5,id:5,ev:5,mk:5};state.ide
 function mkCtx(){const w=curW();const dow=new Date(state.date+"T12:00").getDay();
  return {setting:wantSetting(),auto:$("setting").value==="auto",wx:w,wxWord:w?(w.cls==="nice"?`${w.hi}° and nice`:w.cls==="indoor"?"rough weather":w.cls==="unknown"?"unknown weather":"mixed weather"):"",
   moods:state.moods,people:+$("people").value,budget:+$("budget").value,radius:+$("radius").value,dow,date:state.date,lat:+state.loc.lat}}
-function moreBtn(id,shown,total,key){const b=$(id);b.hidden=total<=shown;b.textContent=`Show more (${total-shown} more)`;b.onclick=()=>{state.show[key]+=10;render()}}
+function moreBtn(id,shown,total,key){const b=$(id);const left=total-shown;b.hidden=left<=0;if(left>0)b.textContent="Show more ("+left+" more)";b.onclick=()=>{state.show[key]+=10;render()}}
 function render(){if(!state.loc)return;const ctx=mkCtx();
  // 1) places
  const items=state.places.map(p=>Object.assign({},p,{meta:CATS[p.c],deal:dealsFor(p,ctx.dow)}));
@@ -390,8 +391,9 @@ function placeParts(){const parts=(state.loc.name||"").replace(/^📡\s*/,"").sp
  if(!cc&&parts.length>1&&/^[A-Z]{2}$/.test(parts[parts.length-1]))cc=parts[parts.length-1];let city=parts[0]||"",region=parts[1]||"";
  if(region&&/^[A-Z]{2}$/.test(region)&&!cc){cc="US";}
  let st=US_ST[region.toLowerCase()]||(region.length===2?region.toLowerCase():"");if(!cc&&st)cc="US";return {city,region,cc,st}}
-const holCache={};
-async function getHolidays(cc,yr){const k=cc+yr;if(holCache[k])return holCache[k];const j=await fetchJ(`https://date.nager.at/api/v3/PublicHolidays/${yr}/${cc}`,{},10000);holCache[k]=j;return j}
+const holCache={},holPend={};
+function getHolidays(cc,yr){const k=cc+yr;if(holCache[k])return Promise.resolve(holCache[k]);if(holPend[k])return holPend[k];
+ const p=fetchJ(`https://date.nager.at/api/v3/PublicHolidays/${yr}/${cc}`,{},10000).then(j=>{holCache[k]=j;delete holPend[k];return j},e=>{delete holPend[k];throw e});holPend[k]=p;return p}
 let evGen=0;state.ev={key:"",hol:[],tm:[],holErr:"",tmErr:"",tmBusy:false,holBusy:false};
 async function loadEvents(){if(!state.loc)return;const pp=placeParts();const key=locKey()+"|"+state.date;if(state.ev.key===key)return;const g=++evGen;
  state.ev={key,hol:[],tm:[],free:[],holErr:"",tmErr:"",holBusy:!!pp.cc,tmBusy:!!tmKey()};state.show.ev=5;render();
@@ -498,23 +500,41 @@ function marketsFor(ctx){const out={open:[],unk:[],closed:0};if(state.mk.key!==l
  const hol=state.ev.hol.some(h=>h.same);
  state.mk.list.forEach(m=>{const dist=hav(+lat,+lon,m.lat,m.lon);if(dist>rad*1.2)return;const r=ohEval(m.oh,state.date,hol);const fm=isFarmers(m);
   if(r.open===false){out.closed++;return}
-  if(r.open===true){const it={name:m.name,event:true,market:true,url:"",lat:m.lat,lon:m.lon,dist,time:r.hours,venue:"",genre:fm?"Farmers market":"Market",price:"",free:true,
+  if(r.open===true){const it={name:m.name,event:true,market:true,oh:m.oh,url:"",lat:m.lat,lon:m.lon,dist,time:r.hours,venue:"",genre:fm?"Farmers market":"Market",price:"",free:true,
     meta:[fm?"Farmers market":"Market","🧺","out",["family","chill","cozy","social","foodie"],1,12,0],deal:[],farmers:fm};Object.assign(it,score(it,ctx));it.why.unshift("open "+r.hours);out.open.push(it)}
   else out.unk.push({name:m.name,lat:m.lat,lon:m.lon,dist,oh:m.oh,farmers:fm})});
  const srt=(a,b)=>(b.farmers-a.farmers)||a.dist-b.dist;out.open.sort((a,b)=>(a.miss-b.miss)||srt(a,b));out.unk.sort(srt);return out}
 // ===== Free local events feed (./data/free-events.json, maintained separately). Missing/invalid => silently ignored.
-const FREE_CAT={festival:["social","adventurous","family"],market:["family","chill","cozy","foodie"],concert:["romantic","social","chill"],library:["nerdy","cozy","chill","family"],kids:["family"],
- community:["social","family"],arts:["creative","romantic"],sports:["active","social"],outdoors:["active","adventurous","chill"],holiday:["family","cozy","social"],other:["social"]};
+const FREE_CAT={festival:["social","adventurous","family"],market:["family","chill","cozy","foodie"],concert:["social","chill"],library:["nerdy","cozy","chill"],kids:["family"],
+ community:["social","family"],arts:["creative"],sports:["active","social"],outdoors:["active","adventurous","chill"],holiday:["family","cozy","social"],other:["social"]};
 const FREE_TAG=[[/music|concert|jazz/i,"romantic"],[/kid|child|family|story/i,"family"],[/art|craft|paint/i,"creative"],[/run|walk|hike|bike|sport|yoga/i,"active"],[/read|book|lecture|science|tech/i,"nerdy"],[/food|market|taste/i,"foodie"]];
-let freeFeed=null;
-function loadFree(g){const p=freeFeed?Promise.resolve(freeFeed):fetchJ("./data/free-events.json?cb="+Math.floor(Date.now()/6e5),{},5000).then(j=>{if(j&&Array.isArray(j.events)){freeFeed=j;return j}return null});
- p.then(j=>{if(!j||g!==evGen||!state.loc)return;const d=state.date,{lat,lon}=state.loc,rad=+$("radius").value;
-  state.ev.free=j.events.filter(e=>{try{if(!e||!e.title||e.lat==null||e.lon==null||!e.start)return false;const s=String(e.start).slice(0,10),en=e.end?String(e.end).slice(0,10):s;
-   return s<=d&&d<=en&&hav(+lat,+lon,+e.lat,+e.lon)<=rad}catch(x){return false}}).map(e=>{let moods=(FREE_CAT[e.category]||FREE_CAT.other).slice();const tg=(e.tags||[]).join(" ")+" "+e.title;
-   FREE_TAG.forEach(t=>{if(t[0].test(tg)&&moods.indexOf(t[1])<0)moods.push(t[1])});if(e.kid_friendly&&moods.indexOf("family")<0)moods.push("family");
-   const st=String(e.start),tm=/T(\d\d:\d\d)/.exec(st),te=e.end&&/T(\d\d:\d\d)/.exec(String(e.end));
-   return {name:e.title,event:true,freeEv:true,free:true,url:e.url||"",lat:+e.lat,lon:+e.lon,dist:hav(+lat,+lon,+e.lat,+e.lon),time:tm?tm[1]+(te?"–"+te[1]:""):"",venue:e.venue||"",genre:(e.category||"event").replace(/^./,c=>c.toUpperCase())+" · free",price:"",
-    meta:[e.title,"🆓",e.indoor===true?"in":e.indoor===false?"out":"any",moods,1,20,0],deal:[],notes:e.notes||""}});render()},()=>{})}
+let freeFeed=null,freeP=null;
+// Tags in the feed are keyword-inferred and noisy (e.g. "Computer Basics" tagged musical), so only trust them when the title agrees.
+const FREE_OK={creative:/craft|art|paint|draw|make|maker|knit|crochet|sew|writ|poet|design|lego|build|creat|color|collage|ornament|decorat|steam|stem/i,
+ romantic:/jazz|concert|orchestra|symphon|wine|light|lights|candle|dance|ballet|film|movie|poetry|choir|holiday walk|stroll/i,
+ active:/yoga|walk|run|fitness|dance|sport|hike|tai chi|zumba|exercise|bike|skat|pickleball|basketball|soccer|swim|workout|stretch|move/i,
+ adventurous:/scavenger|escape room|explore|adventure|festival|parade|bird|hike/i,nerdy:/science|stem|steam|chess|scrabble|trivia|book|lecture|history|code|coding|robot|tech|astronom|game/i,
+ social:/club|party|social|meetup|bingo|trivia|festival|parade|celebrat|potluck|game|karaoke|dance/i,family:/kid|child|family|story|toddler|baby|preschool|teen|youth|tween|ages/i,
+ chill:/./,cozy:/./};
+const FREE_CATOK={concert:/concert|music|band|jazz|choir|sing|orchestra|perform|recital|symphon|karaoke|hip hop|r&b/i,festival:/./,market:/./,holiday:/./,sports:/yoga|dance|run\b|walk|sport|fit|ball|skat|swim|hike|bike|zumba|tai chi|exercise|pickleball|soccer|hockey|workout/i,outdoors:/walk|hike|bird|nature|garden|park|outdoor|trail|nordic|tree|lights|river|nasa|sky|star/i,arts:/./,kids:/./,library:/./,community:/./};
+const FREE_UTIL=/computer basics|tutoring|resume|job applic|work ready|medicare|tax|esl|english conversation|citizenship|drop-in help|social work|tech help|notary|legal|career|employment|homework help|online shopping helps|microsoft|excel|word processing|detroit at work|flex hours|afterschool meals|libby|hoopla|wifi|printing|pick-up begins|take & make/i;
+function freeIndex(j){if(j._idx)return j._idx;j._idx=j.events.filter(e=>e&&e.title&&e.lat!=null&&e.lon!=null&&e.start).map(e=>{const s=String(e.start).slice(0,10);return {e,s,en:e.end?String(e.end).slice(0,10):s}});return j._idx}
+function freeItem(e,lat,lon){const t=e.title;let cat=e.category&&FREE_CAT[e.category]?e.category:"other";if(FREE_CATOK[cat]&&(!FREE_CATOK[cat].test(t)||(cat==="outdoors"&&e.indoor===true)))cat=cat==="outdoors"?"community":"library";
+ let moods=FREE_CAT[cat].slice();(e.tags||[]).forEach(tg=>{const re=FREE_OK[tg];if(re&&re.test(t)&&moods.indexOf(tg)<0&&tg!=="chill"&&tg!=="cozy")moods.push(tg);if((tg==="chill"||tg==="cozy")&&cat!=="sports"&&moods.indexOf(tg)<0)moods.push(tg)});
+ if(/jazz|orchestra|symphon|concert|lights|candle|ballet|poetry/i.test(t)&&!/kid|child|toddler|baby|preschool|ages \d/i.test(t)&&moods.indexOf("romantic")<0)moods.push("romantic");
+ if(e.kid_friendly===true&&!/adult|resume|job|medicare|tax|21\+|senior/i.test(t)&&moods.indexOf("family")<0)moods.push("family");
+ if(/\badults?\b|21\+|seniors?\b/i.test(t))moods=moods.filter(m=>m!=="family");
+ const util=FREE_UTIL.test(t);if(util)moods=[];
+ const st=String(e.start),tm=/T(\d\d:\d\d)/.exec(st),te=e.end&&/T(\d\d:\d\d)/.exec(String(e.end));const multi=e.end&&String(e.end).slice(0,10)!==st.slice(0,10);
+ let time=tm&&tm[1]!=="00:00"?tm[1]+(te&&!multi&&te[1]!=="00:00"?"–"+te[1]:""):"";if(multi)time=(time?time+" · ":"")+"runs through "+niceDate(String(e.end).slice(0,10));
+ const io=e.indoor===true?"in":e.indoor===false?"out":"any";
+ return {name:t,event:true,freeEv:true,free:true,util,url:e.url||"",lat:+e.lat,lon:+e.lon,dist:hav(+lat,+lon,+e.lat,+e.lon),time,venue:e.venue||"",genre:(cat==="other"?"Event":cat.replace(/^./,c=>c.toUpperCase()))+(e.city?" · "+e.city:""),price:"",
+  meta:[t,"🆓",io,moods,1,util?4:20,0],deal:[],notes:e.notes||""}}
+function loadFree(g){if(!freeFeed&&!freeP)freeP=sleep(700).then(()=>fetchJ("./data/free-events.json?cb="+Math.floor(Date.now()/6e5),{},15000)).then(j=>{freeP=null;if(j&&Array.isArray(j.events)){freeFeed=j;return j}return null},e=>{freeP=null;throw e});const p=freeFeed?Promise.resolve(freeFeed):freeP;
+ p.then(j=>{if(!j||g!==evGen||!state.loc)return;const d=state.date,{lat,lon}=state.loc,rad=+$("radius").value;const t0=Date.now();
+  const out=[];freeIndex(j).forEach(x=>{try{if(x.s<=d&&d<=x.en&&hav(+lat,+lon,+x.e.lat,+x.e.lon)<=rad)out.push(freeItem(x.e,lat,lon))}catch(z){}});
+  // collapse exact duplicates (same title, same venue/time)
+  const seen={};state.ev.free=out.filter(i=>{const k=i.name.toLowerCase()+"|"+i.time+"|"+i.venue.toLowerCase();if(seen[k])return false;seen[k]=1;return true});state.ev.freeMs=Date.now()-t0;render()},()=>{})}
 function tmSettings(){const k=tmKey(),site=!!TICKETMASTER_KEY;
  return `<details class="tmset"><summary>⚙️ Ticketmaster key ${k?"(set ✓)":"(optional)"}</summary>`+(site?`<div>A site-wide key is built in — live Ticketmaster events are on.</div>`:
  `<div>Paste a free Ticketmaster <b>Consumer Key</b> to list real ticketed events for this date. It's free: <a href="https://developer-acct.ticketmaster.com/user/register" target="_blank" rel="noopener">register here</a>, open “My Apps”, and copy the Consumer Key. Stored only in this browser.</div>
@@ -528,7 +548,7 @@ function renderEvents(ctx){const ev=state.ev;$("evTitle").textContent="Happening
  same.forEach(x=>{h+=`<div class="hol">🎌 <b>${esc(x.name)}</b>${x.local&&x.local!==x.name?` (${esc(x.local)})`:""} — public holiday. Expect parades/festivities; some places may close or have holiday hours.</div>`});
  near.forEach(x=>{h+=`<div class="status">📆 Nearby holiday: ${esc(x.name)} on ${esc(niceDate(x.date))}</div>`});
  const tm=ev.tm.map(e=>Object.assign(e,score(e,ctx)));tm.sort((a,b)=>a.miss-b.miss||b.s-a.s);evItems=tm;
- const fr=(ev.free||[]).map(e=>Object.assign(e,score(e,ctx)));fr.sort((a,b)=>a.miss-b.miss||b.s-a.s);
+ const fr=(ev.free||[]).map(e=>Object.assign(e,score(e,ctx)));fr.forEach(e=>{if(e.util){e.s-=5;e.why=["practical library service"]}});fr.sort((a,b)=>(a.util-b.util)||a.miss-b.miss||b.s-a.s||a.dist-b.dist);
  const mk=marketsFor(ctx);const dup=m=>fr.some(f=>hav(f.lat,f.lon,m.lat,m.lon)<0.5&&(f.name.toLowerCase().indexOf(m.name.toLowerCase())>=0||m.name.toLowerCase().indexOf(f.name.toLowerCase())>=0));
  mk.open=mk.open.filter(m=>!dup(m));mk.unk=mk.unk.filter(m=>!dup(m));
  const all=fr.concat(tm);evItems=all.concat(mk.open);
@@ -538,14 +558,15 @@ function renderEvents(ctx){const ev=state.ev;$("evTitle").textContent="Happening
   if(!mk.open.length&&!state.mk.busy)h+=`<div class="status">No markets with confirmed hours for this date${mk.closed?` (${mk.closed} nearby closed that day)`:""}.</div>`;
   h+=mk.open.slice(0,state.show.mk).map(evCard).join("");if(mk.open.length>state.show.mk)h+=`<button class="more" onclick="moreMk()">Show more markets (${mk.open.length-state.show.mk})</button>`;
   if(mk.open.length&&mk.closed)h+=`<div class="status">${mk.closed} other nearby market${mk.closed>1?"s":""} closed that day.</div>`;
-  if(mk.unk.length)h+=`<details class="unv"><summary>Hours unverified (${mk.unk.length}) — check before going</summary>`+mk.unk.slice(0,15).map(m=>`<div class="unvi">🧺 <b>${esc(m.name)}</b> · ${m.dist.toFixed(1)} mi${m.oh?` · listed hours: ${esc(m.oh)}`:" · no hours listed"} · <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.name)}%20${m.lat},${m.lon}" target="_blank" rel="noopener">Maps</a></div>`).join("")+`</details>`;
+  if(mk.unk.length)h+=`<details class="unv"><summary>Hours unverified (${mk.unk.length}) — check before going</summary>`+mk.unk.slice(0,15).map(m=>`<div class="unvi">🧺 <b>${esc(m.name)}</b> · ${m.dist.toFixed(1)} mi${m.oh?` · listed hours: ${esc(m.oh)}`:" · no hours listed"} · <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.name)}%20${m.lat},${m.lon}" target="_blank" rel="noopener">Maps</a>${same.length&&!/\bPH\b/.test(m.oh||"")?" · 🎌 Holiday — hours may differ":""}</div>`).join("")+`</details>`;
   if(state.mk.err&&!mk.open.length&&!mk.unk.length)h+=`<div class="status">Markets: ${esc(state.mk.err)}</div>`}
  const st=[];if(ev.holBusy||ev.tmBusy)st.push("Loading events…");if(ev.holErr)st.push(ev.holErr);if(ev.tmErr)st.push(ev.tmErr);
  if(tmKey()&&!ev.tmBusy&&!ev.tmErr&&!tm.length)st.push("No ticketed events found for this date nearby.");
  $("evStatus").innerHTML=st.map(esc).join("<br>")+(ev.holErr||ev.tmErr?' <button onclick="state.ev.key=\'\';loadEvents()">Retry</button>':"");
  const nEv=all.length+same.length+mk.open.length;$("evCount").textContent=nEv?`(${nEv})`:"";$("events").innerHTML=h;moreBtn("evMore",state.show.ev,all.length,"ev");$("evLinks").innerHTML=evLinks();paintTm()}
 function evCard(e){return `<div class="res">${e.img?`<img class="evimg" src="${esc(e.img)}" alt="" loading="lazy">`:""}<h3>${e.market?"🧺":e.freeEv?"🆓":"🎟"} ${esc(e.name)}</h3><div class="meta">${esc(e.genre)}${e.time?" · 🕒 "+esc(e.time):""}${e.venue?" · 📍 "+esc(e.venue):""}${e.dist!=null?` · ${e.dist.toFixed(1)} mi`:""}${e.price?" · "+esc(e.price):""}${e.free?' <span class="badge free">Free</span>':""}</div>
- <div class="why">✅ ${esc(e.why.join(" · ")||"happening that day")}</div><div class="links">${e.url?`<a href="${esc(e.url)}" target="_blank" rel="noopener">${e.freeEv?"ℹ️ Details":"🎫 Tickets"}</a>`:""}${e.lat?`<a href="https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lon}" target="_blank" rel="noopener">🗺 Maps</a>`:""}</div><div style="clear:both"></div></div>`}
+ ${e.market?holNote(e.oh):""}<div class="why">✅ ${esc(e.why.join(" · ")||"happening that day")}</div><div class="links">${e.url?`<a href="${esc(e.url)}" target="_blank" rel="noopener">${e.freeEv?"ℹ️ Details":"🎫 Tickets"}</a>`:""}${e.lat?`<a href="https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lon}" target="_blank" rel="noopener">🗺 Maps</a>`:""}</div><div style="clear:both"></div></div>`}
+function holNote(oh){return state.ev&&state.ev.hol&&state.ev.hol.some(h=>h.same)&&!/\bPH\b/.test(oh||"")?`<div class="holn">🎌 Holiday — hours may differ</div>`:""}
 function card(i,isPick){const [label,emo,io]=i.meta;const city=(state.loc.name||"").replace(/^📡 /,"").split(",")[0];
  const t=i.tags||{};let links="";
  if(!i.anywhere){const g=`https://www.google.com/maps/search/?api=1&query=${i.lat},${i.lon}`;
@@ -555,7 +576,7 @@ function card(i,isPick){const [label,emo,io]=i.meta;const city=(state.loc.name||
  else links=(i.near?`<a href="https://www.google.com/maps/dir/?api=1&destination=${i.near.lat},${i.near.lon}" target="_blank" rel="noopener">🧭 Directions to ${esc(i.near.name)}</a>`:"")+`<a href="https://www.google.com/search?q=${encodeURIComponent(i.name+(i.near?" near "+city:" ideas"))}" target="_blank" rel="noopener">💡 Ideas</a>`;
  const cost=["Free","$","$$","$$$"][i.meta[6]];
  return `<div class="res ${isPick?"":""}"><h3>${emo} ${esc(i.name)}</h3><div class="meta">${i.anywhere?(i.near?`Near ${esc(i.near.name)} (${i.near.dist.toFixed(1)} mi)`:"Anywhere idea"):esc(label)} · ${io==="in"?"Indoor":io==="out"?"Outdoor":"In/Out"} · ~${cost}${i.dist!=null?` · ${i.dist.toFixed(1)} mi`:""}${t.opening_hours?` · 🕒 ${esc(t.opening_hours)}`:""}</div>
- ${i.closed?`<div class="closed">⛔ Likely closed that day (per listed hours — verify)</div>`:""}<div class="why">✅ ${esc(i.why.join(" · ")||"a solid option")}</div>${i.deal.map(d=>`<div class="deal">🏷 ${esc(d)} — <b>typical, verify</b></div>`).join("")}<div class="links">${links}</div></div>`}
+ ${!i.anywhere&&t.opening_hours?holNote(t.opening_hours):""}${i.closed?`<div class="closed">⛔ Likely closed that day (per listed hours — verify)</div>`:""}<div class="why">✅ ${esc(i.why.join(" · ")||"a solid option")}</div>${i.deal.map(d=>`<div class="deal">🏷 ${esc(d)} — <b>typical, verify</b></div>`).join("")}<div class="links">${links}</div></div>`}
 $("go").onclick=()=>resolveTyped();
 $("surprise").onclick=()=>{const pool=[];ranked.filter(i=>i.miss===0).slice(0,10).forEach(i=>pool.push(i));ideaPicks.slice(0,8).forEach(i=>pool.push(i));evItems.filter(i=>i.miss===0).slice(0,6).forEach(i=>pool.push(i));
  if(!pool.length){ranked.slice(0,6).concat(ideaPicks.slice(0,6)).forEach(i=>pool.push(i))}if(!pool.length)return;const p=pool[Math.floor(Math.random()*pool.length)];
