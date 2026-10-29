@@ -69,7 +69,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 const TICKETMASTER_KEY="";
 // v1.6: Ticketmaster via the Dilly-Dally Cloudflare Worker (key stays server-side). Fill in after deploy, e.g. "https://dilly-dally-events.<sub>.workers.dev/events".
 // Set to true once privacy.html is published next to index.html.
-const SHOW_PRIVACY_LINK=false;
+const SHOW_PRIVACY_LINK=true;
 const EVENTS_PROXY_URL="https://dilly-dally-events.dilly-dally.workers.dev/events";
 function userTmKey(){try{return (localStorage.getItem("dd_tm_key")||"").trim()}catch(e){return ""}}
 function tmKey(){return userTmKey()||TICKETMASTER_KEY}
