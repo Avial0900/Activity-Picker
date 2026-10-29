@@ -26,11 +26,13 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 @media(prefers-color-scheme:dark){.deal{background:#3a321b;color:#f3d98a}}
 .links a{font-size:.82rem;margin-right:10px;color:var(--acc2)}.links,.meta,.near,.why{overflow-wrap:anywhere}.status{font-size:.85rem;color:var(--mut)}.err{color:#d33}
 .pick{border:2px solid var(--acc)}.cnt{font-size:.8rem;color:var(--mut);font-weight:400}.more{width:100%;margin-top:6px}.badge{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:9px;background:var(--acc);color:#fff;vertical-align:middle}.badge.free{background:#2e8b57}.subh{font-size:1rem;margin:14px 0 4px}details.unv{margin:6px 0;font-size:.88rem}details.unv summary{cursor:pointer;color:var(--mut)}.unvi{padding:5px 0;border-bottom:1px solid rgba(128,128,128,.2)}details.tmset{margin-top:10px;font-size:.85rem;color:var(--mut)}details.tmset input{width:100%;margin:6px 0;font-size:16px}.holn{font-size:.82rem;color:#7a4b00;background:#fff3d6;border-radius:6px;padding:2px 8px;display:inline-block;margin:3px 0}.hol{background:#efe3ff;color:#4b2a7a;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.9rem}.evimg{float:right;width:72px;height:72px;object-fit:cover;border-radius:10px;margin-left:8px}.near{font-size:.82rem;margin:3px 0}.linkgrid a{display:inline-block;margin:4px 6px 4px 0;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:.85rem}@media(prefers-color-scheme:dark){.hol{background:#2f2540;color:#d9c6ff}}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
+#resCard{padding-top:0}.tabs{position:sticky;top:0;z-index:5;display:flex;gap:4px;margin:0 -14px 10px;padding:8px 8px 0;background:var(--card);border-bottom:1px solid var(--bd);border-radius:14px 14px 0 0}.tab{flex:1 1 auto;min-width:0;white-space:nowrap;border:0;border-bottom:3px solid transparent;border-radius:10px 10px 0 0;background:transparent;color:var(--mut);font:inherit;font-size:.9rem;font-weight:600;padding:8px 6px;cursor:pointer;position:relative}.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--acc);background:var(--chip)}.tab:focus-visible{outline:2px solid var(--acc2);outline-offset:-2px}.tc{font-weight:400;font-size:.78rem}.ts{display:none}.tdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);margin-left:3px;vertical-align:top}.tdot[hidden]{display:none}.spin{display:inline-block;width:10px;height:10px;border:2px solid var(--bd);border-top-color:var(--acc);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}@keyframes sp{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.spin{animation:none}}.tp>h2{font-size:1.05rem}@media(max-width:520px){.tl{display:none}.ts{display:inline}.tab{font-size:.82rem;padding:8px 3px}.tabs{gap:2px;padding:6px 4px 0}}
+#loc{padding-right:46px}#locClr{position:absolute;right:2px;top:2px;width:42px;height:40px;border:0;background:transparent;color:var(--mut);font-size:1.1rem;line-height:1;padding:0;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}#locClr[hidden]{display:none}#locClr:hover,#locClr:focus-visible{color:var(--fg);background:var(--chip)}
 </style></head><body>
 <header><h1>🎲 Dilly-<span>Dally</span></h1><p>What should we do?</p></header>
 <main>
 <section class="card"><h2>📍 Where</h2>
-<div id="sugg"><input id="loc" type="text" placeholder="Type a city or address" autocomplete="off"><ul id="sl" hidden></ul></div>
+<div id="sugg"><input id="loc" type="text" placeholder="Type a city or address" autocomplete="off"><button type="button" id="locClr" aria-label="Clear location" title="Clear location" hidden>✕</button><ul id="sl" hidden></ul></div>
 <div class="row" style="margin-top:8px"><button id="geo">📡 Use my location</button></div>
 <div class="status" id="locStatus"></div></section>
 
@@ -45,9 +47,9 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <div class="row" style="margin-top:12px"><button class="pri" id="go">🔎 Find activities</button><button class="sec" id="surprise">🎲 Surprise me</button></div>
 </section>
 <section class="card" id="pickCard" hidden></section>
-<section class="card" id="secPlaces"><h2>📍 Places of interest <span class="cnt" id="plCount"></span></h2><div class="status" id="plStatus"></div><div id="results"></div><button class="more" id="plMore" hidden>Show more</button></section>
-<section class="card" id="secIdeas"><h2 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">💡 Date night ideas <span class="cnt" id="idCount"></span><button type="button" id="shuffle" style="padding:6px 10px;font-size:.85rem">🔀 Shuffle</button></h2><div id="ideas"></div><button class="more" id="idMore" hidden>Show more</button></section>
-<section class="card" id="secEvents"><h2>🎉 <span id="evTitle">Happening nearby</span> <span class="cnt" id="evCount"></span></h2><div class="status" id="evStatus"></div><div id="events"></div><button class="more" id="evMore" hidden>Show more</button><div id="evLinks"></div><div id="tmSet"></div></section>
+<section class="card" id="resCard"><div class="tabs" role="tablist" aria-label="Results"><button type="button" class="tab" role="tab" id="tab-pl" data-k="pl" aria-controls="secPlaces" aria-selected="true" tabindex="0"><span aria-hidden="true">📍</span> <span class="tl">Places of interest</span><span class="ts">Places</span> <span class="tc" id="tc-pl"></span><span class="tdot" id="td-pl" hidden title="Vibe-matched events"></span></button><button type="button" class="tab" role="tab" id="tab-id" data-k="id" aria-controls="secIdeas" aria-selected="false" tabindex="-1"><span aria-hidden="true">💕</span> <span class="tl">Date night</span><span class="ts">Date night</span> <span class="tc" id="tc-id"></span><span class="tdot" id="td-id" hidden title="Vibe-matched events"></span></button><button type="button" class="tab" role="tab" id="tab-ev" data-k="ev" aria-controls="secEvents" aria-selected="false" tabindex="-1"><span aria-hidden="true">🎉</span> <span class="tl">Events</span><span class="ts">Events</span> <span class="tc" id="tc-ev"></span><span class="tdot" id="td-ev" hidden title="Vibe-matched events"></span></button></div><div class="tp" id="secPlaces" role="tabpanel" aria-labelledby="tab-pl" tabindex="0"><h2>📍 Places of interest <span class="cnt" id="plCount"></span></h2><div class="status" id="plStatus"></div><div id="results"></div><button class="more" id="plMore" hidden>Show more</button></div>
+<div class="tp" id="secIdeas" role="tabpanel" aria-labelledby="tab-id" tabindex="0" hidden><h2 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">💡 Date night ideas <span class="cnt" id="idCount"></span><button type="button" id="shuffle" style="padding:6px 10px;font-size:.85rem">🔀 Shuffle</button></h2><div id="ideas"></div><button class="more" id="idMore" hidden>Show more</button></div>
+<div class="tp" id="secEvents" role="tabpanel" aria-labelledby="tab-ev" tabindex="0" hidden><h2>🎉 <span id="evTitle">Happening nearby</span> <span class="cnt" id="evCount"></span></h2><div class="status" id="evStatus"></div><div id="events"></div><button class="more" id="evMore" hidden>Show more</button><div id="evLinks"></div><div id="tmSet"></div></div></section>
 <p style="text-align:center"><small id="attrib">Data: Open-Meteo, OpenStreetMap.</small><br><small> Deals shown are <b>typical patterns — always verify</b>.</small></p>
 </main>
 <script>
@@ -157,7 +159,7 @@ const DEALS=[
  [null,"zoo",[],"Some zoos have discounted resident/winter days"],
  [/Dave ?& ?Buster/i,"arcade",[3],"Dave & Buster's half-price games days (typical, often Wed)"],
  [null,"library",[0,1,2,3,4,5,6],"Many libraries lend free museum/state-park passes"]];
-let state={loc:null,wx:null,day:0,places:[],moods:new Set(),placesFor:""};let placeGen=0;
+let locGen=0;let state={loc:null,wx:null,day:0,places:[],moods:new Set(),placesFor:""};let placeGen=0;
 const LS=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -200,10 +202,10 @@ async function resolveTyped(){const q=$("loc").value.trim();clearTimeout(dT);$("
  setLoc(list[0])}
 $("loc").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();resolveTyped()}});
 $("geo").onclick=()=>{if(!navigator.geolocation||(window.isSecureContext===false&&location.protocol!=="file:")){$("locStatus").innerHTML='<span class="err">Geolocation not supported.</span>';return}
- $("locStatus").textContent="Getting your location…";
+ $("locStatus").textContent="Getting your location…";const lg=locGen;
  navigator.geolocation.getCurrentPosition(async p=>{const lat=+p.coords.latitude.toFixed(4),lon=+p.coords.longitude.toFixed(4);let name=`My location (${lat}, ${lon})`,gcc="";
   try{const j=await fetchJ(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}`);const a=j.address||{};name="📡 "+[a.city||a.town||a.village||a.county,a.state].filter(Boolean).join(", ");gcc=(a.country_code||"").toUpperCase()}catch(e){}
-  setLoc({name,lat,lon,cc:gcc})},e=>{$("locStatus").innerHTML=`<span class="err">Couldn't get location (${esc(e.message)}). On file:// some browsers block it — try searching instead.</span>`},{timeout:15000,maximumAge:600000})};
+  if(lg!==locGen)return;setLoc({name,lat,lon,cc:gcc})},e=>{if(lg!==locGen)return;$("locStatus").innerHTML=`<span class="err">Couldn't get location (${esc(e.message)}). On file:// some browsers block it — try searching instead.</span>`},{timeout:15000,maximumAge:600000})};
 function setLoc(p){state.loc=p;(function(){const d=LS("dd_date");state.date=d&&d>=todayStr()?d:todayStr()})();save("dd_loc",p);$("loc").value=p.name;$("locStatus").textContent=`Using ${p.name} (${(+p.lat).toFixed(3)}, ${(+p.lon).toFixed(3)})`;loadWx();loadPlaces()}
 // ---------- weather
 const WMO=c=>c===0?"☀️":c<=2?"🌤":c===3?"☁️":c<=48?"🌫":c<=67?"🌧":c<=77?"❄️":c<=82?"🌦":c<=86?"🌨":"⛈";
@@ -588,7 +590,45 @@ function card(i,isPick){const [label,emo,io]=i.meta;const city=(state.loc.name||
 $("go").onclick=()=>resolveTyped();
 $("surprise").onclick=()=>{const pool=[];ranked.filter(i=>i.miss===0).slice(0,10).forEach(i=>pool.push(i));ideaPicks.slice(0,8).forEach(i=>pool.push(i));evItems.filter(i=>i.miss===0).slice(0,6).forEach(i=>pool.push(i));
  if(!pool.length){ranked.slice(0,6).concat(ideaPicks.slice(0,6)).forEach(i=>pool.push(i))}if(!pool.length)return;const p=pool[Math.floor(Math.random()*pool.length)];
- const c=$("pickCard");c.hidden=false;c.className="card pick";c.innerHTML="<h2>🎲 Surprise pick</h2>"+(p.event?evCard(p):card(p,true));c.scrollIntoView({behavior:"smooth",block:"center"})};
+ const c=$("pickCard");c.hidden=false;c.className="card pick";c.innerHTML="<h2>🎲 Surprise pick</h2>"+(p.event?evCard(p):card(p,true));const k=p.event||p.market||p.freeEv?"ev":ideaPicks.indexOf(p)>=0?"id":"pl";c.setAttribute("data-tab",k);if(typeof setTab==="function")setTab(k);c.scrollIntoView({behavior:"smooth",block:"center"})};
 (function(){const _sl=setLoc,_sd=selectDate;setLoc=function(p){state.show={pl:5,id:5,ev:5,mk:5};state.ev.key="";state.mk.key="";_sl(p);loadEvents()};selectDate=function(d,u){_sd(d,u);if(state.loc)loadEvents()}})();
 (function(){const l=LS("dd_loc");if(l&&l.lat!=null)setLoc(l);else{drawDays();$("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”.";$("wxStatus").textContent="Pick a location to see the weather.";$("plStatus").textContent="Pick a location to find places nearby."}})();
+
+// v1.7 results tabs
+const TABS=["pl","id","ev"],TPAN={pl:"secPlaces",id:"secIdeas",ev:"secEvents"};let curTab="pl";
+function setTab(k,focus,scroll){if(TABS.indexOf(k)<0)k="pl";curTab=k;TABS.forEach(t=>{const b=$("tab-"+t),on=t===k;b.setAttribute("aria-selected",on?"true":"false");b.tabIndex=on?0:-1;$(TPAN[t]).hidden=!on});
+ try{localStorage.setItem("dd_tab",k)}catch(e){}if(focus)$("tab-"+k).focus();
+ if(scroll){const r=$("resCard").getBoundingClientRect();if(r.top<0)$("resCard").scrollIntoView({block:"start"})}}
+function tabBusy(k){if(k==="pl")return /…/.test($("plStatus").textContent);if(k==="id")return !ideaPicks.length&&/…/.test($("plStatus").textContent);
+ const ev=state.ev||{};return !!(ev.holBusy||ev.tmBusy||(state.mk&&state.mk.busy))}
+function refreshTabs(){const src={pl:"plCount",id:"idCount",ev:"evCount"};TABS.forEach(k=>{const m=($(src[k]).textContent||"").match(/\d+/);const n=m?m[0]:"";
+  const busy=state.loc&&tabBusy(k);$("tc-"+k).innerHTML=(n?"("+n+")":"")+(busy?' <span class="spin" role="status" aria-label="loading"></span>':"");
+  $("tab-"+k).setAttribute("aria-busy",busy?"true":"false")});
+ const hot=evItems.some(i=>!i.market&&i.miss===0&&!i.util);$("td-ev").hidden=!hot;$("tab-ev").setAttribute("aria-label","Events"+($("evCount").textContent?" "+$("evCount").textContent:"")+(hot?", vibe-matched events":""))}
+(function(){let q=0;const mo=new MutationObserver(()=>{if(q)return;q=setTimeout(()=>{q=0;refreshTabs()},60)});
+ ["secPlaces","secIdeas","secEvents"].forEach(id=>mo.observe($(id),{childList:true,subtree:true,characterData:true}));
+ TABS.forEach(k=>{const b=$("tab-"+k);b.onclick=()=>setTab(k,false,true);b.onkeydown=e=>{const i=TABS.indexOf(k);let n=-1;
+  if(e.key==="ArrowRight"||e.key==="Right")n=(i+1)%3;else if(e.key==="ArrowLeft"||e.key==="Left")n=(i+2)%3;else if(e.key==="Home")n=0;else if(e.key==="End")n=2;
+  if(n>=0){e.preventDefault();setTab(TABS[n],true)}}});
+ let sx=0,sy=0,st=0;const rc=$("resCard");
+ rc.addEventListener("touchstart",e=>{const t=e.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now()},{passive:true});
+ rc.addEventListener("touchend",e=>{const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Date.now()-st>700||Math.abs(dx)<70||Math.abs(dx)<2*Math.abs(dy))return;
+  const i=TABS.indexOf(curTab),n=dx<0?i+1:i-1;if(n>=0&&n<3)setTab(TABS[n],false,true)},{passive:true});
+ let saved="pl";try{saved=localStorage.getItem("dd_tab")||"pl"}catch(e){}setTab(saved);refreshTabs()})();
+
+
+// v1.7 clear-location button
+function clrVis(){$("locClr").hidden=!$("loc").value}
+$("loc").addEventListener("input",clrVis);
+function clearLoc(){locGen++;placeGen++;evGen++;mkGen++;clearTimeout(dT);lastQ="";shown={q:"",list:[]};
+ state.loc=null;state.places=[];state.placesFor="";state.wx=null;state.wxErr="";state.ev.key="";state.ev.tm=[];state.ev.hol=[];state.ev.tmBusy=state.ev.holBusy=false;state.ev.tmErr=state.ev.holErr="";
+ state.mk.key="";state.mk.list=[];state.mk.busy=false;state.mk.err="";state.show={pl:5,id:5,ev:5,mk:5};ranked=[];ideaPicks=[];evItems=[];
+ try{localStorage.removeItem("dd_loc");const pr=LS("dd_prefs");if(pr&&(pr.loc||pr.lat!=null)){delete pr.loc;delete pr.lat;delete pr.lon;save("dd_prefs",pr)}}catch(e){}
+ $("loc").value="";$("sl").hidden=true;$("sl").innerHTML="";clrVis();$("pickCard").hidden=true;
+ $("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”.";
+ try{drawDays()}catch(e){}$("wxStatus").textContent="Pick a location to see the weather.";
+ ["results","ideas","events","evLinks"].forEach(id=>{$(id).innerHTML=""});["plCount","idCount","evCount"].forEach(id=>{$(id).textContent=""});["plMore","idMore","evMore"].forEach(id=>{$(id).hidden=true});
+ $("evStatus").textContent="";$("plStatus").textContent="Pick a location to find places nearby.";refreshTabs();$("loc").focus()}
+$("locClr").onclick=clearLoc;
+(function(){const _sl=setLoc;setLoc=function(p){_sl(p);clrVis()}})();clrVis();
 </script></body></html>

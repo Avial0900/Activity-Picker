@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.7 — 2026-10-29
+- Results are now one card with tabs: 📍 Places of interest, 💕 Date night, 🎉 Events. Only the selected section shows, so no more scrolling past one section to reach the next.
+  - Each tab shows a live count and a small spinner while it is still loading. The Events tab gets a dot when there are vibe-matched events for the date.
+  - On phones (≤520px) the labels shorten to "Places / Date night / Events". The tab bar stays pinned at the top while you scroll through results.
+  - Accessible: role=tablist/tab/tabpanel, aria-selected, aria-controls, and ←/→/Home/End keys. Swiping left/right on touch switches tabs; vertical scrolling still works.
+  - The last tab you used is remembered (localStorage dd_tab), defaulting to Places.
+  - "Surprise me" switches to the tab that holds its pick.
+  - Each section's content, Show more, markets, holidays, free events and Ticketmaster work as before, and each still loads on its own.
+- ✕ clear button inside the "Where" box (42×40px tap target, aria-label "Clear location"). It only shows when the box has text. Tapping it:
+  - empties the box and the saved location (dd_loc), so a reload stays empty, and closes the suggestions
+  - cancels place, weather, event, market and pending "Use my location" loads, so the old city's results never pop back in
+  - resets everything to the empty state and puts the cursor in the box
+
 ## v1.6 — 2026-10-29
 - Live Ticketmaster events for everyone, through a Cloudflare Worker proxy (worker/, "dilly-dally-events"), so the key stays server-side.
   EVENTS_PROXY_URL = https://dilly-dally-events.dilly-dally.workers.dev/events
