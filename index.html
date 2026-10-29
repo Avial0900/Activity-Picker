@@ -24,7 +24,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 .res{border-top:1px solid var(--bd);padding:10px 0}.res:first-child{border:0}.res h3{margin:0;font-size:1rem}.meta{color:var(--mut);font-size:.82rem}
 .why{font-size:.85rem;margin:4px 0}.deal{font-size:.8rem;background:#fff4d6;color:#6b4e00;border-radius:8px;padding:4px 8px;margin:4px 0}
 @media(prefers-color-scheme:dark){.deal{background:#3a321b;color:#f3d98a}}
-.links a{font-size:.82rem;margin-right:10px;color:var(--acc2)}.links,.meta,.near,.why{overflow-wrap:anywhere}.status{font-size:.85rem;color:var(--mut)}.err{color:#d33}
+.links a{font-size:.82rem;margin-right:10px;color:var(--acc2)}.links,.meta,.near,.why{overflow-wrap:anywhere}.status{font-size:.85rem;color:var(--mut)}.vlink{color:inherit;text-decoration:underline;text-decoration-color:var(--bd);text-underline-offset:3px}.via{font-size:.68rem;font-weight:400;color:var(--mut);white-space:nowrap}.err{color:#d33}
 .pick{border:2px solid var(--acc)}.cnt{font-size:.8rem;color:var(--mut);font-weight:400}.more{width:100%;margin-top:6px}.badge{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:9px;background:var(--acc);color:#fff;vertical-align:middle}.badge.free{background:#2e8b57}.subh{font-size:1rem;margin:14px 0 4px}details.unv{margin:6px 0;font-size:.88rem}details.unv summary{cursor:pointer;color:var(--mut)}.unvi{padding:5px 0;border-bottom:1px solid rgba(128,128,128,.2)}details.tmset{margin-top:10px;font-size:.85rem;color:var(--mut)}details.tmset input{width:100%;margin:6px 0;font-size:16px}.holn{font-size:.82rem;color:#7a4b00;background:#fff3d6;border-radius:6px;padding:2px 8px;display:inline-block;margin:3px 0}.hol{background:#efe3ff;color:#4b2a7a;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.9rem}.evimg{float:right;width:72px;height:72px;object-fit:cover;border-radius:10px;margin-left:8px}.near{font-size:.82rem;margin:3px 0}.linkgrid a{display:inline-block;margin:4px 6px 4px 0;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:.85rem}@media(prefers-color-scheme:dark){.hol{background:#2f2540;color:#d9c6ff}}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
 #resCard{padding-top:0}.tabs{position:sticky;top:0;z-index:5;display:flex;gap:4px;margin:0 -14px 10px;padding:8px 8px 0;background:var(--card);border-bottom:1px solid var(--bd);border-radius:14px 14px 0 0}.tab{flex:1 1 auto;min-width:0;white-space:nowrap;border:0;border-bottom:3px solid transparent;border-radius:10px 10px 0 0;background:transparent;color:var(--mut);font:inherit;font-size:.9rem;font-weight:600;padding:8px 6px;cursor:pointer;position:relative}.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--acc);background:var(--chip)}.tab:focus-visible{outline:2px solid var(--acc2);outline-offset:-2px}.tc{font-weight:400;font-size:.78rem}.ts{display:none}.tdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);margin-left:3px;vertical-align:top}.tdot[hidden]{display:none}.spin{display:inline-block;width:10px;height:10px;border:2px solid var(--bd);border-top-color:var(--acc);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}@keyframes sp{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.spin{animation:none}}.tp>h2{font-size:1.05rem}@media(max-width:520px){.tl{display:none}.ts{display:inline}.tab{font-size:.82rem;padding:8px 3px}.tabs{gap:2px;padding:6px 4px 0}}
 #loc{padding-right:46px}#locClr{position:absolute;right:2px;top:2px;width:42px;height:40px;border:0;background:transparent;color:var(--mut);font-size:1.1rem;line-height:1;padding:0;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}#locClr[hidden]{display:none}#locClr:hover,#locClr:focus-visible{color:var(--fg);background:var(--chip)}
@@ -57,7 +57,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <p><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a></p>
 <p>Weather: <a href="https://www.weather.gov/" target="_blank" rel="noopener">National Weather Service</a> · <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) · <a href="https://www.visualcrossing.com/" target="_blank" rel="noopener">Visual Crossing</a></p>
 <p><a href="https://www.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a> · <a href="https://www.ticketmaster.com/" target="_blank" rel="noopener">Ticketmaster</a> · Free local events compiled from public library and city calendars</p>
-<p>We may earn a commission from links on this site.</p>
+<p>Some links are affiliate links (e.g. Viator); Dilly-Dally may earn a commission at no extra cost to you.</p>
 <p id="privacyLink" hidden><a href="./privacy.html">Privacy</a></p>
 </footer>
 
@@ -81,6 +81,27 @@ const MOODS=["chill","adventurous","social","creative","romantic","active","cozy
 // v1.4.1 ranking tiers: 1 = attractions, 2 = other activities, 3 = food & drink (ranked last unless "foodie" mood)
 const TIER={museum:1,park:1,library:1,gallery:1,zoo:1,aquarium:1,attraction:1,garden:1,nature:1,viewpoint:1,trail:1,beach:1,theatre:1,cinema:1,
  brewery:3,cafe:3,restaurant:3,fast_food:3,bar:3,pub:3,market:3};
+// ===== Viator affiliate links (name of a bookable suggestion links to a Viator search; tracked only via campaign codes) =====
+const VIATOR={base:"https://www.viator.com/searchResults/all",pid:"P00328934",mcid:"42383",medium:"link",
+ cityPages:{"detroit":"https://www.viator.com/Detroit/d22934"}, // optional destination pages, used for 'things to do' only
+ ideas:{"Paint night (or paint-and-sip)":"painting class","Escape room challenge":"escape game","Pottery or craft workshop":"pottery class",
+  "Try a cuisine you've never had":"food tour","Dessert-only dinner crawl":"food tour","Brewery or wine tasting flight":"wine tasting","Neighborhood photo walk":"walking tour"},
+ places:{escape:"escape game",attraction:"things to do"},
+ sightsRx:/\b(palace|palácio|palacio|palais|castle|castelo|castillo|château|fortress|fort|cathedral|basilica|tower|torre|lighthouse|monument|fountain|landmark|old town|historic district|temple|shrine)\b|寺|神社|城/i,
+ notSightsRx:/\b(building|house|home|center|centre|nature|park|school|office|hall|barn|hills?)\b/i,
+ nameRules:[[/\b(river ?boat|boat tours?|harbou?r tours?|sightseeing cruises?|cruises?)\b/i,"cruise"],[/\bfood tours?\b/i,"food tour"],[/\bcooking (class|school)\b/i,"cooking class"],[/\bwalking tours?\b/i,"walking tour"],[/\bescape (room|game)s?\b/i,"escape game"]],
+ noCats:["park","nature","trail","library","restaurant","cafe","market","farm","playground","dog_park","garden","beach","brewery"]};
+function viatorCity(){return ((state.loc&&state.loc.name)||"").replace(/^📡 /,"").split(",")[0].trim()}
+function viatorUrl(cat,city){const camp="dd-"+cat.toLowerCase().replace(/[^a-z0-9]+/g,"");const q=`pid=${VIATOR.pid}&mcid=${VIATOR.mcid}&medium=${VIATOR.medium}&campaign=${camp}`;
+ const cp=VIATOR.cityPages[city.toLowerCase()];if(cat==="things to do"&&cp)return cp+"?"+q;
+ return VIATOR.base+"?text="+encodeURIComponent(cat+" "+city).replace(/%20/g,"+")+"&"+q}
+function viatorCat(i){if(i.ev||i.tm||i.freeEv||i.market)return null;
+ if(i.anywhere)return VIATOR.ideas[i.name]||null;
+ const c=i.c||classify(i.tags||{});if(!c||VIATOR.noCats.indexOf(c)>=0)return null;
+ for(const r of VIATOR.nameRules)if(r[0].test(i.name||""))return r[1];
+ if(c==="attraction"&&(!VIATOR.sightsRx.test(i.name||"")||VIATOR.notSightsRx.test(i.name||"")))return null;return VIATOR.places[c]||null}
+function nameHtml(i){const city=viatorCity(),cat=city?viatorCat(i):null;if(!cat)return esc(i.name);
+ return `<a class="vlink" href="${esc(viatorUrl(cat,city))}" target="_blank" rel="sponsored noopener" title="Search similar ${esc(cat)} options in ${esc(city)} on Viator (affiliate link)">${esc(i.name)}</a> <small class="via">via Viator ↗</small>`}
 const CATS={
 park:["Park","🌳","out",["chill","family","active","romantic"],1,30,0],
 nature:["Nature reserve","🦌","out",["chill","adventurous","romantic"],1,12,0],
@@ -640,7 +661,7 @@ function card(i,isPick){const [label,emo,io]=i.meta;const city=(state.loc.name||
   `<a href="https://www.groupon.com/local/${encodeURIComponent(city.toLowerCase().replace(/\s+/g,'-'))}?query=${encodeURIComponent(label)}" target="_blank" rel="noopener">Groupon</a>`}
  else links=(i.near?`<a href="https://www.google.com/maps/dir/?api=1&destination=${i.near.lat},${i.near.lon}" target="_blank" rel="noopener">🧭 Directions to ${esc(i.near.name)}</a>`:"")+`<a href="https://www.google.com/search?q=${encodeURIComponent(i.name+(i.near?" near "+city:" ideas"))}" target="_blank" rel="noopener">💡 Ideas</a>`;
  const cost=["Free","$","$$","$$$"][i.meta[6]];
- return `<div class="res ${isPick?"":""}"><h3>${emo} ${esc(i.name)}</h3><div class="meta">${i.anywhere?(i.near?`Near ${esc(i.near.name)} (${i.near.dist.toFixed(1)} mi)`:"Anywhere idea"):esc(label)} · ${io==="in"?"Indoor":io==="out"?"Outdoor":"In/Out"} · ~${cost}${i.dist!=null?` · ${i.dist.toFixed(1)} mi`:""}${t.opening_hours?` · 🕒 ${esc(t.opening_hours)}`:""}</div>
+ return `<div class="res ${isPick?"":""}"><h3>${emo} ${nameHtml(i)}</h3><div class="meta">${i.anywhere?(i.near?`Near ${esc(i.near.name)} (${i.near.dist.toFixed(1)} mi)`:"Anywhere idea"):esc(label)} · ${io==="in"?"Indoor":io==="out"?"Outdoor":"In/Out"} · ~${cost}${i.dist!=null?` · ${i.dist.toFixed(1)} mi`:""}${t.opening_hours?` · 🕒 ${esc(t.opening_hours)}`:""}</div>
  ${!i.anywhere&&t.opening_hours?holNote(t.opening_hours):""}${i.closed?`<div class="closed">⛔ Likely closed that day (per listed hours — verify)</div>`:""}<div class="why">✅ ${esc(i.why.join(" · ")||"a solid option")}</div>${i.deal.map(d=>`<div class="deal">🏷 ${esc(d)} — <b>typical, verify</b></div>`).join("")}<div class="links">${links}</div></div>`}
 $("go").onclick=()=>resolveTyped();
 $("surprise").onclick=()=>{const pool=[];ranked.filter(i=>i.miss===0).slice(0,10).forEach(i=>pool.push(i));ideaPicks.slice(0,8).forEach(i=>pool.push(i));evItems.filter(i=>i.miss===0).slice(0,6).forEach(i=>pool.push(i));

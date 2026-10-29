@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.9 — 2026-10-29
+
+### Added
+- Viator affiliate links. On bookable experiences, the suggestion's name itself links to a Viator search for similar activities in the chosen city. There's no separate button and no pop-up.
+  - It opens in a new tab with `rel="sponsored noopener"`, next to a small muted "via Viator ↗" label. The tooltip says "Search similar … options in <city> on Viator", so it doesn't promise an exact match.
+  - Date night ideas that get links: paint night (painting class), escape room (escape game), pottery/craft workshop (pottery class), try a new cuisine and dessert crawl (food tour), brewery/wine tasting (wine tasting), and neighborhood photo walk (walking tour).
+  - Places that get links: escape rooms, landmark-type sightseeing attractions (palace, castle, monument, fountain, tower, cathedral, temple, …, but not buildings, houses, centers or parks) as "things to do", and any place named like a boat tour or cruise, food tour, cooking class or walking tour.
+  - Never linked: parks, nature, gardens, trails, libraries, restaurants, cafés, bars, markets, farms, playgrounds, dog parks, beaches, events (free, Ticketmaster, the DD Eyes And Ears feed), and holidays.
+  - Existing Maps, Website/Wikipedia, OSM, Find deals and Groupon links stay as secondary links.
+  - All settings live in one `VIATOR` constant: base URL, pid, mcid, medium, category maps, and the optional Detroit destination page. Campaign codes are `dd-<category>`. There's no API, no key and no tracker.
+- Footer note now reads: "Some links are affiliate links (e.g. Viator); Dilly-Dally may earn a commission at no extra cost to you."
+
 ## v1.8.1 — 2026-10-29
 
 ### Fixed
