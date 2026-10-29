@@ -56,7 +56,12 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 // Optional: paste a free Ticketmaster Discovery API consumer key here to show real ticketed events (concerts, sports, theater...).
 // Leave empty to hide that feature. Get one at https://developer.ticketmaster.com (free, no credit card).
 const TICKETMASTER_KEY="";
-function tmKey(){if(TICKETMASTER_KEY)return TICKETMASTER_KEY;try{return (localStorage.getItem("dd_tm_key")||"").trim()}catch(e){return ""}}
+// v1.6: Ticketmaster via the Dilly-Dally Cloudflare Worker (key stays server-side). Fill in after deploy, e.g. "https://dilly-dally-events.<sub>.workers.dev/events".
+const EVENTS_PROXY_URL="https://dilly-dally-events.dilly-dally.workers.dev/events";
+function userTmKey(){try{return (localStorage.getItem("dd_tm_key")||"").trim()}catch(e){return ""}}
+function tmKey(){return userTmKey()||TICKETMASTER_KEY}
+// order: user's own key (direct) > built-in key (direct) > proxy > hidden
+function tmMode(){return userTmKey()?"user":TICKETMASTER_KEY?"site":EVENTS_PROXY_URL?"proxy":""}
 const $=id=>document.getElementById(id);
 const MOODS=["chill","adventurous","social","creative","romantic","active","cozy","nerdy","family","foodie"];
 // category: [label, emoji, io (in/out/both), moods, minPpl, maxPpl, cost 0-3]
@@ -396,17 +401,18 @@ function getHolidays(cc,yr){const k=cc+yr;if(holCache[k])return Promise.resolve(
  const p=fetchJ(`https://date.nager.at/api/v3/PublicHolidays/${yr}/${cc}`,{},10000).then(j=>{holCache[k]=j;delete holPend[k];return j},e=>{delete holPend[k];throw e});holPend[k]=p;return p}
 let evGen=0;state.ev={key:"",hol:[],tm:[],holErr:"",tmErr:"",tmBusy:false,holBusy:false};
 async function loadEvents(){if(!state.loc)return;const pp=placeParts();const key=locKey()+"|"+state.date;if(state.ev.key===key)return;const g=++evGen;
- state.ev={key,hol:[],tm:[],free:[],holErr:"",tmErr:"",holBusy:!!pp.cc,tmBusy:!!tmKey()};state.show.ev=5;render();
+ state.ev={key,hol:[],tm:[],free:[],holErr:"",tmErr:"",holBusy:!!pp.cc,tmBusy:!!tmMode()};state.show.ev=5;render();
  if(pp.cc){getHolidays(pp.cc,state.date.slice(0,4)).then(list=>{if(g!==evGen)return;const d=state.date;
    state.ev.hol=(list||[]).filter(h=>Math.abs((new Date(h.date+"T12:00")-new Date(d+"T12:00"))/864e5)<=3&&(h.global||!h.counties)).map(h=>({date:h.date,name:h.name,local:h.localName,same:h.date===d}))},
    e=>{if(g===evGen)state.ev.holErr="Holidays (date.nager.at): "+e.message}).then(()=>{if(g!==evGen)return;state.ev.holBusy=false;render()})}
  loadMarkets();loadFree(g);
- if(tmKey()){loadTM(g).then(()=>{},()=>{}).then(()=>{if(g!==evGen)return;state.ev.tmBusy=false;render()})}}
+ if(tmMode()){loadTM(g).then(()=>{},()=>{}).then(()=>{if(g!==evGen)return;state.ev.tmBusy=false;render()})}}
 const TM_MOOD=[[/rock|pop|alternative|indie|country|r&b|hip-hop|rap|dance|electronic/i,["social","adventurous"]],[/jazz|blues|classical|folk|acoustic|world/i,["romantic","chill","cozy"]],
  [/comedy/i,["social","chill"]],[/theatre|theater|musical|opera|ballet|dance/i,["romantic","creative"]],[/family|children|circus|ice shows|magic/i,["family"]],[/sports|basketball|football|hockey|baseball|soccer|wrestling|running|marathon/i,["active","social"]],
  [/film|cinema/i,["chill","cozy"]],[/fair|festival|expo|convention|comic|gaming|lecture|science/i,["nerdy","adventurous","family"]],[/art|craft|workshop/i,["creative"]]];
 async function loadTM(g){const {lat,lon}=state.loc;const d=state.date;
- const url=`https://app.ticketmaster.com/discovery/v2/events.json?apikey=${encodeURIComponent(tmKey())}&latlong=${(+lat).toFixed(4)},${(+lon).toFixed(4)}&radius=${Math.max(5,Math.min(100,+$("radius").value*2))}&unit=miles&localStartDateTime=${d}T00:00:00,${d}T23:59:59&size=60&sort=relevance,desc`;
+ const mode=tmMode();const qs=`latlong=${(+lat).toFixed(4)},${(+lon).toFixed(4)}&radius=${Math.max(5,Math.min(100,+$("radius").value*2))}&unit=miles&localStartDateTime=${d}T00:00:00,${d}T23:59:59&size=50&sort=relevance,desc`;
+ const url=mode==="proxy"?EVENTS_PROXY_URL+(EVENTS_PROXY_URL.indexOf("?")<0?"?":"&")+qs:`https://app.ticketmaster.com/discovery/v2/events.json?apikey=${encodeURIComponent(tmKey())}&`+qs;
  try{const j=await fetchJ(url,{},15000);if(g!==evGen)return;const evs=(j._embedded&&j._embedded.events)||[];
   state.ev.tm=evs.map(e=>{const cl=(e.classifications&&e.classifications[0])||{};const txt=[e.name,cl.segment&&cl.segment.name,cl.genre&&cl.genre.name,cl.subGenre&&cl.subGenre.name].filter(Boolean).join(" ");
    let moods=[];TM_MOOD.forEach(m=>{if(m[0].test(txt))moods=moods.concat(m[1])});if(!moods.length)moods=["social"];
@@ -417,7 +423,7 @@ async function loadTM(g){const {lat,lon}=state.loc;const d=state.date;
    return {name:e.name,event:true,url:e.url,time:e.dates&&e.dates.start&&(e.dates.start.localTime||"").slice(0,5),venue:v.name||"",city:v.city&&v.city.name,
     free:!!pr&&pr.min<=0&&(!pr.max||pr.max<=0),price:pr&&!(pr.min<=0&&(!pr.max||pr.max<=0))?`${pr.currency==="USD"?"$":pr.currency+" "}${Math.round(pr.min)}${pr.max&&pr.max!==pr.min?"–"+Math.round(pr.max):""}`:"",img:img&&img.url,genre:(cl.genre&&cl.genre.name)||(cl.segment&&cl.segment.name)||"Event",
     lat:vl&&vl.lat,lon:vl&&vl.lon,dist:vl?hav(+lat,+lon,vl.lat,vl.lon):null,meta:[e.name,"🎟",io,Array.from(new Set(moods)),1,20,cost],deal:[]}})}
- catch(e){if(g===evGen){const m=e.message||"";state.ev.tmErr=/HTTP 401|HTTP 403/.test(m)?"Ticketmaster rejected the key (401). Check the Consumer Key in ⚙️ settings below.":/HTTP 429/.test(m)?"Ticketmaster rate limit hit (429) — try again in a minute.":"Ticketmaster: "+m}}}
+ catch(e){if(g===evGen){const m=e.message||"";state.ev.tmErr=/HTTP 429/.test(m)?"Ticketmaster rate limit hit (429) — try again in a minute.":mode==="proxy"?"Live events are temporarily unavailable ("+m.replace(/^[^:]*:\s*/,"")+").":/HTTP 401|HTTP 403/.test(m)?"Ticketmaster rejected the key (401). Check the Consumer Key in ⚙️ settings below.":/HTTP 429/.test(m)?"Ticketmaster rate limit hit (429) — try again in a minute.":"Ticketmaster: "+m}}}
 function evLinks(){const pp=placeParts();const d=new Date(state.date+"T12:00");const dn=d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
  let kws=[];state.moods.forEach(m=>{kws=kws.concat((MOOD_KW[m]||[]).slice(0,1))});const kw=kws.slice(0,3).join(" ");const where=[pp.city,pp.st?pp.st.toUpperCase():pp.region].filter(Boolean).join(" ");
  const L=[["🔎 Google",`https://www.google.com/search?q=${encodeURIComponent("events in "+where+" on "+dn+(kw?" "+kw:""))}`]];
@@ -535,8 +541,8 @@ function loadFree(g){if(!freeFeed&&!freeP)freeP=sleep(700).then(()=>fetchJ("./da
   const out=[];freeIndex(j).forEach(x=>{try{if(x.s<=d&&d<=x.en&&hav(+lat,+lon,+x.e.lat,+x.e.lon)<=rad)out.push(freeItem(x.e,lat,lon))}catch(z){}});
   // collapse exact duplicates (same title, same venue/time)
   const seen={};state.ev.free=out.filter(i=>{const k=i.name.toLowerCase()+"|"+i.time+"|"+i.venue.toLowerCase();if(seen[k])return false;seen[k]=1;return true});state.ev.freeMs=Date.now()-t0;render()},()=>{})}
-function tmSettings(){const k=tmKey(),site=!!TICKETMASTER_KEY;
- return `<details class="tmset"><summary>⚙️ Ticketmaster key ${k?"(set ✓)":"(optional)"}</summary>`+(site?`<div>A site-wide key is built in — live Ticketmaster events are on.</div>`:
+function tmSettings(){const k=userTmKey(),site=!k&&(!!TICKETMASTER_KEY||!!EVENTS_PROXY_URL);
+ return `<details class="tmset"><summary>⚙️ Ticketmaster key ${k?"(set ✓)":"(optional)"}</summary>`+(site?`<div>Live Ticketmaster events are on for everyone. You can still use your own key:</div>`:"")+(
  `<div>Paste a free Ticketmaster <b>Consumer Key</b> to list real ticketed events for this date. It's free: <a href="https://developer-acct.ticketmaster.com/user/register" target="_blank" rel="noopener">register here</a>, open “My Apps”, and copy the Consumer Key. Stored only in this browser.</div>
  <input id="tmKeyIn" type="text" autocomplete="off" spellcheck="false" placeholder="Consumer Key" value="${esc(k)}"><button onclick="tmSave(1)">Save</button> ${k?'<button onclick="tmSave(0)">Remove</button>':""}`)+`</details>`}
 function paintTm(){const box=$("tmSet");if(!box)return;const k=tmKey();if(box.getAttribute("data-k")===k&&box.firstChild)return;if(document.activeElement&&document.activeElement.id==="tmKeyIn")return;box.setAttribute("data-k",k);box.innerHTML=tmSettings()}
@@ -551,7 +557,9 @@ function renderEvents(ctx){const ev=state.ev;$("evTitle").textContent="Happening
  const fr=(ev.free||[]).map(e=>Object.assign(e,score(e,ctx)));fr.forEach(e=>{if(e.util){e.s-=5;e.why=["practical library service"]}});fr.sort((a,b)=>(a.util-b.util)||a.miss-b.miss||b.s-a.s||a.dist-b.dist);
  const mk=marketsFor(ctx);const dup=m=>fr.some(f=>hav(f.lat,f.lon,m.lat,m.lon)<0.5&&(f.name.toLowerCase().indexOf(m.name.toLowerCase())>=0||m.name.toLowerCase().indexOf(f.name.toLowerCase())>=0));
  mk.open=mk.open.filter(m=>!dup(m));mk.unk=mk.unk.filter(m=>!dup(m));
- const all=fr.concat(tm);evItems=all.concat(mk.open);
+ const all=fr.concat(tm).sort((a,b)=>(!!a.util-!!b.util)||a.miss-b.miss||b.s-a.s||(a.dist||0)-(b.dist||0));
+ // keep both sources visible in the first 5: at most 3 from one source when the other has items
+ if(fr.length&&tm.length){const top=[],rest=[];let nf=0,nt=0;all.forEach(i=>{const isF=!!i.freeEv;if(top.length<5&&((isF&&nf<3)||(!isF&&nt<3))){top.push(i);isF?nf++:nt++}else rest.push(i)});all.length=0;top.concat(rest).forEach(i=>all.push(i))}evItems=all.concat(mk.open);
  h+=all.slice(0,state.show.ev).map(evCard).join("");
  if(mk.open.length||mk.unk.length||state.mk.busy||state.mk.err){h+=`<h3 class="subh">🧺 Markets open that day ${mk.open.length?`<span class="cnt">(${mk.open.length})</span>`:""}</h3>`;
   if(state.mk.busy&&!mk.open.length&&!mk.unk.length)h+=`<div class="status">Looking for farmers markets…</div>`;
@@ -561,7 +569,7 @@ function renderEvents(ctx){const ev=state.ev;$("evTitle").textContent="Happening
   if(mk.unk.length)h+=`<details class="unv"><summary>Hours unverified (${mk.unk.length}) — check before going</summary>`+mk.unk.slice(0,15).map(m=>`<div class="unvi">🧺 <b>${esc(m.name)}</b> · ${m.dist.toFixed(1)} mi${m.oh?` · listed hours: ${esc(m.oh)}`:" · no hours listed"} · <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.name)}%20${m.lat},${m.lon}" target="_blank" rel="noopener">Maps</a>${same.length&&!/\bPH\b/.test(m.oh||"")?" · 🎌 Holiday — hours may differ":""}</div>`).join("")+`</details>`;
   if(state.mk.err&&!mk.open.length&&!mk.unk.length)h+=`<div class="status">Markets: ${esc(state.mk.err)}</div>`}
  const st=[];if(ev.holBusy||ev.tmBusy)st.push("Loading events…");if(ev.holErr)st.push(ev.holErr);if(ev.tmErr)st.push(ev.tmErr);
- if(tmKey()&&!ev.tmBusy&&!ev.tmErr&&!tm.length)st.push("No ticketed events found for this date nearby.");
+ if(tmMode()&&!ev.tmBusy&&!ev.tmErr&&!tm.length)st.push("No ticketed events found for this date nearby.");
  $("evStatus").innerHTML=st.map(esc).join("<br>")+(ev.holErr||ev.tmErr?' <button onclick="state.ev.key=\'\';loadEvents()">Retry</button>':"");
  const nEv=all.length+same.length+mk.open.length;$("evCount").textContent=nEv?`(${nEv})`:"";$("events").innerHTML=h;moreBtn("evMore",state.show.ev,all.length,"ev");$("evLinks").innerHTML=evLinks();paintTm()}
 function evCard(e){return `<div class="res">${e.img?`<img class="evimg" src="${esc(e.img)}" alt="" loading="lazy">`:""}<h3>${e.market?"🧺":e.freeEv?"🆓":"🎟"} ${esc(e.name)}</h3><div class="meta">${esc(e.genre)}${e.time?" · 🕒 "+esc(e.time):""}${e.venue?" · 📍 "+esc(e.venue):""}${e.dist!=null?` · ${e.dist.toFixed(1)} mi`:""}${e.price?" · "+esc(e.price):""}${e.free?' <span class="badge free">Free</span>':""}</div>

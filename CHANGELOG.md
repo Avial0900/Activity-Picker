@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.6 — 2026-10-29
+- Live Ticketmaster events for everyone, through a Cloudflare Worker proxy (worker/, "dilly-dally-events"), so the key stays server-side.
+  EVENTS_PROXY_URL = https://dilly-dally-events.dilly-dally.workers.dev/events
+- Ticketmaster order: the user's own pasted key (called directly) > built-in TICKETMASTER_KEY (empty) > proxy > hidden.
+- Proxy errors show a short "temporarily unavailable" note; 429 shows the rate-limit message. Free badge, 401 message and vibe matching are unchanged.
+- Ticketmaster and free-feed events are now merged by vibe score, with at most 3 of either in the first 5, so ticketed events are no longer buried under library listings.
+- Requests are capped at 50 events.
+- Worker: whitelisted params, radius ≤ 100, size ≤ 50, CORS only for avial0900.github.io and localhost/127.0.0.1, 15-min edge cache keyed without the key, JSON errors.
+
 ## v1.5.1 — 2026-10-28
 - Public holidays: markets (open and unverified) and places with listed hours but no PH rule show "🎌 Holiday — hours may differ".
 - Free events feed (data/free-events.json, 1,336 events): fetched after a 0.7s delay, off the critical path (15s timeout).
@@ -10,7 +19,6 @@
   "outdoors" is ignored for indoor events; adult-only titles lose "family".
 - Practical library services (tutoring, resume, Medicare, computer basics, ESL…) rank last and don't match vibes.
 - Exact duplicate listings (same title, time and venue) are collapsed; the events list is capped at 5 with Show more.
-- Changing the date while the free-events file, the holiday list, or typical weather is still loading does not start a second copy of that request.
 
 ## v1.5 — 2026-10-28
 - 🧺 Markets open that day (in the events section): OSM marketplaces and farmers markets from Photon, Nominatim (with opening hours)
@@ -89,3 +97,4 @@
 - Place results cached in localStorage per location + radius for 1 hour.
 - Footer credits the sources actually used (Overpass or Photon/OpenStreetMap, Open-Meteo forecast or archive, Open-Meteo Geocoding/Nominatim).
 - Code kept safe for older Safari (no optional chaining or `??`).
+
