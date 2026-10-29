@@ -25,7 +25,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 .why{font-size:.85rem;margin:4px 0}.deal{font-size:.8rem;background:#fff4d6;color:#6b4e00;border-radius:8px;padding:4px 8px;margin:4px 0}
 @media(prefers-color-scheme:dark){.deal{background:#3a321b;color:#f3d98a}}
 .links a{font-size:.82rem;margin-right:10px;color:var(--acc2)}.status{font-size:.85rem;color:var(--mut)}.err{color:#d33}
-.pick{border:2px solid var(--acc)}small{color:var(--mut)}
+.pick{border:2px solid var(--acc)}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
 </style></head><body>
 <header><h1>🎲 Dilly-<span>Dally</span></h1><p>What should we do?</p></header>
 <main>
@@ -34,7 +34,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <div class="row" style="margin-top:8px"><button id="geo">📡 Use my location</button><button id="home">🏠 Garden City, MI</button></div>
 <div class="status" id="locStatus"></div></section>
 
-<section class="card"><h2>🌤 When</h2><div class="days" id="days"><span class="status">Loading weather…</span></div><div class="status" id="wxStatus"></div></section>
+<section class="card"><h2 id="planTitle" style="font-size:1.25rem;color:var(--acc)">Plans for today</h2><div class="row" style="margin-bottom:8px"><div><label for="dateIn">📅 Pick any date</label><input id="dateIn" type="date" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--bd);background:var(--bg)"></div></div><div class="days" id="days"></div><div class="status" id="wxStatus"></div></section>
 
 <section class="card"><h2>🎛 Vibe</h2>
 <label>Mood (pick any)</label><div class="chips" id="moods"></div>
@@ -46,7 +46,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 </section>
 <section class="card" id="pickCard" hidden></section>
 <section class="card"><h2>✨ Ideas</h2><div class="status" id="plStatus"></div><div id="results"></div></section>
-<p style="text-align:center"><small>Data: Open-Meteo, OpenStreetMap (Overpass / Nominatim). Deals shown are <b>typical patterns — always verify</b>.</small></p>
+<p style="text-align:center"><small id="attrib">Data: Open-Meteo, OpenStreetMap.</small><br><small> Deals shown are <b>typical patterns — always verify</b>.</small></p>
 </main>
 <script>
 "use strict";
@@ -162,33 +162,86 @@ $("geo").onclick=()=>{if(!navigator.geolocation||(window.isSecureContext===false
 function setLoc(p){state.loc=p;save("dd_loc",p);$("loc").value=p.name;$("locStatus").textContent=`Using ${p.name} (${(+p.lat).toFixed(3)}, ${(+p.lon).toFixed(3)})`;loadWx();loadPlaces()}
 // ---------- weather
 const WMO=c=>c===0?"☀️":c<=2?"🌤":c===3?"☁️":c<=48?"🌫":c<=67?"🌧":c<=77?"❄️":c<=82?"🌦":c<=86?"🌨":"⛈";
-function dayClass(hi,lo,pp,wind,code){let s=0;if(pp>=60||code>=95)s+=2;else if(pp>=30)s+=1;if(hi<40||hi>95)s+=2;else if(hi<55||hi>88)s+=1;if(wind>25)s+=2;else if(wind>15)s+=1;if(code>=71&&code<=86)s+=1;return s<=1?"nice":s<=2?"mixed":"indoor"}
+function dayClass(hi,lo,pp,wind,code){let s=0;if(pp>=60||code>=95)s+=2;else if(pp>=30)s+=1;if(hi<45||hi>95)s+=2;else if(hi<58||hi>88)s+=1;if(wind>25)s+=2;else if(wind>15)s+=1;if(code>=71&&code<=86)s+=1;return s<=1?"nice":s<=2?"mixed":"indoor"}
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function todayStr(){return ymd(new Date())}
+function addDays(str,n){const d=new Date(str+"T12:00");d.setDate(d.getDate()+n);return ymd(d)}
+function niceDate(str){return new Date(str+"T12:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:str.slice(0,4)!==todayStr().slice(0,4)?"numeric":undefined})}
+state.date=(function(){const d=LS("dd_date");return d&&d>=todayStr()?d:todayStr()})();state.typ={};state.typErr={};
+function curW(){const d=state.date;if(state.wx){for(const w of state.wx)if(w.date===d)return w}const k=locKey()+"|"+d;return state.typ[k]||null}
+function locKey(){return state.loc?(+state.loc.lat).toFixed(3)+","+(+state.loc.lon).toFixed(3):""}
 async function loadWx(){const {lat,lon}=state.loc;$("wxStatus").textContent="Loading forecast…";
- try{const j=await fetchJ(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,sunset&hourly=temperature_2m,precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=7`);
-  const d=j.daily;state.wx=d.time.map((t,i)=>({date:t,hi:Math.round(d.temperature_2m_max[i]),lo:Math.round(d.temperature_2m_min[i]),pp:(d.precipitation_probability_max[i]==null?0:d.precipitation_probability_max[i]),wind:Math.round(d.wind_speed_10m_max[i]),code:d.weather_code[i],
-   hourly:j.hourly.time.map((h,k)=>({h,t:j.hourly.temperature_2m[k],p:j.hourly.precipitation_probability[k]})).filter(x=>x.h.startsWith(t))}));
-  state.wx.forEach(w=>w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,w.code));state.day=Math.min(state.day,6);$("wxStatus").textContent="";drawDays();render()}
- catch(e){$("days").innerHTML="";$("wxStatus").innerHTML=retryHtml("Weather failed: "+e.message,"loadWx()");state.wx=null;render()}}
-function drawDays(){$("days").innerHTML="";const lbl={nice:"Nice out",mixed:"Mixed",indoor:"Indoor weather"};
- state.wx.forEach((w,i)=>{const dt=new Date(w.date+"T12:00");const b=document.createElement("button");b.className="day"+(i===state.day?" on":"");
-  b.innerHTML=`<b>${i===0?"Today":dt.toLocaleDateString("en-US",{weekday:"short"})}</b>${dt.toLocaleDateString("en-US",{month:"short",day:"numeric"})}<div style="font-size:1.4rem">${WMO(w.code)}</div>${w.hi}° / ${w.lo}°<br>💧${w.pp}% 💨${w.wind}<br><span class="tag ${w.cls}">${lbl[w.cls]}</span>`;
-  b.onclick=()=>{state.day=i;drawDays();render()};$("days").append(b)});
- const w=state.wx[state.day],aft=w.hourly.filter(x=>{const h=+x.h.slice(11,13);return h>=10&&h<=20});
- if(aft.length){const best=aft.reduce((a,b)=>(b.p<a.p||b.p===a.p&&b.t>a.t)?b:a);$("wxStatus").textContent=`Best outdoor window ~${new Date(best.h).toLocaleTimeString("en-US",{hour:"numeric"})} (${Math.round(best.t)}°F, ${best.p}% rain)`}}
-// ---------- places
+ try{const j=await fetchJ(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&hourly=temperature_2m,precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=16`);
+  const d=j.daily;state.wx=d.time.map((t,i)=>({kind:"forecast",date:t,hi:Math.round(d.temperature_2m_max[i]),lo:Math.round(d.temperature_2m_min[i]),pp:(d.precipitation_probability_max[i]==null?0:d.precipitation_probability_max[i]),wind:Math.round(d.wind_speed_10m_max[i]),code:d.weather_code[i],
+   hourly:j.hourly.time.map((h,k)=>({h,t:j.hourly.temperature_2m[k],p:j.hourly.precipitation_probability[k]})).filter(x=>x.h.indexOf(t)===0)}));
+  state.wx.forEach(w=>w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,w.code));state.wxErr="";}
+ catch(e){state.wx=null;state.wxErr="Forecast failed: "+e.message}
+ selectDate(state.date)}
+function forecastEnd(){return state.wx?state.wx[state.wx.length-1].date:addDays(todayStr(),15)}
+async function loadTypical(date){const k=locKey()+"|"+date;if(state.typ[k])return;const {lat,lon}=state.loc;
+ $("wxStatus").textContent="Loading typical weather for this date (10-year history)…";
+ const end=addDays(todayStr(),-7),start=(+todayStr().slice(0,4)-11)+"-01-01";
+ try{const j=await fetchJ(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`,{},30000);
+  const d=j.daily,tgt=new Date("2001"+date.slice(4)+"T12:00");let hi=0,lo=0,wet=0,wind=0,n=0;
+  for(let i=0;i<d.time.length;i++){const x=new Date("2001"+d.time[i].slice(4)+"T12:00");let diff=Math.abs(x-tgt)/864e5;diff=Math.min(diff,365-diff);
+   if(diff<=3.5&&d.temperature_2m_max[i]!=null){hi+=d.temperature_2m_max[i];lo+=d.temperature_2m_min[i];wind+=d.wind_speed_10m_max[i]||0;if((d.precipitation_sum[i]||0)>=1)wet++;n++}}
+  if(!n)throw new Error("no history for this date");
+  const w={kind:"typical",date,hi:Math.round(hi/n),lo:Math.round(lo/n),pp:Math.round(wet/n*100),wind:Math.round(wind/n),code:-1,hourly:[],n};
+  w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,0);state.typ[k]=w;delete state.typErr[k]}
+ catch(e){state.typErr[k]=e.message}
+ if(state.date===date){drawDays();render()}}
+function selectDate(d){if(!d||d<todayStr())d=todayStr();state.date=d;save("dd_date",d);drawDays();render();
+ if(d>forecastEnd()||!state.wx&&d>addDays(todayStr(),15)){loadTypical(d)}}
+function drawDays(){const lbl={nice:"Nice out",mixed:"Mixed",indoor:"Indoor weather",unknown:"Weather unknown"};
+ $("planTitle").textContent="Plans for "+niceDate(state.date);
+ const di=$("dateIn");di.min=todayStr();di.value=state.date;
+ const box=$("days");box.innerHTML="";
+ for(let i=0;i<7;i++){const ds=addDays(todayStr(),i);let w=null;if(state.wx)for(const x of state.wx)if(x.date===ds)w=x;const dt=new Date(ds+"T12:00");
+  const b=document.createElement("button");b.className="day"+(ds===state.date?" on":"");
+  b.innerHTML=`<b>${i===0?"Today":dt.toLocaleDateString("en-US",{weekday:"short"})}</b>${dt.toLocaleDateString("en-US",{month:"short",day:"numeric"})}`+(w?`<div style="font-size:1.4rem">${WMO(w.code)}</div>${w.hi}° / ${w.lo}°<br>💧${w.pp}% 💨${w.wind}<br><span class="tag ${w.cls}">${lbl[w.cls]}</span>`:"");
+  b.onclick=()=>selectDate(ds);box.append(b)}
+ const w=curW(),k=locKey()+"|"+state.date;let h="";
+ if(w){h=`<div class="wxsum"><b>${w.kind==="forecast"?WMO(w.code)+" Forecast":"📊 Typical for this date (not a forecast)"}</b> · ${w.hi}° / ${w.lo}°F · ${w.kind==="forecast"?"💧"+w.pp+"% chance of rain":"💧 rain on "+w.pp+"% of past days"} · 💨 ${w.wind} mph <span class="tag ${w.cls}">${lbl[w.cls]}</span>`+(w.kind==="typical"?`<br><small>Average of ${w.n} days within ±3 days of this date over ~10 years (Open-Meteo archive).</small>`:"")+`</div>`;
+  const aft=w.hourly.filter(x=>{const hh=+x.h.slice(11,13);return hh>=10&&hh<=20});
+  if(aft.length){const best=aft.reduce((a,b)=>(b.p<a.p||b.p===a.p&&b.t>a.t)?b:a);h+=`<div class="status">Best outdoor window ~${new Date(best.h).toLocaleTimeString("en-US",{hour:"numeric"})} (${Math.round(best.t)}°F, ${best.p}% rain)</div>`}}
+ else if(state.typErr[k])h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span> outdoor options not filtered.</div>`+retryHtml("Typical-weather lookup failed: "+state.typErr[k],"loadTypical(state.date)");
+ else if(state.date<=forecastEnd()&&state.wxErr)h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span></div>`+retryHtml(state.wxErr,"loadWx()");
+ else h=`<span class="status">Loading weather…</span>`;
+ if(state.wxErr&&w&&w.kind!=="forecast")h+=`<div class="err" style="font-size:.8rem">${esc(state.wxErr)}</div>`;
+ $("wxStatus").innerHTML=h;updAttrib()}
+$("dateIn").onchange=()=>selectDate($("dateIn").value);
+// seasonal + opening hours
+function seasonNote(c,io,date,lat,tags){let m=+date.slice(5,7);if(lat<0)m=(m+5)%12+1;const t=tags||{};
+ const summer=m>=6&&m<=8,winter=m===12||m<=2,cold=winter||m===3||m===11;
+ if((c==="beach"||c==="themepark"||(c==="swim"&&t.indoor!=="yes"&&t.covered!=="yes"&&io!=="in"&&t.leisure==="swimming_pool"&&t.access!=="private"&&!/indoor|aquatic|ymca|natatorium/i.test(t.name||"")))&&cold)return"likely off-season";
+ if((c==="minigolf"||c==="golf")&&winter)return"likely closed for winter";
+ if(c==="farm"&&!(m>=6&&m<=11))return"farms/orchards are mostly a summer–fall thing";
+ if(c==="farm"&&(m===9||m===10))return"+peak orchard season";
+ if(c==="icerink"&&summer&&t.indoor==="no")return"outdoor rink off-season";
+ return""}
+const OHD=["Su","Mo","Tu","We","Th","Fr","Sa"];
+function ohClosed(oh,dow){if(!oh)return null;try{oh=oh.trim();if(/^24\/7$/.test(oh))return false;if(/PH|SH|week|easter|sunrise|sunset|"|\[|\]/.test(oh)&&!/Mo|Tu|We|Th|Fr|Sa|Su/.test(oh))return null;
+ const me=OHD[dow];let covered=false,any=false,offHit=false;
+ for(let r of oh.split(";")){r=r.trim();if(!r)continue;const m=r.match(/^((?:(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:-(?:Mo|Tu|We|Th|Fr|Sa|Su))?(?:,\s*)?)+)\s*(.*)$/);
+  if(!m){if(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|PH|SH)/.test(r))continue;if(/^\d/.test(r)){any=true;covered=true;continue}return null}
+  any=true;let hit=false;for(const part of m[1].split(",")){const p=part.trim();if(!p)continue;const ab=p.split("-");let a=OHD.indexOf(ab[0]),b=ab[1]?OHD.indexOf(ab[1]):a;for(let k=a,g=0;g<8;k=(k+1)%7,g++){if(k===dow)hit=true;if(k===b)break}}
+  if(hit){if(/\b(off|closed)\b/i.test(m[2])){offHit=true;covered=false}else{covered=true;offHit=false}}}
+ if(!any)return null;return offHit||!covered}catch(e){return null}}
+
 async function loadPlaces(){const {lat,lon}=state.loc;const r=Math.round($("radius").value*1609.34);const key=`${lat},${lon},${r}`;state.placesFor=key;
  $("plStatus").textContent="Finding places nearby (OpenStreetMap)…";$("results").innerHTML="";
  const A=`(around:${r},${lat},${lon})`;
- const q=`[out:json][timeout:25];(
+ const q=`[out:json][timeout:20];(
 nwr${A}[leisure~"^(park|nature_reserve|bowling_alley|escape_game|amusement_arcade|water_park|ice_rink|swimming_pool|miniature_golf|golf_course|sports_centre|dog_park|garden|beach_resort)$"][name];
 nwr${A}[tourism~"^(museum|gallery|zoo|aquarium|theme_park|viewpoint|attraction)$"];
 nwr${A}[amenity~"^(cinema|theatre|library|arts_centre|marketplace|pub|bar|cafe|restaurant)$"][name];
 nwr${A}[craft=brewery];nwr${A}[shop=farm][name];nwr${A}[natural=beach][name];relation${A}[route=hiking][name];
 nwr${A}[leisure=playground][name];
-);out center tags 1500;`;
+);out center tags 800;`;
  const urls=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"];let j=null,errs=[];
+ const cached=LS("dd_pl_"+key);if(cached&&Date.now()-cached.t<36e5){state.places=cached.p;state.src=cached.s;$("plStatus").textContent=`${state.places.length} places within ${$("radius").value} mi (${cached.s}, cached).`;updAttrib();render();return}
  const ph=photon(lat,lon,r/1609.34).then(v=>({v}),e=>({e}));
- for(const u of urls){try{j=await fetchJ(u+"?data="+encodeURIComponent(q),{},8000);break}catch(e){errs.push(e.message)}}
+ let ui=0;for(const u of urls){try{j=await fetchJ(u+"?data="+encodeURIComponent(q),{},ui++?12000:22000);break}catch(e){errs.push(e.message)}}
  if(state.placesFor!==key)return;
  let src="OpenStreetMap via Overpass";
  if(!j){$("plStatus").textContent="Overpass unavailable — using Photon (OSM search)…";const x=await ph;if(x.v){j=x.v;src="OpenStreetMap via Photon (fallback, fewer results)"}else errs.push(x.e.message);if(state.placesFor!==key)return}
@@ -198,17 +251,18 @@ nwr${A}[leisure=playground][name];
  for(const e of j.elements){const t=e.tags||{};const c=classify(t);if(!c)continue;const la=(e.lat!=null?e.lat:(e.center&&e.center.lat)),lo=(e.lon!=null?e.lon:(e.center&&e.center.lon));if(la==null)continue;
   const name=t.name||CATS[c][0];const k=c+"|"+name.toLowerCase();if(seen.has(k))continue;seen.add(k);
   state.places.push({name,c,lat:la,lon:lo,dist:hav(lat,lon,la,lo),tags:t,id:e.type+"/"+e.id})}
- state.places=state.places.filter(p=>p.dist<=+$("radius").value*1.05);$("plStatus").textContent=`${state.places.length} places found within ${$("radius").value} mi (${src}).`;render()}
+ state.places=state.places.filter(p=>p.dist<=+$("radius").value*1.05);save("dd_pl_"+key,{t:Date.now(),p:state.places,s:src});state.src=src;updAttrib();$("plStatus").textContent=`${state.places.length} places found within ${$("radius").value} mi (${src}).`;render()}
 const PH=[["park","leisure:park"],["nature reserve","leisure:nature_reserve"],["museum","tourism:museum"],["gallery","tourism:gallery"],["cinema","amenity:cinema"],["bowling","leisure:bowling_alley"],["escape room","leisure:escape_game"],["arcade","leisure:amusement_arcade"],["zoo","tourism:zoo"],["aquarium","tourism:aquarium"],["theatre","amenity:theatre"],["library","amenity:library"],["ice rink","leisure:ice_rink"],["pool","leisure:swimming_pool"],["golf","leisure:golf_course"],["mini golf","leisure:miniature_golf"],["brewery","craft:brewery"],["pub","amenity:pub"],["cafe","amenity:cafe"],["restaurant","amenity:restaurant"],["market","amenity:marketplace"],["viewpoint","tourism:viewpoint"],["beach","natural:beach"],["sports centre","leisure:sports_centre"],["attraction","tourism:attraction"],["farm","shop:farm"],["theme park","tourism:theme_park"],["garden","leisure:garden"]];
 async function photon(lat,lon,mi){const dl=mi/69,dn=mi/(69*Math.cos(lat*Math.PI/180));const bb=[lon-dn,lat-dl,lon+dn,lat+dl].map(x=>x.toFixed(4)).join(",");
  const res=[];let ix=0;const one=([q,t])=>fetchJ(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=${lat}&lon=${lon}&bbox=${bb}&limit=15&lang=en&osm_tag=${t}`,{},15000);
- async function worker(){while(ix<PH.length){const k=ix++;try{res[k]={status:"fulfilled",value:await one(PH[k])}}catch(e){await new Promise(r=>setTimeout(r,800));try{res[k]={status:"fulfilled",value:await one(PH[k])}}catch(e2){res[k]={status:"rejected",reason:e2.message}}}}}
+ async function worker(){while(ix<PH.length){const k=ix++;await new Promise(r=>setTimeout(r,250));try{res[k]={status:"fulfilled",value:await one(PH[k])}}catch(e){await new Promise(r=>setTimeout(r,1500+Math.random()*1000));try{res[k]={status:"fulfilled",value:await one(PH[k])}}catch(e2){res[k]={status:"rejected",reason:e2.message}}}}}
  await Promise.all([worker(),worker()]);
  const els=[];res.forEach(r=>{if(r.status!=="fulfilled")return;for(const f of r.value.features||[]){const pp=f.properties;const tags={name:pp.name,[pp.osm_key]:pp.osm_value};els.push({type:{N:"node",W:"way",R:"relation"}[pp.osm_type]||"node",id:pp.osm_id,lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],tags})}});
  if(!els.length&&res.every(r=>r.status!=="fulfilled"))throw new Error("photon.komoot.io: "+(res[0].reason||"unreachable"));return {elements:els}}
+function updAttrib(){const a=["Weather: Open-Meteo"+(curW()&&curW().kind==="typical"?" (historical archive)":" forecast"),"Places: "+(state.src||"OpenStreetMap"),"Search: Open-Meteo Geocoding / Nominatim"];$("attrib").textContent=a.join(" · ")+" · © OpenStreetMap contributors"}
 function hav(a,b,c,d){const R=3958.8,r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 // ---------- scoring
-function wantSetting(){const s=$("setting").value;if(s!=="auto")return s;const w=state.wx&&state.wx[state.day];if(!w)return"any";return w.cls==="nice"?"outdoor":w.cls==="indoor"?"indoor":"any"}
+function wantSetting(){const s=$("setting").value;if(s!=="auto")return s;const w=curW();if(!w||w.cls==="unknown")return"any";return w.cls==="nice"?"outdoor":w.cls==="indoor"?"indoor":"any"}
 function dealsFor(p,dow){const out=[];const nm=((p.tags&&p.tags.brand)||"")+" "+p.name;let specific=false;
  for(const [re,cat,days,txt] of DEALS){if(cat&&cat!==p.c)continue;if(re){if(re.test(nm)&&days.includes(dow)){out.push(txt);specific=true}}else if(!specific&&days.includes(dow))out.push(txt)}
  return out.slice(0,1)}
@@ -219,15 +273,17 @@ function score(item,ctx){const [label,,io,moods,mn,mx,cost]=item.meta;let s=0,wh
  const hit=moods.filter(m=>ctx.moods.has(m));if(ctx.moods.size){if(hit.length){s+=2*hit.length;why.push(hit.join(" + "))}else{s-=2;miss++}}
  const n=ctx.people;if(n>=mn&&n<=mx){s+=1;why.push(`works for ${n===12?"12+":n}`)}else{s-=2;miss++;why.push(n<mn?"better with more people":"tight for a big group")}
  if(cost>ctx.budget){s-=2*(cost-ctx.budget);miss++}else if(cost===0){s+=.5;why.push("free/cheap")}
- if(item.deal&&item.deal.length){s+=1.5;why.push("possible deal today")}
+ if(item.deal&&item.deal.length){s+=1.5;why.push("possible deal "+(ctx.date===todayStr()?"today":"that day"))}
+ const sn=item.anywhere?"":seasonNote(item.c,io,ctx.date,ctx.lat,item.tags);if(sn){if(sn[0]==="+"){s+=1;why.push(sn.slice(1))}else{s-=3;miss++;why.push(sn)}}
+ item.closed=item.tags?ohClosed(item.tags.opening_hours,ctx.dow):null;if(item.closed){s-=4;miss++}
  if(item.dist!=null){s-=item.dist/ctx.radius*1.5}
  if(item.tags&&(item.tags.website||item.tags.opening_hours))s+=.3;
  return {s,why,miss}}
 let ranked=[];
-function render(){if(!state.loc)return;const w=state.wx&&state.wx[state.day];
- const dow=w?new Date(w.date+"T12:00").getDay():new Date().getDay();
+function render(){if(!state.loc)return;const w=curW();
+ const dow=new Date(state.date+"T12:00").getDay();
  const ctx={setting:wantSetting(),auto:$("setting").value==="auto",wx:w,wxWord:w?(w.cls==="nice"?`${w.hi}° and nice`:w.cls==="indoor"?"rough weather":"mixed weather"):"",
-  moods:state.moods,people:+$("people").value,budget:+$("budget").value,radius:+$("radius").value};
+  moods:state.moods,people:+$("people").value,budget:+$("budget").value,radius:+$("radius").value,dow,date:state.date,lat:+state.loc.lat};
  const items=state.places.map(p=>({...p,meta:CATS[p.c],deal:dealsFor(p,dow)})).concat(ANYWHERE.map(a=>({name:a[0],anywhere:true,meta:[a[0],a[1],a[2],a[3],a[4],a[5],a[6]],deal:[]})));
  items.forEach(i=>{Object.assign(i,score(i,ctx));if(i.anywhere)i.s-=1});
  items.sort((a,b)=>a.miss-b.miss||b.s-a.s);
@@ -240,12 +296,12 @@ function card(i,isPick){const [label,emo,io]=i.meta;const city=(state.loc.name||
  const t=i.tags||{};let links="";
  if(!i.anywhere){const g=`https://www.google.com/maps/search/?api=1&query=${i.lat},${i.lon}`;
   links=`<a href="${g}" target="_blank" rel="noopener">🗺 Maps</a>`+(t.website||t["contact:website"]?`<a href="${esc(t.website||t["contact:website"])}" target="_blank" rel="noopener">🌐 Website</a>`:"")+
-  `<a href="https://www.openstreetmap.org/${i.id}" target="_blank" rel="noopener">OSM</a><a href="https://www.google.com/search?q=${encodeURIComponent(i.name+" "+city+" deals today")}" target="_blank" rel="noopener">🏷 Find deals</a>`+
+  `<a href="https://www.openstreetmap.org/${i.id}" target="_blank" rel="noopener">OSM</a><a href="https://www.google.com/search?q=${encodeURIComponent(i.name+" "+city+" deals "+(state.date===todayStr()?"today":niceDate(state.date)))}" target="_blank" rel="noopener">🏷 Find deals</a>`+
   `<a href="https://www.groupon.com/local/${encodeURIComponent(city.toLowerCase().replace(/\s+/g,'-'))}?query=${encodeURIComponent(label)}" target="_blank" rel="noopener">Groupon</a>`}
  else links=`<a href="https://www.google.com/search?q=${encodeURIComponent(i.name+" ideas")}" target="_blank" rel="noopener">💡 Ideas</a>`;
  const cost=["Free","$","$$","$$$"][i.meta[6]];
  return `<div class="res ${isPick?"":""}"><h3>${emo} ${esc(i.name)}</h3><div class="meta">${i.anywhere?"Anywhere idea":esc(label)} · ${io==="in"?"Indoor":io==="out"?"Outdoor":"In/Out"} · ~${cost}${i.dist!=null?` · ${i.dist.toFixed(1)} mi`:""}${t.opening_hours?` · 🕒 ${esc(t.opening_hours)}`:""}</div>
- <div class="why">✅ ${esc(i.why.join(" · ")||"a solid option")}</div>${i.deal.map(d=>`<div class="deal">🏷 ${esc(d)} — <b>typical, verify</b></div>`).join("")}<div class="links">${links}</div></div>`}
+ ${i.closed?`<div class="closed">⛔ Likely closed that day (per listed hours — verify)</div>`:""}<div class="why">✅ ${esc(i.why.join(" · ")||"a solid option")}</div>${i.deal.map(d=>`<div class="deal">🏷 ${esc(d)} — <b>typical, verify</b></div>`).join("")}<div class="links">${links}</div></div>`}
 $("go").onclick=()=>{if(state.loc){loadPlaces();loadWx()}};
 $("surprise").onclick=()=>{if(!ranked.length)return;const good=ranked.filter(i=>i.miss===0);const pool=(good.length?good:ranked).slice(0,12);const p=pool[Math.floor(Math.random()*pool.length)];
  const c=$("pickCard");c.hidden=false;c.className="card pick";c.innerHTML="<h2>🎲 Surprise pick</h2>"+card(p,true);c.scrollIntoView({behavior:"smooth",block:"center"})};
