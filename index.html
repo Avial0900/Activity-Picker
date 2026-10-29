@@ -24,8 +24,8 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 .res{border-top:1px solid var(--bd);padding:10px 0}.res:first-child{border:0}.res h3{margin:0;font-size:1rem}.meta{color:var(--mut);font-size:.82rem}
 .why{font-size:.85rem;margin:4px 0}.deal{font-size:.8rem;background:#fff4d6;color:#6b4e00;border-radius:8px;padding:4px 8px;margin:4px 0}
 @media(prefers-color-scheme:dark){.deal{background:#3a321b;color:#f3d98a}}
-.links a{font-size:.82rem;margin-right:10px;color:var(--acc2)}.status{font-size:.85rem;color:var(--mut)}.err{color:#d33}
-.pick{border:2px solid var(--acc)}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
+.links a{font-size:.82rem;margin-right:10px;color:var(--acc2)}.links,.meta,.near,.why{overflow-wrap:anywhere}.status{font-size:.85rem;color:var(--mut)}.err{color:#d33}
+.pick{border:2px solid var(--acc)}.cnt{font-size:.8rem;color:var(--mut);font-weight:400}.more{width:100%;margin-top:6px}.hol{background:#efe3ff;color:#4b2a7a;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.9rem}.evimg{float:right;width:72px;height:72px;object-fit:cover;border-radius:10px;margin-left:8px}.near{font-size:.82rem;margin:3px 0}.linkgrid a{display:inline-block;margin:4px 6px 4px 0;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:.85rem}@media(prefers-color-scheme:dark){.hol{background:#2f2540;color:#d9c6ff}}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
 </style></head><body>
 <header><h1>🎲 Dilly-<span>Dally</span></h1><p>What should we do?</p></header>
 <main>
@@ -45,14 +45,23 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <div class="row" style="margin-top:12px"><button class="pri" id="go">🔎 Find activities</button><button class="sec" id="surprise">🎲 Surprise me</button></div>
 </section>
 <section class="card" id="pickCard" hidden></section>
-<section class="card"><h2>✨ Ideas</h2><div class="status" id="plStatus"></div><div id="results"></div></section>
+<section class="card" id="secPlaces"><h2>📍 Places of interest <span class="cnt" id="plCount"></span></h2><div class="status" id="plStatus"></div><div id="results"></div><button class="more" id="plMore" hidden>Show more</button></section>
+<section class="card" id="secIdeas"><h2 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">💡 Date night ideas <span class="cnt" id="idCount"></span><button type="button" id="shuffle" style="padding:6px 10px;font-size:.85rem">🔀 Shuffle</button></h2><div id="ideas"></div><button class="more" id="idMore" hidden>Show more</button></section>
+<section class="card" id="secEvents"><h2>🎉 <span id="evTitle">Happening nearby</span> <span class="cnt" id="evCount"></span></h2><div class="status" id="evStatus"></div><div id="events"></div><button class="more" id="evMore" hidden>Show more</button><div id="evLinks"></div></section>
 <p style="text-align:center"><small id="attrib">Data: Open-Meteo, OpenStreetMap.</small><br><small> Deals shown are <b>typical patterns — always verify</b>.</small></p>
 </main>
 <script>
 "use strict";
+// ===== CONFIG =====
+// Optional: paste a free Ticketmaster Discovery API consumer key here to show real ticketed events (concerts, sports, theater...).
+// Leave empty to hide that feature. Get one at https://developer.ticketmaster.com (free, no credit card).
+const TICKETMASTER_KEY="";
 const $=id=>document.getElementById(id);
-const MOODS=["chill","adventurous","social","creative","romantic","active","cozy","nerdy","family"];
+const MOODS=["chill","adventurous","social","creative","romantic","active","cozy","nerdy","family","foodie"];
 // category: [label, emoji, io (in/out/both), moods, minPpl, maxPpl, cost 0-3]
+// v1.4.1 ranking tiers: 1 = attractions, 2 = other activities, 3 = food & drink (ranked last unless "foodie" mood)
+const TIER={museum:1,park:1,library:1,gallery:1,zoo:1,aquarium:1,attraction:1,garden:1,nature:1,viewpoint:1,trail:1,beach:1,theatre:1,cinema:1,
+ brewery:3,cafe:3,restaurant:3,fast_food:3,bar:3,pub:3,market:3};
 const CATS={
 park:["Park","🌳","out",["chill","family","active","romantic"],1,30,0],
 nature:["Nature reserve","🦌","out",["chill","adventurous","romantic"],1,12,0],
@@ -74,9 +83,9 @@ swim:["Swimming","🏊","both",["active","family"],1,15,1],
 golf:["Golf","⛳","out",["active","social"],1,4,3],
 minigolf:["Mini golf","🏌","out",["family","social","romantic"],2,12,1],
 farm:["Farm / orchard","🍎","out",["family","cozy","chill"],1,20,1],
-brewery:["Brewery / bar","🍺","in",["social","chill"],2,15,2],
-cafe:["Café","☕","in",["cozy","chill","romantic","creative"],1,6,1],
-restaurant:["Restaurant","🍽","in",["social","romantic","cozy"],1,20,2],
+brewery:["Brewery / bar","🍺","in",["social","chill","foodie"],2,15,2],
+cafe:["Café","☕","in",["cozy","chill","romantic","creative","foodie"],1,6,1],
+restaurant:["Restaurant","🍽","in",["social","romantic","cozy","foodie"],1,20,2],
 market:["Market","🧺","out",["social","chill","family"],1,15,1],
 viewpoint:["Viewpoint","🌄","out",["romantic","chill","adventurous"],1,10,0],
 beach:["Beach","🏖","out",["chill","active","romantic","family"],1,30,0],
@@ -98,14 +107,35 @@ function classify(t){
  if(t.natural==="beach"||l==="beach_resort")return"beach"; if(l==="nature_reserve")return"nature"; if(l==="sports_centre")return"sports";
  if(l==="dog_park")return"dog_park"; if(l==="garden")return"garden"; if(l==="playground")return"playground"; if(l==="park")return"park";
  if(t.route==="hiking"||t.highway==="path"&&t.name)return"trail"; if(to==="attraction")return"attraction"; return null;}
+// Date-night / anywhere ideas: [name, emoji, io, moods, minPpl, maxPpl, cost, nearby place categories to link]
 const ANYWHERE=[
- ["Board game marathon at home","🎲","in",["cozy","social","nerdy","family"],2,8,0],["Themed movie night + homemade popcorn","🍿","in",["cozy","chill","romantic"],1,8,0],
- ["Bake something new together","🧁","in",["creative","cozy","family"],1,6,1],["Neighborhood photo walk","📷","out",["creative","chill","active"],1,4,0],
- ["Picnic in the nearest green space","🧺","out",["romantic","chill","family"],1,10,1],["Puzzle + playlist afternoon","🧩","in",["chill","cozy"],1,4,0],
- ["Karaoke night in the living room","🎤","in",["social","creative"],2,12,0],["DIY trivia night","❓","in",["nerdy","social"],3,15,0],
- ["Sunrise/sunset drive","🚗","out",["romantic","adventurous"],1,4,1],["Craft night (paint, knit, collage)","🎨","in",["creative","cozy"],1,8,1],
- ["Backyard/park workout or frisbee","🥏","out",["active","social"],2,12,0],["Cook a recipe from a new country","🌍","in",["adventurous","creative","cozy"],1,6,1],
- ["Stargazing (check cloud cover!)","🌌","out",["romantic","nerdy","chill"],1,6,0],["Video game tournament","🎮","in",["nerdy","social"],2,8,0]];
+ ["Go see a movie","🎬","in",["chill","cozy","romantic"],1,10,2,["cinema"]],["Paint night (or paint-and-sip)","🎨","in",["creative","romantic","social"],1,10,2,["gallery"]],
+ ["Take a scenic drive","🚗","out",["romantic","adventurous","chill"],1,4,1,["viewpoint","nature","park"]],["Sunset picnic","🧺","out",["romantic","chill"],1,6,1,["park","garden","beach"]],
+ ["Stargazing with a blanket","🌌","out",["romantic","nerdy","chill"],1,6,0,["nature","viewpoint","park"]],["Bowling + milkshakes","🎳","in",["social","family","active"],2,10,2,["bowling"]],
+ ["Mini golf showdown","⛳","out",["social","family","romantic"],2,8,1,["minigolf"]],["Escape room challenge","🔐","in",["nerdy","social","adventurous"],2,8,3,["escape"]],
+ ["Arcade date — winner picks dessert","🕹","in",["social","nerdy"],2,8,2,["arcade"]],["Museum wander + rate the art","🏛","in",["nerdy","creative","chill"],1,6,1,["museum","gallery"]],
+ ["Coffee-shop crawl (3 cafés)","☕","in",["cozy","chill","romantic"],1,4,1,["cafe"]],["Try a cuisine you've never had","🍜","in",["adventurous","social","romantic"],1,8,2,["restaurant"]],
+ ["Brewery or wine tasting flight","🍷","in",["social","romantic","chill"],2,8,2,["brewery"]],["Live theater or a show","🎭","in",["romantic","creative","social"],1,8,3,["theatre"]],
+ ["Ice skating hand-in-hand","⛸","in",["romantic","active","family"],1,10,1,["icerink"]],["Climbing gym intro session","🧗","in",["active","adventurous"],1,6,2,["climbing"]],
+ ["Hike + trailside snack","🥾","out",["active","adventurous","chill"],1,8,0,["trail","nature","park"]],["Farmers market + cook what you buy","🥕","out",["creative","cozy","social"],1,6,1,["market","farm"]],
+ ["Botanical garden stroll","🌷","out",["romantic","chill"],1,6,1,["garden","park"]],["Zoo or aquarium day","🐠","in",["family","chill","romantic"],1,10,2,["zoo","aquarium"]],
+ ["Library date: pick books for each other","📚","in",["cozy","nerdy","chill"],1,4,0,["library"]],["Swim + hot cocoa after","🏊","in",["active","family"],1,8,1,["swim"]],
+ ["Beach or lakeside walk","🏖","out",["romantic","chill"],1,8,0,["beach","nature"]],["Theme-park thrills","🎢","out",["adventurous","social","family"],1,10,3,["themepark"]],
+ ["Pub trivia night","❓","in",["nerdy","social"],2,8,1,["brewery"]],["Golf range bucket","🏌","out",["active","social"],1,4,2,["golf"]],
+ ["Pottery or craft workshop","🏺","in",["creative","romantic"],1,6,3,["gallery"]],["Dessert-only dinner crawl","🍰","in",["romantic","social","cozy"],2,6,2,["cafe","restaurant"]],
+ ["Board game marathon","🎲","in",["cozy","social","nerdy","family"],2,8,0,null],["Themed movie night + homemade popcorn","🍿","in",["cozy","chill","romantic"],1,8,0,null],
+ ["Bake something new together","🧁","in",["creative","cozy","family"],1,6,1,null],["Neighborhood photo walk","📷","out",["creative","chill","active"],1,4,0,["park"]],
+ ["Puzzle + playlist night","🧩","in",["chill","cozy"],1,4,0,null],["Living-room karaoke","🎤","in",["social","creative"],2,12,0,null],
+ ["DIY trivia night","🧠","in",["nerdy","social"],3,15,0,null],["Craft night (knit, collage, candles)","🕯","in",["creative","cozy"],1,8,1,null],
+ ["Frisbee or pickup game in the park","🥏","out",["active","social"],2,12,0,["park","sports"]],["Cook a recipe from a new country","🌍","in",["adventurous","creative","cozy"],1,6,1,null],
+ ["Video game tournament","🎮","in",["nerdy","social"],2,8,0,null],["Write each other letters, swap later","💌","in",["romantic","creative","cozy"],2,2,0,null],
+ ["Build a blanket fort + movie","🛋","in",["cozy","romantic","family"],1,6,0,null],["At-home spa night","🛁","in",["chill","romantic","cozy"],1,3,1,null],
+ ["Sunrise breakfast picnic","🌅","out",["romantic","adventurous"],1,4,1,["viewpoint","park"]],["Bike ride to somewhere new","🚲","out",["active","adventurous"],1,6,0,["trail","park"]],
+ ["Thrift-store challenge: $10 outfits","👗","in",["creative","social"],2,6,1,null],["Learn a dance from YouTube","💃","in",["active","romantic","social"],2,6,0,null],
+ ["Plan a dream trip together","🗺","in",["cozy","romantic","nerdy"],2,4,0,null],["Volunteer for an afternoon","🤝","out",["social","family"],1,12,0,null],
+ ["Wine-and-cheese tasting at home","🧀","in",["romantic","cozy"],2,6,2,null],["Geocaching treasure hunt","📍","out",["adventurous","nerdy","family"],1,6,0,["park","nature"]],
+ ["Open-mic or comedy night","🎙","in",["social","creative"],1,8,1,["brewery","theatre"]],["Sports game or local match","🏟","in",["social","active"],1,12,2,["sports"]],
+ ["Fancy dinner, dress up","🍽","in",["romantic"],2,4,3,["restaurant"]],["Cozy bookstore + café afternoon","📖","in",["cozy","chill","nerdy"],1,4,1,["cafe","library"]]];
 // recurring deal patterns: [match regex on brand/name, cat or null, weekdays (0=Sun), text]
 const DEALS=[
  [/\bAMC\b/i,"cinema",[2],"AMC Discount Tuesdays (typically reduced prices for Stubs members)"],
@@ -165,9 +195,9 @@ async function resolveTyped(){const q=$("loc").value.trim();clearTimeout(dT);$("
 $("loc").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();resolveTyped()}});
 $("geo").onclick=()=>{if(!navigator.geolocation||(window.isSecureContext===false&&location.protocol!=="file:")){$("locStatus").innerHTML='<span class="err">Geolocation not supported.</span>';return}
  $("locStatus").textContent="Getting your location…";
- navigator.geolocation.getCurrentPosition(async p=>{const lat=+p.coords.latitude.toFixed(4),lon=+p.coords.longitude.toFixed(4);let name=`My location (${lat}, ${lon})`;
-  try{const j=await fetchJ(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}`);const a=j.address||{};name="📡 "+[a.city||a.town||a.village||a.county,a.state].filter(Boolean).join(", ")}catch(e){}
-  setLoc({name,lat,lon})},e=>{$("locStatus").innerHTML=`<span class="err">Couldn't get location (${esc(e.message)}). On file:// some browsers block it — try searching instead.</span>`},{timeout:15000,maximumAge:600000})};
+ navigator.geolocation.getCurrentPosition(async p=>{const lat=+p.coords.latitude.toFixed(4),lon=+p.coords.longitude.toFixed(4);let name=`My location (${lat}, ${lon})`,gcc="";
+  try{const j=await fetchJ(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}`);const a=j.address||{};name="📡 "+[a.city||a.town||a.village||a.county,a.state].filter(Boolean).join(", ");gcc=(a.country_code||"").toUpperCase()}catch(e){}
+  setLoc({name,lat,lon,cc:gcc})},e=>{$("locStatus").innerHTML=`<span class="err">Couldn't get location (${esc(e.message)}). On file:// some browsers block it — try searching instead.</span>`},{timeout:15000,maximumAge:600000})};
 function setLoc(p){state.loc=p;(function(){const d=LS("dd_date");state.date=d&&d>=todayStr()?d:todayStr()})();save("dd_loc",p);$("loc").value=p.name;$("locStatus").textContent=`Using ${p.name} (${(+p.lat).toFixed(3)}, ${(+p.lon).toFixed(3)})`;loadWx();loadPlaces()}
 // ---------- weather
 const WMO=c=>c===0?"☀️":c<=2?"🌤":c===3?"☁️":c<=48?"🌫":c<=67?"🌧":c<=77?"❄️":c<=82?"🌦":c<=86?"🌨":"⛈";
@@ -269,9 +299,9 @@ async function loadPlaces(){if(!state.loc)return;const gen=++placeGen;const {lat
   const q=`[out:json][timeout:8];(nwr${A}[leisure~"^(park|nature_reserve|bowling_alley|escape_game|amusement_arcade|water_park|ice_rink|swimming_pool|miniature_golf|golf_course|sports_centre|dog_park|garden)$"][name];nwr${A}[tourism~"^(museum|gallery|zoo|aquarium|theme_park|viewpoint|attraction)$"][name];nwr${A}[amenity~"^(cinema|theatre|library|arts_centre|marketplace|pub|bar|cafe|restaurant)$"][name];nwr${A}[craft=brewery];nwr${A}[shop=farm][name];nwr${A}[natural=beach][name];);out center tags 600;`;
   fetchJ(mir+"?data="+encodeURIComponent(q),{},8000).then(j=>{if(live())ingest(j.elements||[],"Overpass",true)},e=>{ovErrs.push("Overpass: "+e.message);try{sessionStorage.setItem("dd_ov_fail",ovFails+1)}catch(x){}})}}
 const CC_LANG={JP:"ja",FR:"fr",DE:"de",ES:"es",MX:"es",AR:"es",CO:"es",CL:"es",PE:"es",IT:"it",PT:"pt",BR:"pt",NL:"nl",BE:"fr",SE:"sv",NO:"no",DK:"da",FI:"fi",IS:"is",PL:"pl",CZ:"cs",RU:"ru",UA:"uk",CN:"zh",TW:"zh",KR:"ko",TR:"tr",GR:"el",IL:"he",AT:"de",CH:"de",HU:"hu",RO:"ro",TH:"th",VN:"vi",ID:"id",ZA:"af"};
-const WIKI_RULES=[[/\b(school|university|college|hospital|district|station|county|township|village|neighbou?rhood|suburb|company|plant|factory|radio|television|congressional|cemetery|highway|road|street|airport|railway|church|parish|ward|municipality|prefecture|census|electoral|constituency|corporation|headquarters|office|apartment|hotel|bank)\b/i,null],
+const WIKI_RULES=[[/\b(school|university|college|hospital|district|station|county|township|village|neighbou?rhood|suburb|company|plant|factory|radio|television|congressional|cemetery|highway|road|street|airport|railway|church|parish|ward|municipality|prefecture|census|electoral|constituency|corporation|headquarters|office|apartment|hotel|bank|pub|tavern|laboratory|laboratories|(city|town|suburb|area) (in|of))\b/i,null],[/\bstatue\b|sculpture/i,"tourism=attraction"],
 [/hall of fame|museum|博物館|美術館|musée|museo|museu|safn/i,"tourism=museum"],[/art gallery|galerie|galería|gallery/i,"tourism=gallery"],[/\bzoo\b|動物園|zoológico/i,"tourism=zoo"],[/aquarium|水族館|acuario/i,"tourism=aquarium"],
-[/amusement park|theme park|water park|遊園地/i,"tourism=theme_park"],[/botanical|\bgardens?\b|庭園|jardin|jardín/i,"leisure=garden"],[/nature reserve|preserve|wildlife|national park|state park|forest|wetland|自然/i,"leisure=nature_reserve"],
+[/amusement park|theme park|water park|遊園地/i,"tourism=theme_park"],[/botanical|\bgardens?\b|庭園|jardin|jardín/i,"leisure=garden"],[/nature reserve|\bpreserve\b|\bwildlife\b|national park|state park|\bforest(?!\s+products)\b|\bwetland\b|自然/i,"leisure=nature_reserve"],
 [/\bpark\b|公園|parc\b|parque/i,"leisure=park"],[/\bbeach\b|plage|playa/i,"natural=beach"],[/\bopera\b|theat(re|er)|concert hall|劇場|théâtre|teatro/i,"amenity=theatre"],[/\bcinema\b|\bmovies?\b|映画館|cinéma|\bcine\b/i,"amenity=cinema"],
 [/stadium|arena|ballpark|スタジアム|estadio/i,"leisure=sports_centre"],[/\blibrary\b|図書館|bibliothèque|biblioteca/i,"amenity=library"],[/\bmarket\b|市場|marché|mercado/i,"amenity=marketplace"],[/brewery|brasserie/i,"craft=brewery"],
 [/observation|viewpoint|mountain|\bhill\b|展望/i,"tourism=viewpoint"],[/castle|palace|temple|shrine|cathedral|landmark|monument|memorial|tower|historic|lighthouse|寺|神社|城|château|palacio|plaza|square|\bbridge\b/i,"tourism=attraction"]];
@@ -322,31 +352,106 @@ function score(item,ctx){const [label,,io,moods,mn,mx,cost]=item.meta;let s=0,wh
  if(item.dist!=null){s-=item.dist/ctx.radius*1.5}
  if(item.tags&&(item.tags.website||item.tags.opening_hours))s+=.3;
  return {s,why,miss}}
-let ranked=[];
-function render(){if(!state.loc)return;const w=curW();
- const dow=new Date(state.date+"T12:00").getDay();
- const ctx={setting:wantSetting(),auto:$("setting").value==="auto",wx:w,wxWord:w?(w.cls==="nice"?`${w.hi}° and nice`:w.cls==="indoor"?"rough weather":"mixed weather"):"",
-  moods:state.moods,people:+$("people").value,budget:+$("budget").value,radius:+$("radius").value,dow,date:state.date,lat:+state.loc.lat};
- const items=state.places.map(p=>({...p,meta:CATS[p.c],deal:dealsFor(p,dow)})).concat(ANYWHERE.map(a=>({name:a[0],anywhere:true,meta:[a[0],a[1],a[2],a[3],a[4],a[5],a[6]],deal:[]})));
- items.forEach(i=>{Object.assign(i,score(i,ctx));if(i.anywhere)i.s-=1});
- items.sort((a,b)=>a.miss-b.miss||b.s-a.s);
- // diversity: max 3 per category in top
- const cnt={},out=[];for(const i of items){const k=i.c||"anywhere";cnt[k]=(cnt[k]||0)+1;if(cnt[k]<=3)out.push(i);if(out.length>=25)break}
- ranked=out;const perfect=out.filter(i=>i.miss===0);
- let h=perfect.length?"":`<p class="status">Nothing matches every filter — here are the closest options.</p>`;
- h+=out.map(card).join("");$("results").innerHTML=h}
+let ranked=[],ideaPicks=[],evItems=[];state.show={pl:5,id:5,ev:5};state.ideaSeed=1;
+function mkCtx(){const w=curW();const dow=new Date(state.date+"T12:00").getDay();
+ return {setting:wantSetting(),auto:$("setting").value==="auto",wx:w,wxWord:w?(w.cls==="nice"?`${w.hi}° and nice`:w.cls==="indoor"?"rough weather":w.cls==="unknown"?"unknown weather":"mixed weather"):"",
+  moods:state.moods,people:+$("people").value,budget:+$("budget").value,radius:+$("radius").value,dow,date:state.date,lat:+state.loc.lat}}
+function moreBtn(id,shown,total,key){const b=$(id);b.hidden=total<=shown;b.textContent=`Show more (${total-shown} more)`;b.onclick=()=>{state.show[key]+=10;render()}}
+function render(){if(!state.loc)return;const ctx=mkCtx();
+ // 1) places
+ const items=state.places.map(p=>Object.assign({},p,{meta:CATS[p.c],deal:dealsFor(p,ctx.dow)}));
+ items.forEach(i=>Object.assign(i,score(i,ctx)));const foodie=state.moods.has("foodie");
+ const tier=i=>{const t=TIER[i.c]||2;return foodie?(t===3?0:t):t};
+ items.sort((a,b)=>a.miss-b.miss||tier(a)-tier(b)||b.s-a.s);
+ const cnt={},pool=[];for(const i of items){cnt[i.c]=(cnt[i.c]||0)+1;if(cnt[i.c]<=4)pool.push(i);if(pool.length>=40)break}
+ // diversify first 5: max 1 per category, then 2, then anything
+ const out=[],used={};for(const cap of [1,2,99]){for(const i of pool){if(out.length>=5)break;if(out.indexOf(i)<0&&(used[i.c]||0)<cap&&(cap<99||true)){
+   if(cap<99&&!foodie&&tier(i)===3&&pool.some(j=>out.indexOf(j)<0&&tier(j)<3&&(used[j.c]||0)<cap))continue;out.push(i);used[i.c]=(used[i.c]||0)+1}}}
+ pool.forEach(i=>{if(out.indexOf(i)<0)out.push(i)});
+ ranked=out;$("plCount").textContent=state.places.length?`(${state.places.length})`:"";
+ let h=out.length&&!out.some(i=>i.miss===0)?`<p class="status">Nothing matches every filter — here are the closest options.</p>`:"";
+ h+=out.slice(0,state.show.pl).map(x=>card(x)).join("");$("results").innerHTML=h;moreBtn("plMore",state.show.pl,out.length,"pl");
+ renderIdeas(ctx);renderEvents(ctx)}
+function nearestOf(cats){let best=null;if(!cats)return null;for(const p of state.places)if(cats.indexOf(p.c)>=0&&(!best||p.dist<best.dist))best=p;return best}
+function rnd(seed){let x=seed*9301+49297;return function(){x=(x*9301+49297)%233280;return x/233280}}
+function renderIdeas(ctx){const ideas=ANYWHERE.map(a=>({name:a[0],anywhere:true,meta:a.slice(0,7),deal:[],link:a[7]}));
+ ideas.forEach(i=>{Object.assign(i,score(i,ctx));i.near=nearestOf(i.link);if(i.near){i.s+=1.5;i.why.push("nearby: "+i.near.name)}});
+ ideas.sort((a,b)=>a.miss-b.miss||b.s-a.s);let pool=ideas.filter(i=>i.miss===0);if(pool.length<8)pool=ideas.slice(0,Math.max(12,pool.length));
+ const r=rnd(state.ideaSeed);pool=pool.map(i=>[r()+(i.near?0.15:0),i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);ideaPicks=pool;
+ $("idCount").textContent=`(${pool.length} match)`;$("ideas").innerHTML=pool.slice(0,state.show.id).map(x=>card(x)).join("");moreBtn("idMore",state.show.id,pool.length,"id")}
+$("shuffle").onclick=()=>{state.ideaSeed=Math.floor(Math.random()*1e6)+1;state.show.id=5;if(state.loc)render()};
+// ===== Events =====
+const MOOD_KW={social:["trivia","meetup","bar events"],creative:["workshop","art class","craft"],active:["fun run","fitness class","sports"],romantic:["live music","wine tasting","concert"],
+ nerdy:["board games","lecture","convention"],family:["kids","family festival"],chill:["acoustic","film screening"],cozy:["market","book reading"],adventurous:["festival","outdoor adventure"]};
+const US_ST={"alabama":"al","alaska":"ak","arizona":"az","arkansas":"ar","california":"ca","colorado":"co","connecticut":"ct","delaware":"de","florida":"fl","georgia":"ga","hawaii":"hi","idaho":"id","illinois":"il","indiana":"in","iowa":"ia","kansas":"ks","kentucky":"ky","louisiana":"la","maine":"me","maryland":"md","massachusetts":"ma","michigan":"mi","minnesota":"mn","mississippi":"ms","missouri":"mo","montana":"mt","nebraska":"ne","nevada":"nv","new hampshire":"nh","new jersey":"nj","new mexico":"nm","new york":"ny","north carolina":"nc","north dakota":"nd","ohio":"oh","oklahoma":"ok","oregon":"or","pennsylvania":"pa","rhode island":"ri","south carolina":"sc","south dakota":"sd","tennessee":"tn","texas":"tx","utah":"ut","vermont":"vt","virginia":"va","washington":"wa","west virginia":"wv","wisconsin":"wi","wyoming":"wy","district of columbia":"dc"};
+const CC_NAME={GB:"united-kingdom",JP:"japan",CA:"canada",AU:"australia",FR:"france",DE:"germany",ES:"spain",IT:"italy",MX:"mexico",IE:"ireland",NL:"netherlands",NZ:"new-zealand",ZA:"south-africa",IS:"iceland",BR:"brazil",IN:"india",SG:"singapore"};
+function placeParts(){const parts=(state.loc.name||"").replace(/^📡\s*/,"").split(",").map(x=>x.trim()).filter(Boolean);let cc=state.loc.cc||"";
+ if(!cc&&parts.length>1&&/^[A-Z]{2}$/.test(parts[parts.length-1]))cc=parts[parts.length-1];let city=parts[0]||"",region=parts[1]||"";
+ if(region&&/^[A-Z]{2}$/.test(region)&&!cc){cc="US";}
+ let st=US_ST[region.toLowerCase()]||(region.length===2?region.toLowerCase():"");if(!cc&&st)cc="US";return {city,region,cc,st}}
+const holCache={};
+async function getHolidays(cc,yr){const k=cc+yr;if(holCache[k])return holCache[k];const j=await fetchJ(`https://date.nager.at/api/v3/PublicHolidays/${yr}/${cc}`,{},10000);holCache[k]=j;return j}
+let evGen=0;state.ev={key:"",hol:[],tm:[],holErr:"",tmErr:"",tmBusy:false,holBusy:false};
+async function loadEvents(){if(!state.loc)return;const pp=placeParts();const key=locKey()+"|"+state.date;if(state.ev.key===key)return;const g=++evGen;
+ state.ev={key,hol:[],tm:[],holErr:"",tmErr:"",holBusy:!!pp.cc,tmBusy:!!TICKETMASTER_KEY};state.show.ev=5;render();
+ if(pp.cc){getHolidays(pp.cc,state.date.slice(0,4)).then(list=>{if(g!==evGen)return;const d=state.date;
+   state.ev.hol=(list||[]).filter(h=>Math.abs((new Date(h.date+"T12:00")-new Date(d+"T12:00"))/864e5)<=3&&(h.global||!h.counties)).map(h=>({date:h.date,name:h.name,local:h.localName,same:h.date===d}))},
+   e=>{if(g===evGen)state.ev.holErr="Holidays (date.nager.at): "+e.message}).then(()=>{if(g!==evGen)return;state.ev.holBusy=false;render()})}
+ if(TICKETMASTER_KEY){loadTM(g).then(()=>{},()=>{}).then(()=>{if(g!==evGen)return;state.ev.tmBusy=false;render()})}}
+const TM_MOOD=[[/rock|pop|alternative|indie|country|r&b|hip-hop|rap|dance|electronic/i,["social","adventurous"]],[/jazz|blues|classical|folk|acoustic|world/i,["romantic","chill","cozy"]],
+ [/comedy/i,["social","chill"]],[/theatre|theater|musical|opera|ballet|dance/i,["romantic","creative"]],[/family|children|circus|ice shows|magic/i,["family"]],[/sports|basketball|football|hockey|baseball|soccer|wrestling|running|marathon/i,["active","social"]],
+ [/film|cinema/i,["chill","cozy"]],[/fair|festival|expo|convention|comic|gaming|lecture|science/i,["nerdy","adventurous","family"]],[/art|craft|workshop/i,["creative"]]];
+async function loadTM(g){const {lat,lon}=state.loc;const d=state.date;
+ const url=`https://app.ticketmaster.com/discovery/v2/events.json?apikey=${encodeURIComponent(TICKETMASTER_KEY)}&latlong=${(+lat).toFixed(4)},${(+lon).toFixed(4)}&radius=${Math.max(5,Math.min(100,+$("radius").value*2))}&unit=miles&localStartDateTime=${d}T00:00:00,${d}T23:59:59&size=60&sort=relevance,desc`;
+ try{const j=await fetchJ(url,{},15000);if(g!==evGen)return;const evs=(j._embedded&&j._embedded.events)||[];
+  state.ev.tm=evs.map(e=>{const cl=(e.classifications&&e.classifications[0])||{};const txt=[e.name,cl.segment&&cl.segment.name,cl.genre&&cl.genre.name,cl.subGenre&&cl.subGenre.name].filter(Boolean).join(" ");
+   let moods=[];TM_MOOD.forEach(m=>{if(m[0].test(txt))moods=moods.concat(m[1])});if(!moods.length)moods=["social"];
+   const v=(e._embedded&&e._embedded.venues&&e._embedded.venues[0])||{};const pr=e.priceRanges&&e.priceRanges[0];const min=pr?pr.min:null;
+   const cost=min==null?2:min<=0?0:min<25?1:min<75?2:3;const io=/festival|fair|outdoor|park|amphitheat|stadium|field/i.test(txt+" "+(v.name||""))?"out":"in";
+   const img=(e.images||[]).filter(x=>x.ratio==="1_1"||x.width<=400).sort((a,b)=>a.width-b.width)[0]||(e.images||[])[0];
+   const vl=v.location?{lat:+v.location.latitude,lon:+v.location.longitude}:null;
+   return {name:e.name,event:true,url:e.url,time:e.dates&&e.dates.start&&(e.dates.start.localTime||"").slice(0,5),venue:v.name||"",city:v.city&&v.city.name,
+    price:pr?`${pr.currency==="USD"?"$":pr.currency+" "}${Math.round(pr.min)}${pr.max&&pr.max!==pr.min?"–"+Math.round(pr.max):""}`:"",img:img&&img.url,genre:(cl.genre&&cl.genre.name)||(cl.segment&&cl.segment.name)||"Event",
+    lat:vl&&vl.lat,lon:vl&&vl.lon,dist:vl?hav(+lat,+lon,vl.lat,vl.lon):null,meta:[e.name,"🎟",io,Array.from(new Set(moods)),1,20,cost],deal:[]}})}
+ catch(e){if(g===evGen)state.ev.tmErr="Ticketmaster: "+e.message}}
+function evLinks(){const pp=placeParts();const d=new Date(state.date+"T12:00");const dn=d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+ let kws=[];state.moods.forEach(m=>{kws=kws.concat((MOOD_KW[m]||[]).slice(0,1))});const kw=kws.slice(0,3).join(" ");const where=[pp.city,pp.st?pp.st.toUpperCase():pp.region].filter(Boolean).join(" ");
+ const L=[["🔎 Google",`https://www.google.com/search?q=${encodeURIComponent("events in "+where+" on "+dn+(kw?" "+kw:""))}`]];
+ const slugC=pp.city.toLowerCase().normalize?pp.city.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""):pp.city.toLowerCase().replace(/\s+/g,"-");
+ const ebLoc=pp.cc==="US"&&pp.st?pp.st+"--"+slugC:(CC_NAME[pp.cc]?CC_NAME[pp.cc]+"--"+slugC:"");
+ if(ebLoc)L.push(["🎫 Eventbrite",`https://www.eventbrite.com/d/${ebLoc}/${kw?encodeURIComponent(kws[0].replace(/\s+/g,"-"))+"/":"events--"+state.date+"/"}?start_date=${state.date}&end_date=${state.date}`]);
+ L.push(["👥 Meetup",`https://www.meetup.com/find/?source=EVENTS&keywords=${encodeURIComponent(kw||"events")}`+(pp.cc==="US"&&pp.st?`&location=us--${pp.st}--${encodeURIComponent(pp.city.toLowerCase())}`:`&location=${encodeURIComponent(where)}`)+`&customStartDate=${state.date}T00%3A00%3A00.000Z&customEndDate=${state.date}T23%3A59%3A00.000Z&dateRange=custom`]);
+ if(slugC)L.push(["📅 AllEvents",`https://allevents.in/${slugC}/all?sdate=${state.date}&edate=${state.date}`]);
+ L.push(["🎟 Ticketmaster",`https://www.ticketmaster.com/search?q=${encodeURIComponent(pp.city)}&startDate=${state.date}&endDate=${state.date}`]);
+ if(pp.cc==="US"&&pp.st)L.push(["🎸 Bandsintown",`https://www.bandsintown.com/c/${slugC}-${pp.st}?date=${state.date}`]);
+ return `<div class="status" style="margin-top:8px">Find events on ${esc(dn)}${kw?` — vibe: ${esc(kw)}`:""}:</div><div class="linkgrid">`+L.map(x=>`<a href="${x[1]}" target="_blank" rel="noopener">${x[0]}</a>`).join("")+`</div>`}
+function renderEvents(ctx){const ev=state.ev;$("evTitle").textContent="Happening on "+niceDate(state.date);
+ if(!state.loc||ev.key!==locKey()+"|"+state.date){$("events").innerHTML="";return}
+ let h="";const same=ev.hol.filter(x=>x.same),near=ev.hol.filter(x=>!x.same);
+ same.forEach(x=>{h+=`<div class="hol">🎌 <b>${esc(x.name)}</b>${x.local&&x.local!==x.name?` (${esc(x.local)})`:""} — public holiday. Expect parades/festivities; some places may close or have holiday hours.</div>`});
+ near.forEach(x=>{h+=`<div class="status">📆 Nearby holiday: ${esc(x.name)} on ${esc(niceDate(x.date))}</div>`});
+ const tm=ev.tm.map(e=>Object.assign(e,score(e,ctx)));tm.sort((a,b)=>a.miss-b.miss||b.s-a.s);evItems=tm;
+ h+=tm.slice(0,state.show.ev).map(evCard).join("");
+ const st=[];if(ev.holBusy||ev.tmBusy)st.push("Loading events…");if(ev.holErr)st.push(ev.holErr);if(ev.tmErr)st.push(ev.tmErr);
+ if(TICKETMASTER_KEY&&!ev.tmBusy&&!ev.tmErr&&!tm.length)st.push("No ticketed events found for this date nearby.");
+ $("evStatus").innerHTML=st.map(esc).join("<br>")+(ev.holErr||ev.tmErr?' <button onclick="state.ev.key=\'\';loadEvents()">Retry</button>':"");
+ $("evCount").textContent=(tm.length+same.length)?`(${tm.length+same.length})`:"";$("events").innerHTML=h;moreBtn("evMore",state.show.ev,tm.length,"ev");$("evLinks").innerHTML=evLinks()}
+function evCard(e){return `<div class="res">${e.img?`<img class="evimg" src="${esc(e.img)}" alt="" loading="lazy">`:""}<h3>🎟 ${esc(e.name)}</h3><div class="meta">${esc(e.genre)}${e.time?" · 🕒 "+esc(e.time):""}${e.venue?" · 📍 "+esc(e.venue):""}${e.dist!=null?` · ${e.dist.toFixed(1)} mi`:""}${e.price?" · "+esc(e.price):""}</div>
+ <div class="why">✅ ${esc(e.why.join(" · ")||"happening that day")}</div><div class="links"><a href="${esc(e.url)}" target="_blank" rel="noopener">🎫 Tickets</a>${e.lat?`<a href="https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lon}" target="_blank" rel="noopener">🗺 Maps</a>`:""}</div><div style="clear:both"></div></div>`}
 function card(i,isPick){const [label,emo,io]=i.meta;const city=(state.loc.name||"").replace(/^📡 /,"").split(",")[0];
  const t=i.tags||{};let links="";
  if(!i.anywhere){const g=`https://www.google.com/maps/search/?api=1&query=${i.lat},${i.lon}`;
   links=`<a href="${g}" target="_blank" rel="noopener">🗺 Maps</a>`+(t.website||t["contact:website"]?`<a href="${esc(t.website||t["contact:website"])}" target="_blank" rel="noopener">${i.wiki?"📖 Wikipedia":"🌐 Website"}</a>`:"")+
   (i.wiki?"":`<a href="https://www.openstreetmap.org/${i.id}" target="_blank" rel="noopener">OSM</a>`)+`<a href="https://www.google.com/search?q=${encodeURIComponent(i.name+" "+city+" deals "+(state.date===todayStr()?"today":niceDate(state.date)))}" target="_blank" rel="noopener">🏷 Find deals</a>`+
   `<a href="https://www.groupon.com/local/${encodeURIComponent(city.toLowerCase().replace(/\s+/g,'-'))}?query=${encodeURIComponent(label)}" target="_blank" rel="noopener">Groupon</a>`}
- else links=`<a href="https://www.google.com/search?q=${encodeURIComponent(i.name+" ideas")}" target="_blank" rel="noopener">💡 Ideas</a>`;
+ else links=(i.near?`<a href="https://www.google.com/maps/dir/?api=1&destination=${i.near.lat},${i.near.lon}" target="_blank" rel="noopener">🧭 Directions to ${esc(i.near.name)}</a>`:"")+`<a href="https://www.google.com/search?q=${encodeURIComponent(i.name+(i.near?" near "+city:" ideas"))}" target="_blank" rel="noopener">💡 Ideas</a>`;
  const cost=["Free","$","$$","$$$"][i.meta[6]];
- return `<div class="res ${isPick?"":""}"><h3>${emo} ${esc(i.name)}</h3><div class="meta">${i.anywhere?"Anywhere idea":esc(label)} · ${io==="in"?"Indoor":io==="out"?"Outdoor":"In/Out"} · ~${cost}${i.dist!=null?` · ${i.dist.toFixed(1)} mi`:""}${t.opening_hours?` · 🕒 ${esc(t.opening_hours)}`:""}</div>
+ return `<div class="res ${isPick?"":""}"><h3>${emo} ${esc(i.name)}</h3><div class="meta">${i.anywhere?(i.near?`Near ${esc(i.near.name)} (${i.near.dist.toFixed(1)} mi)`:"Anywhere idea"):esc(label)} · ${io==="in"?"Indoor":io==="out"?"Outdoor":"In/Out"} · ~${cost}${i.dist!=null?` · ${i.dist.toFixed(1)} mi`:""}${t.opening_hours?` · 🕒 ${esc(t.opening_hours)}`:""}</div>
  ${i.closed?`<div class="closed">⛔ Likely closed that day (per listed hours — verify)</div>`:""}<div class="why">✅ ${esc(i.why.join(" · ")||"a solid option")}</div>${i.deal.map(d=>`<div class="deal">🏷 ${esc(d)} — <b>typical, verify</b></div>`).join("")}<div class="links">${links}</div></div>`}
 $("go").onclick=()=>resolveTyped();
-$("surprise").onclick=()=>{if(!ranked.length)return;const good=ranked.filter(i=>i.miss===0);const pool=(good.length?good:ranked).slice(0,12);const p=pool[Math.floor(Math.random()*pool.length)];
- const c=$("pickCard");c.hidden=false;c.className="card pick";c.innerHTML="<h2>🎲 Surprise pick</h2>"+card(p,true);c.scrollIntoView({behavior:"smooth",block:"center"})};
+$("surprise").onclick=()=>{const pool=[];ranked.filter(i=>i.miss===0).slice(0,10).forEach(i=>pool.push(i));ideaPicks.slice(0,8).forEach(i=>pool.push(i));evItems.filter(i=>i.miss===0).slice(0,6).forEach(i=>pool.push(i));
+ if(!pool.length){ranked.slice(0,6).concat(ideaPicks.slice(0,6)).forEach(i=>pool.push(i))}if(!pool.length)return;const p=pool[Math.floor(Math.random()*pool.length)];
+ const c=$("pickCard");c.hidden=false;c.className="card pick";c.innerHTML="<h2>🎲 Surprise pick</h2>"+(p.event?evCard(p):card(p,true));c.scrollIntoView({behavior:"smooth",block:"center"})};
+(function(){const _sl=setLoc,_sd=selectDate;setLoc=function(p){state.show={pl:5,id:5,ev:5};state.ev.key="";_sl(p);loadEvents()};selectDate=function(d,u){_sd(d,u);if(state.loc)loadEvents()}})();
 (function(){const l=LS("dd_loc");if(l&&l.lat!=null)setLoc(l);else{drawDays();$("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”.";$("wxStatus").textContent="Pick a location to see the weather.";$("plStatus").textContent="Pick a location to find places nearby."}})();
 </script></body></html>

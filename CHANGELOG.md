@@ -1,5 +1,27 @@
 # Changelog
 
+## v1.4.1 — 2026-10-28
+- Places of interest ranking now uses category tiers that outrank mood and distance:
+  1) museums, parks, libraries, galleries, gardens, nature, zoos/aquariums, historic sites/landmarks, viewpoints, trails, beaches, theaters, cinemas;
+  2) other activities; 3) food & drink (restaurants, cafés, bars, breweries), still listed but below.
+- New "foodie" mood chip: selecting it moves food & drink to the top.
+- The first 5 places shown are diversified (1 per category first, then up to 2).
+- Wikipedia classification fixes: pubs and city/town articles are no longer tagged as gardens/parks; statues are landmarks.
+- Verified libraries come from Photon (amenity:library), Nominatim ("library") and Wikipedia.
+
+## v1.4 — 2026-10-28
+- Three sections in fixed order, each with a header, count, independent loading, 5 items + "Show more":
+  📍 Places of interest · 💡 Date night ideas · 🎉 Happening on <date>.
+- Date night ideas: 56 ideas tagged by mood/indoor-outdoor/cost/group size, filtered by mood, weather and budget,
+  randomized with a 🔀 Shuffle button, each tied to the nearest matching real place with a Google Maps directions link.
+- Events: public holidays on/near the selected date via Nager.Date (no key, CORS OK), e.g. Thanksgiving, Culture Day.
+- "Find events" deep links for the date + mood keywords: Google, Eventbrite, Meetup, AllEvents, Ticketmaster, Bandsintown (US).
+- Optional Ticketmaster Discovery API: set TICKETMASTER_KEY at the top of the script; hidden when empty.
+  Events get mood/indoor/cost tags, image, time, venue, distance, price and a ticket link.
+- "Surprise me" now picks from places, ideas and events.
+- Geolocation now records the country code (used for holidays).
+- Wikidata festivals evaluated and skipped (slow, no reliable dates).
+
 ## 2026-10-28 — v1.3.2
 - Pressing Enter or tapping "Find activities" now uses what's typed in the location box: the top suggestion if one is showing, otherwise it looks the text up. Weather and places then reload together for that location. If nothing matches, it says "Couldn't find “…”".
 - Weather and typical-weather results that arrive after the location has changed are thrown away, so two locations never mix.
