@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>Privacy — Dilly-Dally</title>
+<style>
+:root{--bg:#fbf8f3;--card:#fff;--fg:#222;--mut:#666;--acc:#e8673c;--acc2:#2a9d8f;--bd:#e5ddd2;--chip:#f1ebe2}
+@media(prefers-color-scheme:dark){:root{--bg:#16171b;--card:#212329;--fg:#eee;--mut:#9a9ca3;--acc:#ff8a5c;--acc2:#4cc9b8;--bd:#33363e;--chip:#2c2f36}}
+*{box-sizing:border-box}body{margin:0;font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
+header{padding:18px 16px 6px;text-align:center}h1{margin:0;font-size:1.6rem}h1 span{color:var(--acc)}header p{margin:4px 0;color:var(--mut);font-size:.9rem}
+main{max-width:760px;margin:auto;padding:8px 12px 40px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px 16px;margin:10px 0}
+h2{font-size:1.05rem;margin:0 0 8px}p,li{font-size:.92rem}ul{padding-left:20px;margin:6px 0}li{margin:4px 0}
+a{color:var(--acc2)}code{background:var(--chip);border-radius:6px;padding:0 5px;font-size:.85em}.mut{color:var(--mut);font-size:.85rem}
+</style></head><body>
+<header><h1><a href="./" style="color:inherit;text-decoration:none">🎲 Dilly-<span>Dally</span></a></h1><p>Privacy</p></header>
+<main>
+<section class="card"><h2>The short version</h2>
+<ul>
+<li>There are no accounts, and we don't sell or rent your data.</li>
+<li>Your location and preferences stay in your own browser. To find things to do, your location (or the area you typed) is sent to the map, weather and event services listed below.</li>
+<li>We don't set cookies. Our site analytics are cookieless.</li>
+</ul>
+<p class="mut">Effective date: October 29, 2026</p></section>
+
+<section class="card"><h2>Your location</h2>
+<p>You can type a place, or tap “Use my location”, in which case your browser asks your permission before sharing your position. The app uses your location in your browser to look up weather, places and events nearby. We have no server-side database of users or locations.</p></section>
+
+<section class="card"><h2>What's stored in your browser</h2>
+<p>Dilly-Dally uses your browser's <code>localStorage</code> (and <code>sessionStorage</code>) on your device only. You can clear it at any time in your browser settings, or with the ✕ button in the “Where” box, which removes your saved location.</p>
+<ul>
+<li><code>dd_loc</code>: the place you last chose (name and coordinates).</li>
+<li><code>dd_date</code>: the date you picked.</li>
+<li><code>dd_prefs</code>: mood, group size, budget, radius and indoor/outdoor setting.</li>
+<li><code>dd_tab</code>: which results tab you last opened.</li>
+<li><code>dd_pl_…</code> and <code>dd_mk_…</code>: a temporary cache of places and markets found near a location, so repeat visits load faster.</li>
+<li><code>dd_tm_key</code>: only if you paste your own Ticketmaster key in the Events settings. It stays in your browser and is sent only to Ticketmaster.</li>
+<li><code>dd_ov_fail</code> (session only): notes that a map server was slow, so the app can use a different one.</li>
+</ul></section>
+
+<section class="card"><h2>Services that receive your location</h2>
+<p>To show results, your browser sends the place name you typed, or approximate coordinates, to these services. Each has its own privacy policy. Where we say “via our proxy”, the request goes through our server first (see below), and the service sees our server instead of your device.</p>
+<ul>
+<li><b>Place search:</b> <a href="https://photon.komoot.io/" target="_blank" rel="noopener">Photon (Komoot)</a>, with <a href="https://nominatim.openstreetmap.org/" target="_blank" rel="noopener">Nominatim / OpenStreetMap</a> as a backup. These also turn “Use my location” into a town name.</li>
+<li><b>Places nearby:</b> <a href="https://overpass-api.de/" target="_blank" rel="noopener">Overpass API</a> (OpenStreetMap data), Nominatim, Photon, and <a href="https://www.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a> (nearby articles). Nominatim and Overpass requests may go via our caching proxy.</li>
+<li><b>Weather:</b> the <a href="https://www.weather.gov/" target="_blank" rel="noopener">US National Weather Service</a> (US locations, called directly), <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a> (via our proxy), and <a href="https://www.visualcrossing.com/" target="_blank" rel="noopener">Visual Crossing</a> for dates far ahead (via our proxy).</li>
+<li><b>Events:</b> <a href="https://www.ticketmaster.com/" target="_blank" rel="noopener">Ticketmaster</a> via our proxy, or directly from your browser if you paste your own key. <a href="https://date.nager.at/" target="_blank" rel="noopener">Nager.Date</a> receives only your country code, to list public holidays. Free local events come from a file on this site that we compile from public library and city calendars, so loading it sends your location nowhere.</li>
+<li><b>Links you tap</b> (Maps, Tickets, Eventbrite, Meetup, Bandsintown, AllEvents, Groupon, Google search and others) open those sites, and the link may include the place or city name. What happens there is covered by their policies.</li>
+</ul></section>
+
+<section class="card"><h2>Our proxy (Cloudflare Workers)</h2>
+<p>Some requests go through a small proxy we run on Cloudflare Workers. It keeps our API keys private, adds the identification some services require, and caches results for a short time (minutes to a day) so we stay within their limits. It forwards only what's needed: rounded coordinates, a date and search terms. It doesn't log your requests or link them to you. Like any web server, Cloudflare processes your IP address to deliver the request (see <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare's privacy policy</a>).</p></section>
+
+<section class="card"><h2>Analytics</h2>
+<p>We may use <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">Cloudflare Web Analytics</a> to count page views. It's cookieless: it doesn't set cookies, use local storage for tracking, or fingerprint your device.</p></section>
+
+<section class="card"><h2>Affiliate links</h2>
+<p>We may earn a commission from some links on this site. If we add affiliate links, the partner site may set its own cookies when you click through, under that partner's policy. Dilly-Dally itself doesn't set cookies.</p></section>
+
+<section class="card"><h2>Children</h2>
+<p>Dilly-Dally is a general-audience planning tool. It isn't directed at children under 13, and we don't knowingly collect personal information from them.</p></section>
+
+<section class="card"><h2>Changes</h2>
+<p>If this policy changes, we'll update it on this page and change the effective date above.</p></section>
+<p style="text-align:center"><a href="./">← Back to Dilly-Dally</a></p>
+</main></body></html>
