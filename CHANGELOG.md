@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.8.1 — 2026-10-29
+
+### Fixed
+- Far-date weather (more than 10 days out) sometimes showed no weather line or stayed stuck on "Loading weather…" when the date was changed while the NWS/MET forecast was still loading, when the date was picked before a location, after rapid date changes, or after clearing the location mid-load.
+  - Weather now has a single `ensureWx()` path. It runs on every date change, as soon as a location is set (the history lookup no longer waits for NWS/MET to finish), and when the forecast load completes.
+  - Forecast loads carry a generation token (`wxGen`), so a stale load from an older location never overwrites a newer one. Clearing the location invalidates any load in flight.
+  - Stale history responses are stored under their own location|date key and only redraw if they still match the current selection.
+  - "Loading…" only appears while a request is actually in flight. Otherwise the line always ends in a forecast, "Typical for this date", or "Weather unknown" with Retry. History lookups also have a hard 20s watchdog.
+
+### Changed
+- Privacy page link enabled in the footer (`SHOW_PRIVACY_LINK=true`), now that privacy.html is approved (effective October 29, 2026).
+
 ## v1.8 — 2026-10-29 (weather/geocoding sources, footer, privacy draft)
 - **Open-Meteo removed everywhere.** Its free tier is non-commercial.
 - **Forecast, US:** the National Weather Service (api.weather.gov `/points` → `forecast` + `forecastHourly`), called straight from the browser (CORS `*`, no key). It covers about 7 days.

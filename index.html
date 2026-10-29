@@ -218,7 +218,7 @@ $("geo").onclick=()=>{if(!navigator.geolocation||(window.isSecureContext===false
  navigator.geolocation.getCurrentPosition(async p=>{const lat=+p.coords.latitude.toFixed(4),lon=+p.coords.longitude.toFixed(4);let name=`My location (${lat}, ${lon})`,gcc="";
   try{const j=await fetchJ(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}`);const a=j.address||{};name="📡 "+[a.city||a.town||a.village||a.county,a.state].filter(Boolean).join(", ");gcc=(a.country_code||"").toUpperCase()}catch(e){}
   if(lg!==locGen)return;setLoc({name,lat,lon,cc:gcc})},e=>{if(lg!==locGen)return;$("locStatus").innerHTML=`<span class="err">Couldn't get location (${esc(e.message)}). On file:// some browsers block it — try searching instead.</span>`},{timeout:15000,maximumAge:600000})};
-function setLoc(p){state.loc=p;(function(){const d=LS("dd_date");state.date=d&&d>=todayStr()?d:todayStr()})();save("dd_loc",p);$("loc").value=p.name;$("locStatus").textContent=`Using ${p.name} (${(+p.lat).toFixed(3)}, ${(+p.lon).toFixed(3)})`;loadWx();loadPlaces()}
+function setLoc(p){state.loc=p;(function(){const d=LS("dd_date");state.date=d&&d>=todayStr()?d:todayStr()})();save("dd_loc",p);$("loc").value=p.name;$("locStatus").textContent=`Using ${p.name} (${(+p.lat).toFixed(3)}, ${(+p.lon).toFixed(3)})`;loadWx();drawDays();ensureWx();loadPlaces()}
 // ---------- weather
 const WMO=c=>c===0?"☀️":c<=2?"🌤":c===3?"☁️":c<=48?"🌫":c<=67?"🌧":c<=77?"❄️":c<=82?"🌦":c<=86?"🌨":"⛈";
 function dayClass(hi,lo,pp,wind,code){let s=0;if(pp>=60||code>=95)s+=2;else if(pp>=30)s+=1;if(hi<45||hi>95)s+=2;else if(hi<58||hi>88)s+=1;if(wind>25)s+=2;else if(wind>15)s+=1;if(code>=71&&code<=86)s+=1;return s<=1?"nice":s<=2?"mixed":"indoor"}
@@ -260,30 +260,33 @@ async function wxMET(lat,lon){const qs=`lat=${(+lat).toFixed(4)}&lon=${(+lon).to
  return order.filter(d=>days[d].t.length>=(d===order[0]?1:4)).map(d=>{const w=days[d],pool=w.day.length?w.day:w.all;let code=2,pp=0;
   if(pool.length){const cs=pool.map(x=>x[0]).sort((a,b)=>sev(b)-sev(a));const wet=pool.filter(x=>x[0]>=45);code=wet.length>=Math.max(2,pool.length/4)?cs[0]:cs[Math.floor(cs.length/2)];pp=Math.max.apply(null,pool.map(x=>x[1]))}
   return {kind:"forecast",src:"met",date:d,hi:Math.round(Math.max.apply(null,w.t)),lo:Math.round(Math.min.apply(null,w.t)),pp,wind:Math.round(w.wind),code,hourly:w.hrs}})}
-async function loadWx(){if(!state.loc)return;const {lat,lon}=state.loc;const lk=locKey();state.wx=null;state.wxErr="";state.wxSrc=[];state.wxT={};$("wxStatus").textContent="Loading forecast…";
+let wxGen=0;state.wxBusy=false;
+async function loadWx(){if(!state.loc)return;const g=++wxGen;state.wxBusy=true;try{await loadWx0(g)}catch(e){if(g===wxGen&&!state.wx)state.wxErr="Forecast failed: "+e.message}finally{if(g===wxGen){state.wxBusy=false;if(state.loc)selectDate(state.date)}}}
+async function loadWx0(g){const {lat,lon}=state.loc;const lk=locKey();state.wx=null;state.wxErr="";state.wxSrc=[];state.wxT={};
  const t0=Date.now(),errs=[];const us=state.loc.cc?state.loc.cc==="US":isUS(+lat,+lon);
  const nws=us?wxNWS(lat,lon).then(r=>{state.wxT.nws=Date.now()-t0;return r},e=>{state.wxT.nws=Date.now()-t0;errs.push(e.message);return null}):Promise.resolve(null);
  const met=wxMET(lat,lon).then(r=>{state.wxT.met=Date.now()-t0;return r},e=>{state.wxT.met=Date.now()-t0;errs.push(e.message);return null});
- const a=await nws;if(locKey()!==lk)return;
+ const a=await nws;if(g!==wxGen||locKey()!==lk)return;
  if(a){state.wx=a;state.wxSrc=["nws"];a.forEach(w=>w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,w.code));selectDate(state.date)}
- const b=await met;if(locKey()!==lk)return;
+ const b=await met;if(g!==wxGen||locKey()!==lk)return;
  if(b){const have={};(state.wx||[]).forEach(w=>have[w.date]=1);const add=b.filter(w=>!have[w.date]&&w.date>=todayStr());add.forEach(w=>w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,w.code));
   if(add.length){state.wx=(state.wx||[]).concat(add).sort((x,y)=>x.date<y.date?-1:1);state.wxSrc.push("met")}}
- if(!state.wx)state.wxErr="Forecast failed: "+errs.join("; ");else state.wxErr="";
- selectDate(state.date)}
+ if(!state.wx)state.wxErr="Forecast failed: "+(errs.join("; ")||"no data");else state.wxErr=""}
 function forecastEnd(){return state.wx&&state.wx.length?state.wx[state.wx.length-1].date:addDays(todayStr(),9)}
 async function loadTypical(date){if(!state.loc)return;const k=locKey()+"|"+date;if(state.typ[k]||typPend[k])return;typPend[k]=1;const {lat,lon}=state.loc;
- $("wxStatus").textContent="Loading weather for this date…";
+ if(state.date===date)drawDays();
  try{if(!API_BASE)throw new Error("not configured");let j;
-  try{j=await fetchJ0(`${API_BASE}/weather/history?lat=${(+lat).toFixed(3)}&lon=${(+lon).toFixed(3)}&date=${date}`,{},15000)}catch(e){throw new Error(/HTTP (503|404)/.test(e.message)?"not configured":e.message)}
+  try{j=await Promise.race([fetchJ0(`${API_BASE}/weather/history?lat=${(+lat).toFixed(3)}&lon=${(+lon).toFixed(3)}&date=${date}`,{},15000),new Promise((_,rj)=>setTimeout(()=>rj(new Error("timed out")),20000))])}catch(e){throw new Error(/HTTP (503|404)/.test(e.message)?"not configured":e.message)}
   if(j.hi==null||j.lo==null)throw new Error("no data for this date");
   const w={kind:"typical",src:"vc",date,hi:Math.round(j.hi),lo:Math.round(j.lo),pp:Math.round(j.pp!=null?j.pp:0),wind:Math.round(j.wind||0),code:-1,hourly:[],cond:j.conditions||"",fc:j.source==="fcst"};
   w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,0);state.typ[k]=w;delete state.typErr[k]}
  catch(e){state.typErr[k]=e.message}
  delete typPend[k];
- if(state.date===date&&locKey()+"|"+date===k){drawDays();render()}}
+ if(state.loc&&state.date===date&&locKey()+"|"+date===k){drawDays();render()}}
+function farDate(d){return d>forecastEnd()||(!state.wx&&d>addDays(todayStr(),9))}
+function ensureWx(){if(!state.loc)return;const d=state.date,k=locKey()+"|"+d;if(farDate(d)&&!state.typ[k]&&!state.typErr[k]&&!typPend[k])loadTypical(d)}
 function selectDate(d,user){if(!d||d<todayStr())d=todayStr();const bump=!!(state.wx&&state.wx.length)&&d<state.wx[0].date;if(bump)d=state.wx[0].date;state.date=d;if(user&&!bump)save("dd_date",d);drawDays();render();
- if(state.loc&&(d>forecastEnd()||(!state.wx&&d>addDays(todayStr(),9))))loadTypical(d)}
+ ensureWx()}
 function drawDays(){const lbl={nice:"Nice out",mixed:"Mixed",indoor:"Indoor weather",unknown:"Weather unknown"};
  $("planTitle").textContent="Plans for "+niceDate(state.date);
  const di=$("dateIn");di.min=todayStr();di.value=state.date;
@@ -300,7 +303,9 @@ function drawDays(){const lbl={nice:"Nice out",mixed:"Mixed",indoor:"Indoor weat
  else if(state.typErr[k])h=state.typErr[k]==="not configured"?`<div class="wxsum"><span class="tag unknown">Weather unknown</span> Forecast not available this far out yet — outdoor options not filtered.</div>`:`<div class="wxsum"><span class="tag unknown">Weather unknown</span> outdoor options not filtered.</div>`+retryHtml("Weather lookup for this date failed: "+state.typErr[k],"loadTypical(state.date)");
  else if(state.date<=forecastEnd()&&state.wxErr)h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span></div>`+retryHtml(state.wxErr,"loadWx()");
  else if(state.wx&&state.date<=forecastEnd())h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span> no forecast for this date here.</div>`;
- else h=`<span class="status">Loading weather…</span>`;
+ else if(typPend[k]||state.wxBusy)h=`<span class="status">${typPend[k]?"Loading weather for this date…":"Loading forecast…"}</span>`;
+ else if(farDate(state.date)){h=`<span class="status">Loading weather for this date…</span>`;setTimeout(ensureWx,0)}
+ else h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span></div>`+retryHtml("Forecast unavailable","loadWx()");
  if(state.wxErr&&w&&w.kind!=="forecast")h+=`<div class="err" style="font-size:.8rem">${esc(state.wxErr)}</div>`;
  $("wxStatus").innerHTML=h;updAttrib()}
 $("dateIn").onchange=()=>selectDate($("dateIn").value,true);
@@ -670,7 +675,7 @@ function refreshTabs(){const src={pl:"plCount",id:"idCount",ev:"evCount"};TABS.f
 // v1.7 clear-location button
 function clrVis(){$("locClr").hidden=!$("loc").value}
 $("loc").addEventListener("input",clrVis);
-function clearLoc(){locGen++;placeGen++;evGen++;mkGen++;clearTimeout(dT);lastQ="";shown={q:"",list:[]};
+function clearLoc(){locGen++;wxGen++;state.wxBusy=false;placeGen++;evGen++;mkGen++;clearTimeout(dT);lastQ="";shown={q:"",list:[]};
  state.loc=null;state.places=[];state.placesFor="";state.wx=null;state.wxErr="";state.ev.key="";state.ev.tm=[];state.ev.hol=[];state.ev.tmBusy=state.ev.holBusy=false;state.ev.tmErr=state.ev.holErr="";
  state.mk.key="";state.mk.list=[];state.mk.busy=false;state.mk.err="";state.show={pl:5,id:5,ev:5,mk:5};ranked=[];ideaPicks=[];evItems=[];
  try{localStorage.removeItem("dd_loc");const pr=LS("dd_prefs");if(pr&&(pr.loc||pr.lat!=null)){delete pr.loc;delete pr.lat;delete pr.lon;save("dd_prefs",pr)}}catch(e){}
