@@ -229,39 +229,40 @@ function ohClosed(oh,dow){if(!oh)return null;try{oh=oh.trim();if(/^24\/7$/.test(
  if(!any)return null;return offHit||!covered}catch(e){return null}}
 
 async function loadPlaces(){const {lat,lon}=state.loc;const mi=+$("radius").value;const r=Math.round(mi*1609.34);const key=`${lat},${lon},${r}`;state.placesFor=key;
- const cached=LS("dd_pl_"+key);if(cached&&Date.now()-cached.t<36e5){state.places=cached.p;state.src=cached.s;$("plStatus").textContent=`${state.places.length} places within ${mi} mi (${cached.s}, cached).`;updAttrib();render();return}
- state.places=[];state.src="";const seen={},used={},errs=[];let phDone=false,ovDone=false;
+ const cached=LS("dd_pl_"+key);if(cached&&cached.p&&cached.p.length&&Date.now()-cached.t<36e5){state.places=cached.p;state.src=cached.s;$("plStatus").textContent=`${state.places.length} places within ${mi} mi (${cached.s}, cached).`;updAttrib();render();return}
+ state.places=[];state.src="";const seen={},used={},errs=[],ovErrs=[];let phDone=false,ovDone=false;const deadline=Date.now()+45000;
+ setTimeout(function(){if(state.placesFor===key&&!(phDone&&ovDone)){phDone=ovDone=true;errs.push("stopped after 45s");status()}},45500);
  $("plStatus").textContent="Finding places nearby (OpenStreetMap)…";render();
  function ingest(elements,src,prefer){let n=0;for(const e of elements){const t=e.tags||{};const c=classify(t);if(!c)continue;const la=(e.lat!=null?e.lat:(e.center&&e.center.lat)),lo=(e.lon!=null?e.lon:(e.center&&e.center.lon));if(la==null)continue;
   const d=hav(lat,lon,la,lo);if(d>mi*1.05)continue;const name=t.name||CATS[c][0];const k=c+"|"+name.toLowerCase();const p={name,c,lat:la,lon:lo,dist:d,tags:t,id:e.type+"/"+e.id};
   if(seen[k]!=null){if(prefer)state.places[seen[k]]=p;continue}seen[k]=state.places.length;state.places.push(p);n++}
   if(n||prefer)used[src]=1;state.src=Object.keys(used).join(" + ")||"OpenStreetMap";updAttrib();render()}
  function status(){if(state.placesFor!==key)return;const busy=!(phDone&&ovDone);
-  if(!state.places.length&&!busy){$("plStatus").innerHTML=retryHtml("Couldn't reach OpenStreetMap — "+errs.join("; ")+". Showing anywhere-ideas.","loadPlaces()");return}
+  if(!state.places.length&&!busy){$("plStatus").innerHTML=retryHtml(errs.length?"No places loaded — map services failed: "+errs.concat(ovErrs).slice(0,4).join("; ")+". Try again, or a larger radius.":"No places found within "+mi+" mi in OpenStreetMap. Try a larger radius.","loadPlaces()")+" <small>Showing anywhere-ideas meanwhile.</small>";return}
+  if(!busy&&errs.length&&state.places.length){$("plStatus").innerHTML=esc(`${state.places.length} places found within ${mi} mi (${state.src}). Some lookups failed (${errs.length}) — results may be incomplete.`)+' <button onclick="loadPlaces()">Retry</button>';return}
   $("plStatus").textContent=`${state.places.length} places ${busy?"so far":"found"} within ${mi} mi (${state.src||"OpenStreetMap"})${busy?" — still loading…":"."}`+(!busy&&errs.length?` (${errs.length} lookups skipped)`:"");
-  if(!busy)save("dd_pl_"+key,{t:Date.now(),p:state.places,s:state.src})}
+  if(!busy&&state.places.length&&!errs.some(e=>/stopped/.test(e)))save("dd_pl_"+key,{t:Date.now(),p:state.places,s:state.src})}
  // Overpass: opportunistic, one short attempt, rotate mirrors, skip after 2 failures this session
  let ovFails=0;try{ovFails=+sessionStorage.getItem("dd_ov_fail")||0}catch(e){}
  if(ovFails>=2){ovDone=true}else{const mir=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"][(ovFails+Math.floor(Date.now()/1000))%2];
   const A=`(around:${r},${lat},${lon})`;
   const q=`[out:json][timeout:8];(nwr${A}[leisure~"^(park|nature_reserve|bowling_alley|escape_game|amusement_arcade|water_park|ice_rink|swimming_pool|miniature_golf|golf_course|sports_centre|dog_park|garden)$"][name];nwr${A}[tourism~"^(museum|gallery|zoo|aquarium|theme_park|viewpoint|attraction)$"][name];nwr${A}[amenity~"^(cinema|theatre|library|arts_centre|marketplace|pub|bar|cafe|restaurant)$"][name];nwr${A}[craft=brewery];nwr${A}[shop=farm][name];nwr${A}[natural=beach][name];);out center tags 600;`;
-  fetchJ(mir+"?data="+encodeURIComponent(q),{},8000).then(j=>{if(state.placesFor!==key)return;ingest(j.elements||[],"Overpass",true)},e=>{errs.push(e.message);try{sessionStorage.setItem("dd_ov_fail",ovFails+1)}catch(x){}}).then(()=>{ovDone=true;status()})}
+  fetchJ(mir+"?data="+encodeURIComponent(q),{},8000).then(j=>{if(state.placesFor!==key)return;ingest(j.elements||[],"Overpass",true)},e=>{ovErrs.push("Overpass: "+e.message);try{sessionStorage.setItem("dd_ov_fail",ovFails+1)}catch(x){}}).then(()=>{ovDone=true;status()})}
  // Photon: sequential, popular first, progressive
- await photon(lat,lon,mi,key,els=>{if(state.placesFor===key){ingest(els,"Photon/OpenStreetMap",false);status()}},m=>errs.push(m));
+ await photon(lat,lon,mi,key,els=>{if(state.placesFor===key){ingest(els,"Photon/OpenStreetMap",false);status()}},m=>errs.push(m),deadline);
  phDone=true;status()}
-const PH=[["park",["leisure:park","leisure:dog_park","leisure:playground","leisure:nature_reserve","leisure:garden","leisure:water_park","tourism:theme_park"]],
-["restaurant",["amenity:restaurant"]],["cafe",["amenity:cafe"]],["museum",["tourism:museum","tourism:gallery","amenity:arts_centre"]],
-["cinema",["amenity:cinema","amenity:theatre"]],["theatre",["amenity:theatre","amenity:cinema"]],["brewery",["craft:brewery","amenity:pub","amenity:bar"]],["bar",["amenity:bar","amenity:pub"]],
-["bowling",["leisure:bowling_alley"]],["golf",["leisure:golf_course","leisure:miniature_golf"]],["library",["amenity:library"]],["zoo",["tourism:zoo","tourism:aquarium"]],
-["arcade",["leisure:amusement_arcade"]],["escape",["leisure:escape_game"]],["market",["amenity:marketplace","shop:farm"]],["farm",["shop:farm"]],["ice",["leisure:ice_rink"]],
-["pool",["leisure:swimming_pool","leisure:sports_centre"]],["center",["leisure:sports_centre"]],["beach",["natural:beach","tourism:viewpoint"]],["attraction",["tourism:attraction","tourism:viewpoint"]]];
+// Photon reverse lookups: location-agnostic (no keywords), nearest-first, filtered by OSM tags
+const PH=[["fun",["tourism:museum","tourism:gallery","amenity:cinema","amenity:theatre","leisure:bowling_alley","leisure:amusement_arcade","leisure:escape_game","leisure:miniature_golf","tourism:zoo","tourism:aquarium","tourism:theme_park","leisure:water_park","amenity:arts_centre"]],
+["parks",["leisure:park","leisure:garden","leisure:nature_reserve","natural:beach","tourism:viewpoint","leisure:dog_park"]],["food",["amenity:restaurant","amenity:cafe"]],
+["drinks",["craft:brewery","amenity:pub","amenity:bar","amenity:marketplace","shop:farm"]],["more",["tourism:attraction","amenity:library","leisure:sports_centre","leisure:ice_rink","leisure:swimming_pool","leisure:golf_course","leisure:playground"]]];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function photon(lat,lon,mi,key,onBatch,onErr){const dl=mi/69,dn=mi/(69*Math.cos(lat*Math.PI/180));const bb=[lon-dn,lat-dl,lon+dn,lat+dl].map(x=>x.toFixed(4)).join(",");
- for(let k=0;k<PH.length;k++){if(state.placesFor!==key)return;const q=PH[k][0],tags=PH[k][1];
-  const url=`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&lat=${lat}&lon=${lon}&bbox=${bb}&limit=25&lang=en`+tags.map(t=>"&osm_tag="+t).join("");
-  let j=null,last="";for(let tr=0;tr<3&&!j;tr++){if(tr)await sleep(700*Math.pow(2,tr)+Math.random()*500);try{j=await fetchJ(url,{},12000)}catch(e){last=e.message}}
-  if(j){const els=[];for(const f of j.features||[]){const pp=f.properties;const t={name:pp.name};t[pp.osm_key]=pp.osm_value;els.push({type:{N:"node",W:"way",R:"relation"}[pp.osm_type]||"node",id:pp.osm_id,lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],tags:t})}onBatch(els)}else onErr(q+": "+last);
+async function photon(lat,lon,mi,key,onBatch,onErr,deadline){const km=Math.max(1,Math.min(mi*1.609,50)).toFixed(1);
+ let ix=0;async function worker(w){await sleep(w*350);while(ix<PH.length){const k=ix++;if(state.placesFor!==key||Date.now()>deadline)return;const g=PH[k][0],tags=PH[k][1];
+  const url=`https://photon.komoot.io/reverse?lat=${(+lat).toFixed(5)}&lon=${(+lon).toFixed(5)}&radius=${km}&limit=50&lang=default`+tags.map(t=>"&osm_tag="+t).join("");
+  let j=null,last="";for(let tr=0;tr<3&&!j;tr++){if(tr)await sleep(700*Math.pow(2,tr)+Math.random()*500);if(Date.now()>deadline)break;try{j=await fetchJ(url,{},Math.min(10000,Math.max(2000,deadline-Date.now())))}catch(e){last=e.message}}
+  if(j){const els=[];for(const f of j.features||[]){const pp=f.properties;if(!pp.name)continue;const t={name:pp.name};t[pp.osm_key]=pp.osm_value;els.push({type:{N:"node",W:"way",R:"relation"}[pp.osm_type]||"node",id:pp.osm_id,lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],tags:t})}onBatch(els)}else onErr(g+": "+(last||"timed out"));
   await sleep(300+Math.random()*120)}}
+ await Promise.all([worker(0),worker(1)])}
 function updAttrib(){const a=["Weather: Open-Meteo"+(curW()&&curW().kind==="typical"?" (historical archive)":" forecast"),"Places: "+(state.src||"OpenStreetMap"),"Search: Open-Meteo Geocoding / Nominatim"];$("attrib").textContent=a.join(" · ")+" · © OpenStreetMap contributors"}
 function hav(a,b,c,d){const R=3958.8,r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 // ---------- scoring
