@@ -30,8 +30,8 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <header><h1>🎲 Dilly-<span>Dally</span></h1><p>What should we do?</p></header>
 <main>
 <section class="card"><h2>📍 Where</h2>
-<div id="sugg"><input id="loc" type="text" placeholder="Search any city, town, or place…" autocomplete="off"><ul id="sl" hidden></ul></div>
-<div class="row" style="margin-top:8px"><button id="geo">📡 Use my location</button><button id="home">🏠 Garden City, MI</button></div>
+<div id="sugg"><input id="loc" type="text" placeholder="Type a city or address" autocomplete="off"><ul id="sl" hidden></ul></div>
+<div class="row" style="margin-top:8px"><button id="geo">📡 Use my location</button></div>
 <div class="status" id="locStatus"></div></section>
 
 <section class="card"><h2 id="planTitle" style="font-size:1.25rem;color:var(--acc)">Plans for today</h2><div class="row" style="margin-bottom:8px"><div><label for="dateIn">📅 Pick any date</label><input id="dateIn" type="date" style="width:100%;padding:9px;border-radius:10px;border:1px solid var(--bd);background:var(--bg)"></div></div><div class="days" id="days"></div><div class="status" id="wxStatus"></div></section>
@@ -98,7 +98,6 @@ function classify(t){
  if(t.natural==="beach"||l==="beach_resort")return"beach"; if(l==="nature_reserve")return"nature"; if(l==="sports_centre")return"sports";
  if(l==="dog_park")return"dog_park"; if(l==="garden")return"garden"; if(l==="playground")return"playground"; if(l==="park")return"park";
  if(t.route==="hiking"||t.highway==="path"&&t.name)return"trail"; if(to==="attraction")return"attraction"; return null;}
-const HOME={name:"Garden City, MI",lat:42.3256,lon:-83.3310};
 const ANYWHERE=[
  ["Board game marathon at home","🎲","in",["cozy","social","nerdy","family"],2,8,0],["Themed movie night + homemade popcorn","🍿","in",["cozy","chill","romantic"],1,8,0],
  ["Bake something new together","🧁","in",["creative","cozy","family"],1,6,1],["Neighborhood photo walk","📷","out",["creative","chill","active"],1,4,0],
@@ -122,7 +121,7 @@ const DEALS=[
  [null,"zoo",[],"Some zoos have discounted resident/winter days"],
  [/Dave ?& ?Buster/i,"arcade",[3],"Dave & Buster's half-price games days (typical, often Wed)"],
  [null,"library",[0,1,2,3,4,5,6],"Many libraries lend free museum/state-park passes"]];
-let state={loc:null,wx:null,day:0,places:[],moods:new Set(),placesFor:""};
+let state={loc:null,wx:null,day:0,places:[],moods:new Set(),placesFor:""};let placeGen=0;
 const LS=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -138,28 +137,38 @@ $("radius").oninput=()=>$("rv").textContent=$("radius").value;
 $("radius").onchange=()=>{savePrefs();loadPlaces()};
 ["people","budget","setting"].forEach(id=>$(id).onchange=()=>{savePrefs();render()});
 function savePrefs(){save("dd_prefs",{m:[...state.moods],p:$("people").value,b:$("budget").value,r:$("radius").value,s:$("setting").value})}
-const pr=LS("dd_prefs");if(pr){pr.m.forEach(m=>state.moods.add(m));[...$("moods").children].forEach(b=>b.classList.toggle("on",state.moods.has(b.textContent)));$("people").value=pr.p;$("budget").value=pr.b;$("radius").value=pr.r;$("rv").textContent=pr.r;$("setting").value=pr.s}
+const pr=LS("dd_prefs");if(pr){(Array.isArray(pr.m)?pr.m:[]).forEach(m=>state.moods.add(m));[...$("moods").children].forEach(b=>b.classList.toggle("on",state.moods.has(b.textContent)));if(pr.p!=null)$("people").value=pr.p;if(pr.b!=null)$("budget").value=pr.b;if(pr.r!=null){$("radius").value=pr.r;$("rv").textContent=pr.r}if(pr.s)$("setting").value=pr.s}
 // ---------- location
 let dT,lastQ="";
 $("loc").addEventListener("input",()=>{clearTimeout(dT);const q=$("loc").value.trim();if(q.length<2){$("sl").hidden=true;return}dT=setTimeout(()=>search(q),400)});
 document.addEventListener("click",e=>{if(!$("sugg").contains(e.target))$("sl").hidden=true});
-async function search(q){lastQ=q;let list=[];
- try{const j=await fetchJ("https://geocoding-api.open-meteo.com/v1/search?count=8&language=en&format=json&name="+encodeURIComponent(q.split(",")[0]));
+let nomLast=0,geoCache={};
+async function geocode(q){const ck=q.toLowerCase();if(geoCache[ck])return geoCache[ck];let list=[];
+ try{const j=await fetchJ("https://geocoding-api.open-meteo.com/v1/search?count=8&language=en&format=json&name="+encodeURIComponent(q.split(",")[0].trim()),{},10000);
   list=(j.results||[]).map(r=>({name:[r.name,r.admin1,r.country_code].filter(Boolean).join(", "),lat:r.latitude,lon:r.longitude}));
-  const extra=q.split(",").slice(1).join(" ").trim().toLowerCase();if(extra)list.sort((a,b)=>(b.name.toLowerCase().includes(extra))-(a.name.toLowerCase().includes(extra)));}catch(e){}
- if(list.length<3){try{const j=await fetchJ("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&q="+encodeURIComponent(q));
-  list=list.concat(j.map(r=>({name:r.display_name.split(",").slice(0,4).join(","),lat:+r.lat,lon:+r.lon})))}catch(e){}}
- if(q!==lastQ)return;const ul=$("sl");ul.innerHTML="";
+  const extra=q.split(",").slice(1).join(" ").trim().toLowerCase();if(extra)list.sort((a,b)=>(b.name.toLowerCase().indexOf(extra)>=0)-(a.name.toLowerCase().indexOf(extra)>=0));}catch(e){}
+ if(!list.length){const wait=nomLast+1100-Date.now();if(wait>0)await sleep(wait);nomLast=Date.now();
+  try{const j=await fetchJ("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&q="+encodeURIComponent(q),{},10000);
+   list=j.map(r=>({name:r.display_name.split(",").slice(0,4).join(","),lat:+r.lat,lon:+r.lon}))}catch(e){}}
+ if(list.length)geoCache[ck]=list;return list}
+let shown={q:"",list:[]};
+async function search(q){lastQ=q;const list=await geocode(q);
+ if(q!==lastQ||$("loc").value.trim()!==q)return;shown={q,list};const ul=$("sl");ul.innerHTML="";
  if(!list.length){ul.innerHTML="<li>No matches</li>"}
  list.forEach(p=>{const li=document.createElement("li");li.textContent=p.name;li.onclick=()=>{ul.hidden=true;setLoc(p)};ul.append(li)});ul.hidden=false}
-$("loc").addEventListener("keydown",e=>{if(e.key==="Enter"){const f=$("sl").querySelector("li");if(f&&f.onclick)f.onclick()}});
-$("home").onclick=()=>setLoc(HOME);
+async function resolveTyped(){const q=$("loc").value.trim();clearTimeout(dT);$("sl").hidden=true;
+ if(!q||(state.loc&&q===state.loc.name)){if(state.loc)setLoc(state.loc);else $("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”.";return}
+ let list=shown.q===q?shown.list:null;if(!list||!list.length){$("locStatus").textContent="Looking up “"+q+"”…";lastQ=q;list=await geocode(q)}
+ if($("loc").value.trim()!==q)return;
+ if(!list.length){$("locStatus").innerHTML=`<span class="err">Couldn't find “${esc(q)}”. Try adding a state or country, e.g. “Madison, WI”.</span>`;return}
+ setLoc(list[0])}
+$("loc").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();resolveTyped()}});
 $("geo").onclick=()=>{if(!navigator.geolocation||(window.isSecureContext===false&&location.protocol!=="file:")){$("locStatus").innerHTML='<span class="err">Geolocation not supported.</span>';return}
  $("locStatus").textContent="Getting your location…";
  navigator.geolocation.getCurrentPosition(async p=>{const lat=+p.coords.latitude.toFixed(4),lon=+p.coords.longitude.toFixed(4);let name=`My location (${lat}, ${lon})`;
   try{const j=await fetchJ(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}`);const a=j.address||{};name="📡 "+[a.city||a.town||a.village||a.county,a.state].filter(Boolean).join(", ")}catch(e){}
   setLoc({name,lat,lon})},e=>{$("locStatus").innerHTML=`<span class="err">Couldn't get location (${esc(e.message)}). On file:// some browsers block it — try searching instead.</span>`},{timeout:15000,maximumAge:600000})};
-function setLoc(p){state.loc=p;save("dd_loc",p);$("loc").value=p.name;$("locStatus").textContent=`Using ${p.name} (${(+p.lat).toFixed(3)}, ${(+p.lon).toFixed(3)})`;loadWx();loadPlaces()}
+function setLoc(p){state.loc=p;(function(){const d=LS("dd_date");state.date=d&&d>=todayStr()?d:todayStr()})();save("dd_loc",p);$("loc").value=p.name;$("locStatus").textContent=`Using ${p.name} (${(+p.lat).toFixed(3)}, ${(+p.lon).toFixed(3)})`;loadWx();loadPlaces()}
 // ---------- weather
 const WMO=c=>c===0?"☀️":c<=2?"🌤":c===3?"☁️":c<=48?"🌫":c<=67?"🌧":c<=77?"❄️":c<=82?"🌦":c<=86?"🌨":"⛈";
 function dayClass(hi,lo,pp,wind,code){let s=0;if(pp>=60||code>=95)s+=2;else if(pp>=30)s+=1;if(hi<45||hi>95)s+=2;else if(hi<58||hi>88)s+=1;if(wind>25)s+=2;else if(wind>15)s+=1;if(code>=71&&code<=86)s+=1;return s<=1?"nice":s<=2?"mixed":"indoor"}
@@ -170,15 +179,15 @@ function niceDate(str){return new Date(str+"T12:00").toLocaleDateString("en-US",
 state.date=(function(){const d=LS("dd_date");return d&&d>=todayStr()?d:todayStr()})();state.typ={};state.typErr={};
 function curW(){const d=state.date;if(state.wx){for(const w of state.wx)if(w.date===d)return w}const k=locKey()+"|"+d;return state.typ[k]||null}
 function locKey(){return state.loc?(+state.loc.lat).toFixed(3)+","+(+state.loc.lon).toFixed(3):""}
-async function loadWx(){const {lat,lon}=state.loc;$("wxStatus").textContent="Loading forecast…";
+async function loadWx(){if(!state.loc)return;const {lat,lon}=state.loc;const lk=locKey();state.wx=null;state.wxErr="";$("wxStatus").textContent="Loading forecast…";
  try{const j=await fetchJ(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&hourly=temperature_2m,precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=16`);
-  const d=j.daily;state.wx=d.time.map((t,i)=>({kind:"forecast",date:t,hi:Math.round(d.temperature_2m_max[i]),lo:Math.round(d.temperature_2m_min[i]),pp:(d.precipitation_probability_max[i]==null?0:d.precipitation_probability_max[i]),wind:Math.round(d.wind_speed_10m_max[i]),code:d.weather_code[i],
+  if(locKey()!==lk)return;const d=j.daily;state.wx=d.time.map((t,i)=>({kind:"forecast",date:t,hi:Math.round(d.temperature_2m_max[i]),lo:Math.round(d.temperature_2m_min[i]),pp:(d.precipitation_probability_max[i]==null?0:d.precipitation_probability_max[i]),wind:Math.round(d.wind_speed_10m_max[i]),code:d.weather_code[i],
    hourly:j.hourly.time.map((h,k)=>({h,t:j.hourly.temperature_2m[k],p:j.hourly.precipitation_probability[k]})).filter(x=>x.h.indexOf(t)===0)}));
   state.wx.forEach(w=>w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,w.code));state.wxErr="";}
- catch(e){state.wx=null;state.wxErr="Forecast failed: "+e.message}
- selectDate(state.date)}
-function forecastEnd(){return state.wx?state.wx[state.wx.length-1].date:addDays(todayStr(),15)}
-async function loadTypical(date){const k=locKey()+"|"+date;if(state.typ[k])return;const {lat,lon}=state.loc;
+ catch(e){if(locKey()!==lk)return;state.wx=null;state.wxErr="Forecast failed: "+e.message}
+ if(locKey()!==lk)return;selectDate(state.date)}
+function forecastEnd(){return state.wx&&state.wx.length?state.wx[state.wx.length-1].date:addDays(todayStr(),15)}
+async function loadTypical(date){if(!state.loc)return;const k=locKey()+"|"+date;if(state.typ[k])return;const {lat,lon}=state.loc;
  $("wxStatus").textContent="Loading typical weather for this date (10-year history)…";
  const end=addDays(todayStr(),-7),start=(+todayStr().slice(0,4)-11)+"-01-01";
  try{const j=await fetchJ(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`,{},30000);
@@ -189,9 +198,9 @@ async function loadTypical(date){const k=locKey()+"|"+date;if(state.typ[k])retur
   const w={kind:"typical",date,hi:Math.round(hi/n),lo:Math.round(lo/n),pp:Math.round(wet/n*100),wind:Math.round(wind/n),code:-1,hourly:[],n};
   w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,0);state.typ[k]=w;delete state.typErr[k]}
  catch(e){state.typErr[k]=e.message}
- if(state.date===date){drawDays();render()}}
-function selectDate(d){if(!d||d<todayStr())d=todayStr();state.date=d;save("dd_date",d);drawDays();render();
- if(d>forecastEnd()||!state.wx&&d>addDays(todayStr(),15)){loadTypical(d)}}
+ if(state.date===date&&locKey()+"|"+date===k){drawDays();render()}}
+function selectDate(d,user){if(!d||d<todayStr())d=todayStr();const bump=!!(state.wx&&state.wx.length)&&d<state.wx[0].date;if(bump)d=state.wx[0].date;state.date=d;if(user&&!bump)save("dd_date",d);drawDays();render();
+ if(state.loc&&(d>forecastEnd()||(!state.wx&&d>addDays(todayStr(),15))))loadTypical(d)}
 function drawDays(){const lbl={nice:"Nice out",mixed:"Mixed",indoor:"Indoor weather",unknown:"Weather unknown"};
  $("planTitle").textContent="Plans for "+niceDate(state.date);
  const di=$("dateIn");di.min=todayStr();di.value=state.date;
@@ -199,17 +208,19 @@ function drawDays(){const lbl={nice:"Nice out",mixed:"Mixed",indoor:"Indoor weat
  for(let i=0;i<7;i++){const ds=addDays(todayStr(),i);let w=null;if(state.wx)for(const x of state.wx)if(x.date===ds)w=x;const dt=new Date(ds+"T12:00");
   const b=document.createElement("button");b.className="day"+(ds===state.date?" on":"");
   b.innerHTML=`<b>${i===0?"Today":dt.toLocaleDateString("en-US",{weekday:"short"})}</b>${dt.toLocaleDateString("en-US",{month:"short",day:"numeric"})}`+(w?`<div style="font-size:1.4rem">${WMO(w.code)}</div>${w.hi}° / ${w.lo}°<br>💧${w.pp}% 💨${w.wind}<br><span class="tag ${w.cls}">${lbl[w.cls]}</span>`:"");
-  b.onclick=()=>selectDate(ds);box.append(b)}
+  b.onclick=()=>selectDate(ds,true);box.append(b)}
  const w=curW(),k=locKey()+"|"+state.date;let h="";
- if(w){h=`<div class="wxsum"><b>${w.kind==="forecast"?WMO(w.code)+" Forecast":"📊 Typical for this date (not a forecast)"}</b> · ${w.hi}° / ${w.lo}°F · ${w.kind==="forecast"?"💧"+w.pp+"% chance of rain":"💧 rain on "+w.pp+"% of past days"} · 💨 ${w.wind} mph <span class="tag ${w.cls}">${lbl[w.cls]}</span>`+(w.kind==="typical"?`<br><small>Average of ${w.n} days within ±3 days of this date over ~10 years (Open-Meteo archive).</small>`:"")+`</div>`;
+ if(!state.loc)h=`<span class="status">Pick a location to see the weather.</span>`;
+ else if(w){h=`<div class="wxsum"><b>${w.kind==="forecast"?WMO(w.code)+" Forecast":"📊 Typical for this date (not a forecast)"}</b> · ${w.hi}° / ${w.lo}°F · ${w.kind==="forecast"?"💧"+w.pp+"% chance of rain":"💧 rain on "+w.pp+"% of past days"} · 💨 ${w.wind} mph <span class="tag ${w.cls}">${lbl[w.cls]}</span>`+(w.kind==="typical"?`<br><small>Average of ${w.n} days within ±3 days of this date over ~10 years (Open-Meteo archive).</small>`:"")+`</div>`;
   const aft=w.hourly.filter(x=>{const hh=+x.h.slice(11,13);return hh>=10&&hh<=20});
   if(aft.length){const best=aft.reduce((a,b)=>(b.p<a.p||b.p===a.p&&b.t>a.t)?b:a);h+=`<div class="status">Best outdoor window ~${new Date(best.h).toLocaleTimeString("en-US",{hour:"numeric"})} (${Math.round(best.t)}°F, ${best.p}% rain)</div>`}}
  else if(state.typErr[k])h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span> outdoor options not filtered.</div>`+retryHtml("Typical-weather lookup failed: "+state.typErr[k],"loadTypical(state.date)");
  else if(state.date<=forecastEnd()&&state.wxErr)h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span></div>`+retryHtml(state.wxErr,"loadWx()");
+ else if(state.wx&&state.date<=forecastEnd())h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span> no forecast for this date here.</div>`;
  else h=`<span class="status">Loading weather…</span>`;
  if(state.wxErr&&w&&w.kind!=="forecast")h+=`<div class="err" style="font-size:.8rem">${esc(state.wxErr)}</div>`;
  $("wxStatus").innerHTML=h;updAttrib()}
-$("dateIn").onchange=()=>selectDate($("dateIn").value);
+$("dateIn").onchange=()=>selectDate($("dateIn").value,true);
 // seasonal + opening hours
 function seasonNote(c,io,date,lat,tags){let m=+date.slice(5,7);if(lat<0)m=(m+5)%12+1;const t=tags||{};
  const summer=m>=6&&m<=8,winter=m===12||m<=2,cold=winter||m===3||m===11;
@@ -228,42 +239,70 @@ function ohClosed(oh,dow){if(!oh)return null;try{oh=oh.trim();if(/^24\/7$/.test(
   if(hit){if(/\b(off|closed)\b/i.test(m[2])){offHit=true;covered=false}else{covered=true;offHit=false}}}
  if(!any)return null;return offHit||!covered}catch(e){return null}}
 
-async function loadPlaces(){const {lat,lon}=state.loc;const mi=+$("radius").value;const r=Math.round(mi*1609.34);const key=`${lat},${lon},${r}`;state.placesFor=key;
+async function loadPlaces(){if(!state.loc)return;const gen=++placeGen;const {lat,lon}=state.loc;const mi=+$("radius").value;const r=Math.round(mi*1609.34);const key=`${lat},${lon},${r}`;state.placesFor=key;
  const cached=LS("dd_pl_"+key);if(cached&&cached.p&&cached.p.length&&Date.now()-cached.t<36e5){state.places=cached.p;state.src=cached.s;$("plStatus").textContent=`${state.places.length} places within ${mi} mi (${cached.s}, cached).`;updAttrib();render();return}
- state.places=[];state.src="";const seen={},used={},errs=[],ovErrs=[];let phDone=false,ovDone=false;const deadline=Date.now()+45000;
- setTimeout(function(){if(state.placesFor===key&&!(phDone&&ovDone)){phDone=ovDone=true;errs.push("stopped after 45s");status()}},45500);
- $("plStatus").textContent="Finding places nearby (OpenStreetMap)…";render();
+ state.places=[];state.src="";const seen={},used={},srcErr={},ovErrs=[];let pending=3,stopped=false;const pend={Photon:1,Wikipedia:1,Nominatim:1};const deadline=Date.now()+45000;
+ setTimeout(function(){if(gen!==placeGen||state.placesFor!==key||!(pending>0))return;stopped=true;pending=0;status()},45500);
+ $("plStatus").textContent="Finding places nearby…";render();
  function ingest(elements,src,prefer){let n=0;for(const e of elements){const t=e.tags||{};const c=classify(t);if(!c)continue;const la=(e.lat!=null?e.lat:(e.center&&e.center.lat)),lo=(e.lon!=null?e.lon:(e.center&&e.center.lon));if(la==null)continue;
-  const d=hav(lat,lon,la,lo);if(d>mi*1.05)continue;const name=t.name||CATS[c][0];const k=c+"|"+name.toLowerCase();const p={name,c,lat:la,lon:lo,dist:d,tags:t,id:e.type+"/"+e.id};
+  const d=hav(lat,lon,la,lo);if(d>mi*1.05)continue;const name=t.name||CATS[c][0];const k=c+"|"+name.toLowerCase();const p={name,c,lat:la,lon:lo,dist:d,tags:t,id:e.type+"/"+e.id,wiki:e.wiki};
   if(seen[k]!=null){if(prefer)state.places[seen[k]]=p;continue}seen[k]=state.places.length;state.places.push(p);n++}
-  if(n||prefer)used[src]=1;state.src=Object.keys(used).join(" + ")||"OpenStreetMap";updAttrib();render()}
- function status(){if(state.placesFor!==key)return;const busy=!(phDone&&ovDone);
-  if(!state.places.length&&!busy){$("plStatus").innerHTML=retryHtml(errs.length?"No places loaded — map services failed: "+errs.concat(ovErrs).slice(0,4).join("; ")+". Try again, or a larger radius.":"No places found within "+mi+" mi in OpenStreetMap. Try a larger radius.","loadPlaces()")+" <small>Showing anywhere-ideas meanwhile.</small>";return}
-  if(!busy&&errs.length&&state.places.length){$("plStatus").innerHTML=esc(`${state.places.length} places found within ${mi} mi (${state.src}). Some lookups failed (${errs.length}) — results may be incomplete.`)+' <button onclick="loadPlaces()">Retry</button>';return}
-  $("plStatus").textContent=`${state.places.length} places ${busy?"so far":"found"} within ${mi} mi (${state.src||"OpenStreetMap"})${busy?" — still loading…":"."}`+(!busy&&errs.length?` (${errs.length} lookups skipped)`:"");
-  if(!busy&&state.places.length&&!errs.some(e=>/stopped/.test(e)))save("dd_pl_"+key,{t:Date.now(),p:state.places,s:state.src})}
- // Overpass: opportunistic, one short attempt, rotate mirrors, skip after 2 failures this session
+  if(n)used[src]=1;state.src=Object.keys(used).join(" + ");updAttrib();render();status()}
+ function done(name,err){if(gen!==placeGen||state.placesFor!==key)return;delete pend[name];if(err)srcErr[name]=err;pending=Math.max(0,pending-1);status()}
+ function status(){if(gen!==placeGen||state.placesFor!==key)return;const busy=pending>0;const el=Object.keys(srcErr).map(k=>k+": "+srcErr[k]);if(stopped)Object.keys(pend).forEach(k=>el.push(k+": no response after 45s"));
+  if(!state.places.length&&!busy){$("plStatus").innerHTML=retryHtml(el.length?"No places loaded — every source failed: "+el.concat(ovErrs).join("; ")+". Try again in a minute, or a larger radius.":"No places found within "+mi+" mi. Try a larger radius.","loadPlaces()")+" <small>Showing anywhere-ideas meanwhile.</small>";return}
+  if(!state.places.length){$("plStatus").textContent="Finding places nearby…";return}
+  if(!busy&&el.length){$("plStatus").innerHTML=esc(`${state.places.length} places found within ${mi} mi (${state.src}). Some sources failed — ${el.join("; ")}.`)+' <button onclick="loadPlaces()">Retry</button>';return}
+  $("plStatus").textContent=`${state.places.length} places ${busy?"so far":"found"} within ${mi} mi (${state.src})${busy?" — still loading…":"."}`;
+  if(!busy&&!el.length)save("dd_pl_"+key,{t:Date.now(),p:state.places,s:state.src})}
+ const live=()=>gen===placeGen&&state.placesFor===key;
+ // 1) Photon (OSM, tag-filtered reverse lookups)
+ photon(lat,lon,mi,key,els=>{if(live())ingest(els,"Photon/OSM",false)},deadline).then(e=>done("Photon",e),e=>done("Photon",e.message));
+ // 2) Wikipedia GeoSearch (notable places), English + local language
+ wikiSource(lat,lon,r,key,els=>{if(live())ingest(els,"Wikipedia",false)}).then(e=>done("Wikipedia",e),e=>done("Wikipedia",e.message));
+ // 3) Nominatim bounded category search (1 req/s)
+ nomSource(lat,lon,mi,key,els=>{if(live())ingest(els,"Nominatim/OSM",false)},deadline).then(e=>done("Nominatim",e),e=>done("Nominatim",e.message));
+ // 4) Overpass: opportunistic, never blocks
  let ovFails=0;try{ovFails=+sessionStorage.getItem("dd_ov_fail")||0}catch(e){}
- if(ovFails>=2){ovDone=true}else{const mir=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"][(ovFails+Math.floor(Date.now()/1000))%2];
+ if(ovFails<2){const mir=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"][(ovFails+Math.floor(Date.now()/1000))%2];
   const A=`(around:${r},${lat},${lon})`;
   const q=`[out:json][timeout:8];(nwr${A}[leisure~"^(park|nature_reserve|bowling_alley|escape_game|amusement_arcade|water_park|ice_rink|swimming_pool|miniature_golf|golf_course|sports_centre|dog_park|garden)$"][name];nwr${A}[tourism~"^(museum|gallery|zoo|aquarium|theme_park|viewpoint|attraction)$"][name];nwr${A}[amenity~"^(cinema|theatre|library|arts_centre|marketplace|pub|bar|cafe|restaurant)$"][name];nwr${A}[craft=brewery];nwr${A}[shop=farm][name];nwr${A}[natural=beach][name];);out center tags 600;`;
-  fetchJ(mir+"?data="+encodeURIComponent(q),{},8000).then(j=>{if(state.placesFor!==key)return;ingest(j.elements||[],"Overpass",true)},e=>{ovErrs.push("Overpass: "+e.message);try{sessionStorage.setItem("dd_ov_fail",ovFails+1)}catch(x){}}).then(()=>{ovDone=true;status()})}
- // Photon: sequential, popular first, progressive
- await photon(lat,lon,mi,key,els=>{if(state.placesFor===key){ingest(els,"Photon/OpenStreetMap",false);status()}},m=>errs.push(m),deadline);
- phDone=true;status()}
+  fetchJ(mir+"?data="+encodeURIComponent(q),{},8000).then(j=>{if(live())ingest(j.elements||[],"Overpass",true)},e=>{ovErrs.push("Overpass: "+e.message);try{sessionStorage.setItem("dd_ov_fail",ovFails+1)}catch(x){}})}}
+const CC_LANG={JP:"ja",FR:"fr",DE:"de",ES:"es",MX:"es",AR:"es",CO:"es",CL:"es",PE:"es",IT:"it",PT:"pt",BR:"pt",NL:"nl",BE:"fr",SE:"sv",NO:"no",DK:"da",FI:"fi",IS:"is",PL:"pl",CZ:"cs",RU:"ru",UA:"uk",CN:"zh",TW:"zh",KR:"ko",TR:"tr",GR:"el",IL:"he",AT:"de",CH:"de",HU:"hu",RO:"ro",TH:"th",VN:"vi",ID:"id",ZA:"af"};
+const WIKI_RULES=[[/\b(school|university|college|hospital|district|station|county|township|village|neighbou?rhood|suburb|company|plant|factory|radio|television|congressional|cemetery|highway|road|street|airport|railway|church|parish|ward|municipality|prefecture|census|electoral|constituency|corporation|headquarters|office|apartment|hotel|bank)\b/i,null],
+[/hall of fame|museum|博物館|美術館|musée|museo|museu|safn/i,"tourism=museum"],[/art gallery|galerie|galería|gallery/i,"tourism=gallery"],[/\bzoo\b|動物園|zoológico/i,"tourism=zoo"],[/aquarium|水族館|acuario/i,"tourism=aquarium"],
+[/amusement park|theme park|water park|遊園地/i,"tourism=theme_park"],[/botanical|\bgardens?\b|庭園|jardin|jardín/i,"leisure=garden"],[/nature reserve|preserve|wildlife|national park|state park|forest|wetland|自然/i,"leisure=nature_reserve"],
+[/\bpark\b|公園|parc\b|parque/i,"leisure=park"],[/\bbeach\b|plage|playa/i,"natural=beach"],[/\bopera\b|theat(re|er)|concert hall|劇場|théâtre|teatro/i,"amenity=theatre"],[/\bcinema\b|\bmovies?\b|映画館|cinéma|\bcine\b/i,"amenity=cinema"],
+[/stadium|arena|ballpark|スタジアム|estadio/i,"leisure=sports_centre"],[/\blibrary\b|図書館|bibliothèque|biblioteca/i,"amenity=library"],[/\bmarket\b|市場|marché|mercado/i,"amenity=marketplace"],[/brewery|brasserie/i,"craft=brewery"],
+[/observation|viewpoint|mountain|\bhill\b|展望/i,"tourism=viewpoint"],[/castle|palace|temple|shrine|cathedral|landmark|monument|memorial|tower|historic|lighthouse|寺|神社|城|château|palacio|plaza|square|\bbridge\b/i,"tourism=attraction"]];
+function wikiClass(text){for(const [re,tag] of WIKI_RULES){if(re.test(text))return tag}return undefined}
+async function wikiSource(lat,lon,r,key,onBatch){const cc=((state.loc.name||"").split(",").pop()||"").trim().toUpperCase();const langs=["en"];if(CC_LANG[cc])langs.push(CC_LANG[cc]);
+ const rad=Math.min(10000,Math.max(500,r));let ok=0,last="";
+ await Promise.all(langs.map(async lg=>{try{const j=await fetchJ(`https://${lg}.wikipedia.org/w/api.php?action=query&generator=geosearch&ggscoord=${(+lat).toFixed(5)}|${(+lon).toFixed(5)}&ggsradius=${rad}&ggslimit=200&prop=description|coordinates&colimit=max&format=json&origin=*`,{},15000);ok++;
+  const pages=(j.query&&j.query.pages)||{};const els=[];for(const id in pages){const pg=pages[id];const co=pg.coordinates&&pg.coordinates[0];if(!co||co.lat==null||co.lon==null)continue;const txt=pg.title+" "+(pg.description||"");const tg=wikiClass(txt);if(!tg)continue;const kv=tg.split("=");
+   const t={name:pg.title.replace(/\s*\(.*\)$/,""),website:`https://${lg}.wikipedia.org/?curid=${pg.pageid}`,description:pg.description||""};t[kv[0]]=kv[1];els.push({type:"wiki",id:lg+pg.pageid,wiki:true,lat:co.lat,lon:co.lon,tags:t})}
+  if(state.placesFor===key)onBatch(els)}catch(e){last=e.message}}));
+ return ok?"":(last||"failed")}
+const NOMQ=["park","museum","cinema","bowling","zoo","theatre","library","restaurant"];
+async function nomSource(lat,lon,mi,key,onBatch,deadline){const dl=mi/69,dn=mi/(69*Math.cos(lat*Math.PI/180));const vb=[lon-dn,lat+dl,lon+dn,lat-dl].map(x=>x.toFixed(4)).join(",");let ok=0,last="";
+ for(const q of NOMQ){if(state.placesFor!==key||Date.now()>deadline-3000)break;const wait=nomLast+1100-Date.now();if(wait>0)await sleep(wait);nomLast=Date.now();
+  try{const j=await fetchJ(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&viewbox=${vb}&bounded=1&limit=40`,{},12000);ok++;
+   const els=[];const rows=Array.isArray(j)?j:[];for(const x of rows){if(!x||!x.name||x.lat==null||x.lon==null)continue;const cat=x.category||x.class;if(!cat)continue;const t={name:x.name};t[cat]=x.type;els.push({type:x.osm_type,id:x.osm_id,lat:+x.lat,lon:+x.lon,tags:t})}if(state.placesFor===key)onBatch(els)}
+  catch(e){last=e.message;if(/HTTP 429|HTTP 403/.test(last))break}}
+ return ok?"":(last||"failed")}
 // Photon reverse lookups: location-agnostic (no keywords), nearest-first, filtered by OSM tags
 const PH=[["fun",["tourism:museum","tourism:gallery","amenity:cinema","amenity:theatre","leisure:bowling_alley","leisure:amusement_arcade","leisure:escape_game","leisure:miniature_golf","tourism:zoo","tourism:aquarium","tourism:theme_park","leisure:water_park","amenity:arts_centre"]],
 ["parks",["leisure:park","leisure:garden","leisure:nature_reserve","natural:beach","tourism:viewpoint","leisure:dog_park"]],["food",["amenity:restaurant","amenity:cafe"]],
 ["drinks",["craft:brewery","amenity:pub","amenity:bar","amenity:marketplace","shop:farm"]],["more",["tourism:attraction","amenity:library","leisure:sports_centre","leisure:ice_rink","leisure:swimming_pool","leisure:golf_course","leisure:playground"]]];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function photon(lat,lon,mi,key,onBatch,onErr,deadline){const km=Math.max(1,Math.min(mi*1.609,50)).toFixed(1);
- let ix=0;async function worker(w){await sleep(w*350);while(ix<PH.length){const k=ix++;if(state.placesFor!==key||Date.now()>deadline)return;const g=PH[k][0],tags=PH[k][1];
+async function photon(lat,lon,mi,key,onBatch,deadline){const km=Math.max(1,Math.min(mi*1.609,50)).toFixed(1);let ok=0,last="";
+ let ix=0;async function worker(w){await sleep(w*400);while(ix<PH.length){const k=ix++;if(state.placesFor!==key||Date.now()>deadline)return;const tags=PH[k][1];
   const url=`https://photon.komoot.io/reverse?lat=${(+lat).toFixed(5)}&lon=${(+lon).toFixed(5)}&radius=${km}&limit=50&lang=default`+tags.map(t=>"&osm_tag="+t).join("");
-  let j=null,last="";for(let tr=0;tr<3&&!j;tr++){if(tr)await sleep(700*Math.pow(2,tr)+Math.random()*500);if(Date.now()>deadline)break;try{j=await fetchJ(url,{},Math.min(10000,Math.max(2000,deadline-Date.now())))}catch(e){last=e.message}}
-  if(j){const els=[];for(const f of j.features||[]){const pp=f.properties;if(!pp.name)continue;const t={name:pp.name};t[pp.osm_key]=pp.osm_value;els.push({type:{N:"node",W:"way",R:"relation"}[pp.osm_type]||"node",id:pp.osm_id,lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],tags:t})}onBatch(els)}else onErr(g+": "+(last||"timed out"));
-  await sleep(300+Math.random()*120)}}
- await Promise.all([worker(0),worker(1)])}
-function updAttrib(){const a=["Weather: Open-Meteo"+(curW()&&curW().kind==="typical"?" (historical archive)":" forecast"),"Places: "+(state.src||"OpenStreetMap"),"Search: Open-Meteo Geocoding / Nominatim"];$("attrib").textContent=a.join(" · ")+" · © OpenStreetMap contributors"}
+  let j=null;for(let tr=0;tr<2&&!j;tr++){if(tr)await sleep(1500+Math.random()*2500);if(Date.now()>deadline-2000)break;try{j=await fetchJ(url,{},Math.min(18000,Math.max(2000,deadline-Date.now())))}catch(e){last=e.message}}
+  if(j){ok++;const els=[];for(const f of j.features||[]){const pp=f.properties||{};const xy=f.geometry&&f.geometry.coordinates;if(!pp.name||!xy||xy.length<2)continue;const t={name:pp.name};if(pp.osm_key)t[pp.osm_key]=pp.osm_value;els.push({type:{N:"node",W:"way",R:"relation"}[pp.osm_type]||"node",id:pp.osm_id,lat:xy[1],lon:xy[0],tags:t})}onBatch(els)}
+  await sleep(300+Math.random()*150)}}
+ await Promise.all([worker(0),worker(1)]);return ok?"":(last||"timed out")}
+function updAttrib(){const a=["Weather: Open-Meteo"+(curW()&&curW().kind==="typical"?" (historical archive)":" forecast"),"Places: "+(state.src||"OpenStreetMap"),"Search: Open-Meteo Geocoding / Nominatim","Wikipedia (CC BY-SA)"];$("attrib").textContent=a.join(" · ")+" · © OpenStreetMap contributors"}
 function hav(a,b,c,d){const R=3958.8,r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 // ---------- scoring
 function wantSetting(){const s=$("setting").value;if(s!=="auto")return s;const w=curW();if(!w||w.cls==="unknown")return"any";return w.cls==="nice"?"outdoor":w.cls==="indoor"?"indoor":"any"}
@@ -299,15 +338,15 @@ function render(){if(!state.loc)return;const w=curW();
 function card(i,isPick){const [label,emo,io]=i.meta;const city=(state.loc.name||"").replace(/^📡 /,"").split(",")[0];
  const t=i.tags||{};let links="";
  if(!i.anywhere){const g=`https://www.google.com/maps/search/?api=1&query=${i.lat},${i.lon}`;
-  links=`<a href="${g}" target="_blank" rel="noopener">🗺 Maps</a>`+(t.website||t["contact:website"]?`<a href="${esc(t.website||t["contact:website"])}" target="_blank" rel="noopener">🌐 Website</a>`:"")+
-  `<a href="https://www.openstreetmap.org/${i.id}" target="_blank" rel="noopener">OSM</a><a href="https://www.google.com/search?q=${encodeURIComponent(i.name+" "+city+" deals "+(state.date===todayStr()?"today":niceDate(state.date)))}" target="_blank" rel="noopener">🏷 Find deals</a>`+
+  links=`<a href="${g}" target="_blank" rel="noopener">🗺 Maps</a>`+(t.website||t["contact:website"]?`<a href="${esc(t.website||t["contact:website"])}" target="_blank" rel="noopener">${i.wiki?"📖 Wikipedia":"🌐 Website"}</a>`:"")+
+  (i.wiki?"":`<a href="https://www.openstreetmap.org/${i.id}" target="_blank" rel="noopener">OSM</a>`)+`<a href="https://www.google.com/search?q=${encodeURIComponent(i.name+" "+city+" deals "+(state.date===todayStr()?"today":niceDate(state.date)))}" target="_blank" rel="noopener">🏷 Find deals</a>`+
   `<a href="https://www.groupon.com/local/${encodeURIComponent(city.toLowerCase().replace(/\s+/g,'-'))}?query=${encodeURIComponent(label)}" target="_blank" rel="noopener">Groupon</a>`}
  else links=`<a href="https://www.google.com/search?q=${encodeURIComponent(i.name+" ideas")}" target="_blank" rel="noopener">💡 Ideas</a>`;
  const cost=["Free","$","$$","$$$"][i.meta[6]];
  return `<div class="res ${isPick?"":""}"><h3>${emo} ${esc(i.name)}</h3><div class="meta">${i.anywhere?"Anywhere idea":esc(label)} · ${io==="in"?"Indoor":io==="out"?"Outdoor":"In/Out"} · ~${cost}${i.dist!=null?` · ${i.dist.toFixed(1)} mi`:""}${t.opening_hours?` · 🕒 ${esc(t.opening_hours)}`:""}</div>
  ${i.closed?`<div class="closed">⛔ Likely closed that day (per listed hours — verify)</div>`:""}<div class="why">✅ ${esc(i.why.join(" · ")||"a solid option")}</div>${i.deal.map(d=>`<div class="deal">🏷 ${esc(d)} — <b>typical, verify</b></div>`).join("")}<div class="links">${links}</div></div>`}
-$("go").onclick=()=>{if(state.loc){loadPlaces();loadWx()}};
+$("go").onclick=()=>resolveTyped();
 $("surprise").onclick=()=>{if(!ranked.length)return;const good=ranked.filter(i=>i.miss===0);const pool=(good.length?good:ranked).slice(0,12);const p=pool[Math.floor(Math.random()*pool.length)];
  const c=$("pickCard");c.hidden=false;c.className="card pick";c.innerHTML="<h2>🎲 Surprise pick</h2>"+card(p,true);c.scrollIntoView({behavior:"smooth",block:"center"})};
-setLoc(LS("dd_loc")||HOME);
+(function(){const l=LS("dd_loc");if(l&&l.lat!=null)setLoc(l);else{drawDays();$("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”.";$("wxStatus").textContent="Pick a location to see the weather.";$("plStatus").textContent="Pick a location to find places nearby."}})();
 </script></body></html>
