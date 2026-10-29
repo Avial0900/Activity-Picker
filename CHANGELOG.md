@@ -1,5 +1,33 @@
 # Changelog
 
+## v1.11 — 2026-10-29
+
+### Added
+- **SEO and sharing (requested by DD Mark):**
+  - Title "Dilly-Dally — What should we do?" and a meta description.
+  - Canonical URL https://letsdillydally.com/.
+  - Open Graph and Twitter card tags, with a new `og-image.png` (1200×630, about 50 KB).
+  - WebApplication JSON-LD: free, no ratings.
+  - `robots.txt` and `sitemap.xml` covering /, /privacy and the 5 landing pages.
+  - IndexNow key file `7ff6c1c1b865ab3d35b3acb87ff1aa3a.txt`.
+- **Shareable links:**
+  - Format: `?q=&lat=&lon=&date=&mood=a,b&budget=0-3&setting=auto|indoor|outdoor|any&tab=places|date|events`.
+  - Params are validated, and invalid values are ignored. Characters that could inject HTML are stripped from `q`. Valid params override saved settings.
+  - With no params, behavior is unchanged (no default city).
+  - New 🔗 Share button, shown once a location is set. It uses `navigator.share`, falls back to copying the link to the clipboard (with a "Link copied" message), and as a last resort shows a selectable link field.
+  - Coordinates are rounded to 3 decimals, even for "Use my location".
+  - When the page was opened from a shared link (or after Share is used), the address bar stays in sync via `history.replaceState`, so no history entries are added.
+- **Static landing pages** (crawlable without JS; each has a preset button into the app):
+  - /detroit-rainy-day
+  - /detroit-date-night
+  - /detroit-free-this-weekend (the button computes the coming Saturday when the page loads and on click)
+  - /royal-oak-date-night
+  - /ann-arbor-with-kids
+  - A subtle "Explore" line in the footer links to them.
+
+### Changed
+- Museum Viator links now require a museum/gallery-type word in the name, or a tourism=museum tag plus a Wikipedia/Wikidata reference or a website. This drops tag-only entries such as "Heritage Hall" and "Legacy Beacon" in Detroit.
+
 ## v1.10 — 2026-10-29
 
 ### Changed

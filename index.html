@@ -1,7 +1,16 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Dilly-Dally</title>
+<title>Dilly-Dally — What should we do?</title>
+<meta name="description" content="Free activity picker for anywhere: places, date night ideas and events matched to your mood, the weather and your date.">
+<link rel="canonical" href="https://letsdillydally.com/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Dilly-Dally">
+<meta property="og:title" content="Dilly-Dally — What should we do?"><meta property="og:description" content="Free activity picker for anywhere: places, date night ideas and events matched to your mood, the weather and your date.">
+<meta property="og:url" content="https://letsdillydally.com/"><meta property="og:image" content="https://letsdillydally.com/og-image.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="Dilly-Dally — What should we do? Places, date night ideas and events.">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Dilly-Dally — What should we do?"><meta name="twitter:description" content="Free activity picker for anywhere: places, date night ideas and events matched to your mood, the weather and your date.">
+<meta name="twitter:image" content="https://letsdillydally.com/og-image.png"><meta name="twitter:image:alt" content="Dilly-Dally — What should we do? Places, date night ideas and events.">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebApplication", "name": "Dilly-Dally", "url": "https://letsdillydally.com/", "description": "Free activity picker for anywhere: places, date night ideas and events matched to your mood, the weather and your date.", "applicationCategory": "LifestyleApplication", "operatingSystem": "Any", "browserRequirements": "Requires JavaScript and a modern web browser.", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}}</script>
 <style>
 :root{--bg:#fbf8f3;--card:#fff;--fg:#222;--mut:#666;--acc:#e8673c;--acc2:#2a9d8f;--bd:#e5ddd2;--chip:#f1ebe2}
 @media(prefers-color-scheme:dark){:root{--bg:#16171b;--card:#212329;--fg:#eee;--mut:#9a9ca3;--acc:#ff8a5c;--acc2:#4cc9b8;--bd:#33363e;--chip:#2c2f36}}
@@ -48,6 +57,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <div class="row" style="margin-top:12px"><button class="pri" id="go">🔎 Find activities</button><button class="sec" id="surprise">🎲 Surprise me</button></div>
 </section>
 <section class="card" id="pickCard" hidden></section>
+<div id="shareRow" hidden style="text-align:right;margin:4px 2px -4px"><button type="button" id="shareBtn" style="padding:6px 12px;font-size:.85rem">🔗 Share</button> <span id="shareMsg" class="status" role="status" aria-live="polite"></span><input id="shareUrl" readonly hidden style="width:100%;margin-top:6px;font-size:.8rem" aria-label="Share link"></div>
 <section class="card" id="resCard"><div class="tabs" role="tablist" aria-label="Results"><button type="button" class="tab" role="tab" id="tab-pl" data-k="pl" aria-controls="secPlaces" aria-selected="true" tabindex="0"><span aria-hidden="true">📍</span> <span class="tl">Places of interest</span><span class="ts">Places</span> <span class="tc" id="tc-pl"></span><span class="tdot" id="td-pl" hidden title="Vibe-matched events"></span></button><button type="button" class="tab" role="tab" id="tab-id" data-k="id" aria-controls="secIdeas" aria-selected="false" tabindex="-1"><span aria-hidden="true">💕</span> <span class="tl">Date night</span><span class="ts">Date night</span> <span class="tc" id="tc-id"></span><span class="tdot" id="td-id" hidden title="Vibe-matched events"></span></button><button type="button" class="tab" role="tab" id="tab-ev" data-k="ev" aria-controls="secEvents" aria-selected="false" tabindex="-1"><span aria-hidden="true">🎉</span> <span class="tl">Events</span><span class="ts">Events</span> <span class="tc" id="tc-ev"></span><span class="tdot" id="td-ev" hidden title="Vibe-matched events"></span></button></div><div class="tp" id="secPlaces" role="tabpanel" aria-labelledby="tab-pl" tabindex="0"><h2>📍 Places of interest <span class="cnt" id="plCount"></span></h2><div class="status" id="plStatus"></div><div id="results"></div><button class="more" id="plMore" hidden>Show more</button></div>
 <div class="tp" id="secIdeas" role="tabpanel" aria-labelledby="tab-id" tabindex="0" hidden><h2 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">💡 Date night ideas <span class="cnt" id="idCount"></span><button type="button" id="shuffle" style="padding:6px 10px;font-size:.85rem">🔀 Shuffle</button></h2><div id="ideas"></div><button class="more" id="idMore" hidden>Show more</button></div>
 <div class="tp" id="secEvents" role="tabpanel" aria-labelledby="tab-ev" tabindex="0" hidden><h2>🎉 <span id="evTitle">Happening nearby</span> <span class="cnt" id="evCount"></span></h2><div class="status" id="evStatus"></div><div id="events"></div><button class="more" id="evMore" hidden>Show more</button><div id="evLinks"></div><div id="tmSet"></div></div></section>
@@ -58,10 +68,24 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <p>Weather: <a href="https://www.weather.gov/" target="_blank" rel="noopener">National Weather Service</a> · <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) · <a href="https://www.visualcrossing.com/" target="_blank" rel="noopener">Visual Crossing</a></p>
 <p><a href="https://www.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a> · <a href="https://www.ticketmaster.com/" target="_blank" rel="noopener">Ticketmaster</a> · Free local events compiled from public library and city calendars</p>
 <p>Some links are affiliate links (e.g. Viator); Dilly-Dally may earn a commission at no extra cost to you.</p>
+<p class="explore">Explore: <a href="./detroit-rainy-day">Things to do in Detroit when it rains</a> · <a href="./detroit-date-night">Date night ideas in Detroit</a> · <a href="./detroit-free-this-weekend">Free things to do in Detroit this weekend</a> · <a href="./royal-oak-date-night">Date night in Royal Oak, MI</a> · <a href="./ann-arbor-with-kids">Things to do in Ann Arbor with kids</a></p>
 <p id="privacyLink" hidden><a href="./privacy.html">Privacy</a></p>
 </footer>
 
 <script>
+// v1.11 shareable links: ?q=&lat=&lon=&date=YYYY-MM-DD&mood=a,b&tab=places|date|events. Validated; params override localStorage. No params = unchanged behavior.
+var URLP=(function(){var out={has:false};try{var sp=new URLSearchParams(location.search);if(!sp.toString())return out;
+ var moods=["chill","adventurous","social","creative","romantic","active","cozy","nerdy","family","foodie"],tabs={places:"pl",date:"id",events:"ev"};
+ var lat=parseFloat(sp.get("lat")),lon=parseFloat(sp.get("lon"));
+ if(/^-?\d{1,2}(\.\d+)?$/.test(sp.get("lat")||"")&&/^-?\d{1,3}(\.\d+)?$/.test(sp.get("lon")||"")&&isFinite(lat)&&isFinite(lon)&&Math.abs(lat)<=90&&Math.abs(lon)<=180){
+  var q=(sp.get("q")||"").replace(/[\u0000-\u001f<>"'`&\\]/g,"").replace(/\s+/g," ").trim().slice(0,80);
+  lat=Math.round(lat*1000)/1000;lon=Math.round(lon*1000)/1000;out.loc={name:q||(lat+", "+lon),lat:lat,lon:lon};out.has=true;localStorage.setItem("dd_loc",JSON.stringify(out.loc))}
+ var d=sp.get("date")||"";if(/^\d{4}-\d{2}-\d{2}$/.test(d)&&!isNaN(Date.parse(d+"T12:00"))&&new Date(d+"T00:00:00Z").toISOString().slice(0,10)===d){out.date=d;out.has=true;localStorage.setItem("dd_date",JSON.stringify(d))}
+ if(sp.get("mood")!=null){var m=(sp.get("mood")||"").toLowerCase().split(",").filter(function(x){return moods.indexOf(x)>=0});
+  if(m.length){out.moods=m;out.has=true;var pr={};try{pr=JSON.parse(localStorage.getItem("dd_prefs")||"{}")||{}}catch(e){}pr.m=m;localStorage.setItem("dd_prefs",JSON.stringify(pr))}}
+ var bu=sp.get("budget"),se=sp.get("setting");if(/^[0-3]$/.test(bu||"")||/^(auto|indoor|outdoor|any)$/.test(se||"")){var pr2={};try{pr2=JSON.parse(localStorage.getItem("dd_prefs")||"{}")||{}}catch(e){}
+  if(/^[0-3]$/.test(bu||"")){pr2.b=bu;out.budget=bu}if(/^(auto|indoor|outdoor|any)$/.test(se||"")){pr2.s=se;out.setting=se}out.has=true;localStorage.setItem("dd_prefs",JSON.stringify(pr2))}
+ var t=tabs[sp.get("tab")||""];if(t){out.tab=t;out.has=true;localStorage.setItem("dd_tab",t)}}catch(e){}return out})();
 "use strict";
 // ===== CONFIG =====
 // Optional: paste a free Ticketmaster Discovery API consumer key here to show real ticketed events (concerts, sports, theater...).
@@ -92,6 +116,7 @@ const VIATOR={base:"https://www.viator.com/searchResults/all",pid:"P00328934",mc
   "Brewery or wine tasting flight":"wine","Neighborhood photo walk":"walking","Museum wander + rate the art":"museum","Bike ride to somewhere new":"bike","Take a scenic drive":"daytrip",
   "Ghost or history walking tour":"ghost","Kayak or paddleboard outing":"kayak","Sunset or river cruise":"cruise"},
  places:{escape:"escape",attraction:"things",museum:"museum"},
+ museumWordRx:/\b(museums?|museu|museo|musée|gallery|galleries|galerie|galería|galeria|art institute|institute of arts?|exhibit(ion)?s?|planetarium|science cent(er|re))\b|博物館|美術館/i,
  galleryRx:/\b(museum|museu|museo|musée|museum of art|art institute|institute of arts)\b|博物館|美術館/i,
  sightsRx:/\b(palace|palácio|palacio|palais|castle|castelo|castillo|château|fortress|fort|cathedral|basilica|monastery|mosteiro|abbey|tower|torre|lighthouse|monument|fountain|landmark|old town|historic district|historic site|aqueduct|ruins|temple|shrine)\b|寺|神社|城/i,
  notSightsRx:/\b(building|house|home|center|centre|nature|park|school|office|hall|barn|hills?|apartments?|store|shop|farm)\b/i,
@@ -109,7 +134,8 @@ function viatorCat(i){if(i.ev||i.event||i.tm||i.freeEv||i.market||i.hol)return n
  for(const r of VIATOR.nameRules)if(r[0].test(n))return r[1];if(!c)return null;
  if(c==="gallery")return VIATOR.galleryRx.test(n)?"museum":null;
  if(c==="attraction"){if(VIATOR.galleryRx.test(n))return "museum";if(!VIATOR.sightsRx.test(n)||VIATOR.notSightsRx.test(n))return null}
- if(c==="museum"&&/\b(building|apartments?|house)$/i.test(n))return null;
+ if(c==="museum"){const t=i.tags||{};if(/\b(building|apartments?|house)$/i.test(n))return null;
+  if(!VIATOR.museumWordRx.test(n)&&!(i.wiki||t.wikidata||t.wikipedia||t.website||t["contact:website"]))return null}
  return VIATOR.places[c]||null}
 function nameHtml(i){const city=viatorCity(),type=city?viatorCat(i):null,u=type?viatorUrl(type,city):null;if(!u)return esc(i.name);
  return `<a class="vlink" href="${esc(u)}" target="_blank" rel="sponsored noopener" title="Search tours &amp; experiences for ${esc(VIATOR.types[type][0])} in ${esc(city)} on Viator (affiliate link)">${esc(i.name)}</a> <small class="via">via Viator ↗</small>`}
@@ -218,7 +244,7 @@ for(let i=1;i<=12;i++)$("people").add(new Option(i===12?"12+":String(i),i));
 $("people").value=2;$("rv").textContent=$("radius").value;
 $("radius").oninput=()=>$("rv").textContent=$("radius").value;
 $("radius").onchange=()=>{savePrefs();loadPlaces()};
-["people","budget","setting"].forEach(id=>$(id).onchange=()=>{savePrefs();render()});
+["people","budget","setting"].forEach(id=>$(id).onchange=()=>{savePrefs();render();if(typeof shareVis==="function")shareVis()});
 function savePrefs(){save("dd_prefs",{m:[...state.moods],p:$("people").value,b:$("budget").value,r:$("radius").value,s:$("setting").value})}
 const pr=LS("dd_prefs");if(pr){(Array.isArray(pr.m)?pr.m:[]).forEach(m=>state.moods.add(m));[...$("moods").children].forEach(b=>b.classList.toggle("on",state.moods.has(b.textContent)));if(pr.p!=null)$("people").value=pr.p;if(pr.b!=null)$("budget").value=pr.b;if(pr.r!=null){$("radius").value=pr.r;$("rv").textContent=pr.r}if(pr.s)$("setting").value=pr.s}
 // ---------- location
@@ -707,7 +733,19 @@ function refreshTabs(){const src={pl:"plCount",id:"idCount",ev:"evCount"};TABS.f
 
 
 // v1.7 clear-location button
-function clrVis(){$("locClr").hidden=!$("loc").value}
+function clrVis(){$("locClr").hidden=!$("loc").value;shareVis()}
+// v1.11 Share. Coordinates are rounded to 3 decimals (~100 m) on purpose, also for "use my location", so a shared link never carries precise GPS.
+function shareLink(){if(!state.loc)return location.href;const T={pl:"places",id:"date",ev:"events"};const sp=new URLSearchParams();
+ sp.set("q",(state.loc.name||"").replace(/^📡\s*/,""));sp.set("lat",(+state.loc.lat).toFixed(3));sp.set("lon",(+state.loc.lon).toFixed(3));
+ if(state.date)sp.set("date",state.date);const m=Array.from(state.moods);if(m.length)sp.set("mood",m.join(","));if($("budget").value!=="2")sp.set("budget",$("budget").value);if($("setting").value!=="auto")sp.set("setting",$("setting").value);sp.set("tab",T[curTab]||"places");
+ return location.origin+location.pathname+"?"+sp.toString()}
+function syncUrl(){try{if(!history.replaceState)return;history.replaceState(history.state,"",state.loc?shareLink():location.pathname)}catch(e){}}
+function shareVis(){$("shareRow").hidden=!state.loc;if(!state.loc){$("shareUrl").hidden=true;$("shareMsg").textContent=""}if(URLP.has||shareVis.on)syncUrl()}
+function shareToast(t){$("shareMsg").textContent=t;clearTimeout(shareToast.t);shareToast.t=setTimeout(()=>{$("shareMsg").textContent=""},2500)}
+$("shareBtn").onclick=async()=>{const url=shareLink(),title="Dilly-Dally — What should we do?",text="Ideas for "+((state.loc&&state.loc.name)||"").replace(/^📡\s*/,"")+" on "+niceDate(state.date);shareVis.on=1;
+ if(navigator.share){try{await navigator.share({title,text,url});return}catch(e){if(e&&e.name==="AbortError")return}}
+ if(navigator.clipboard&&navigator.clipboard.writeText){try{await navigator.clipboard.writeText(url);shareToast("Link copied");return}catch(e){}}
+ const f=$("shareUrl");f.value=url;f.hidden=false;f.focus();f.select();shareToast("Copy this link:")};
 $("loc").addEventListener("input",clrVis);
 function clearLoc(){locGen++;wxGen++;state.wxBusy=false;placeGen++;evGen++;mkGen++;clearTimeout(dT);lastQ="";shown={q:"",list:[]};
  state.loc=null;state.places=[];state.placesFor="";state.wx=null;state.wxErr="";state.ev.key="";state.ev.tm=[];state.ev.hol=[];state.ev.tmBusy=state.ev.holBusy=false;state.ev.tmErr=state.ev.holErr="";
@@ -720,5 +758,6 @@ function clearLoc(){locGen++;wxGen++;state.wxBusy=false;placeGen++;evGen++;mkGen
  $("evStatus").textContent="";$("plStatus").textContent="Pick a location to find places nearby.";refreshTabs();$("loc").focus()}
 $("locClr").onclick=clearLoc;
 (function(){const _sl=setLoc;setLoc=function(p){_sl(p);clrVis()}})();clrVis();
+(function(){const _st=setTab,_sd=selectDate;setTab=function(k,f,sc){_st(k,f,sc);shareVis()};selectDate=function(d,u){_sd(d,u);shareVis()};$("moods").addEventListener("click",()=>setTimeout(shareVis,0))})();
 if(SHOW_PRIVACY_LINK)$("privacyLink").hidden=false;
 </script></body></html>
