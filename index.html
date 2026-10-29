@@ -84,24 +84,35 @@ const TIER={museum:1,park:1,library:1,gallery:1,zoo:1,aquarium:1,attraction:1,ga
 // ===== Viator affiliate links (name of a bookable suggestion links to a Viator search; tracked only via campaign codes) =====
 const VIATOR={base:"https://www.viator.com/searchResults/all",pid:"P00328934",mcid:"42383",medium:"link",
  cityPages:{"detroit":"https://www.viator.com/Detroit/d22934"}, // optional destination pages, used for 'things to do' only
- ideas:{"Paint night (or paint-and-sip)":"painting class","Escape room challenge":"escape game","Pottery or craft workshop":"pottery class",
-  "Try a cuisine you've never had":"food tour","Dessert-only dinner crawl":"food tour","Brewery or wine tasting flight":"wine tasting","Neighborhood photo walk":"walking tour"},
- places:{escape:"escape game",attraction:"things to do"},
- sightsRx:/\b(palace|palácio|palacio|palais|castle|castelo|castillo|château|fortress|fort|cathedral|basilica|tower|torre|lighthouse|monument|fountain|landmark|old town|historic district|temple|shrine)\b|寺|神社|城/i,
- notSightsRx:/\b(building|house|home|center|centre|nature|park|school|office|hall|barn|hills?)\b/i,
- nameRules:[[/\b(river ?boat|boat tours?|harbou?r tours?|sightseeing cruises?|cruises?)\b/i,"cruise"],[/\bfood tours?\b/i,"food tour"],[/\bcooking (class|school)\b/i,"cooking class"],[/\bwalking tours?\b/i,"walking tour"],[/\bescape (room|game)s?\b/i,"escape game"]],
+ // type -> [short Viator search words (city appended), campaign code]
+ types:{things:["things to do","dd-thingstodo"],museum:["museum tour","dd-museum"],cruise:["cruise","dd-cruise"],foodtour:["food tour","dd-foodtour"],cooking:["cooking class","dd-cookingclass"],
+  walking:["walking tour","dd-walkingtour"],escape:["escape game","dd-escapegame"],painting:["painting class","dd-paintingclass"],pottery:["pottery class","dd-potteryclass"],wine:["wine tasting","dd-winetasting"],
+  bike:["bike tour","dd-biketour"],ghost:["ghost tour","dd-ghosttour"],history:["history tour","dd-historytour"],kayak:["kayak","dd-kayak"],daytrip:["day trip","dd-daytrip"]},
+ ideas:{"Paint night (or paint-and-sip)":"painting","Escape room challenge":"escape","Pottery or craft workshop":"pottery","Try a cuisine you've never had":"foodtour","Dessert-only dinner crawl":"foodtour",
+  "Brewery or wine tasting flight":"wine","Neighborhood photo walk":"walking","Museum wander + rate the art":"museum","Bike ride to somewhere new":"bike","Take a scenic drive":"daytrip",
+  "Ghost or history walking tour":"ghost","Kayak or paddleboard outing":"kayak","Sunset or river cruise":"cruise"},
+ places:{escape:"escape",attraction:"things",museum:"museum"},
+ galleryRx:/\b(museum|museu|museo|musée|museum of art|art institute|institute of arts)\b|博物館|美術館/i,
+ sightsRx:/\b(palace|palácio|palacio|palais|castle|castelo|castillo|château|fortress|fort|cathedral|basilica|monastery|mosteiro|abbey|tower|torre|lighthouse|monument|fountain|landmark|old town|historic district|historic site|aqueduct|ruins|temple|shrine)\b|寺|神社|城/i,
+ notSightsRx:/\b(building|house|home|center|centre|nature|park|school|office|hall|barn|hills?|apartments?|store|shop|farm)\b/i,
+ nameRules:[[/\b(ghost|haunted|paranormal) (tours?|walks?)\b/i,"ghost"],[/\b(histor(y|ic|ical)|heritage) (walking )?tours?\b/i,"history"],[/\b(kayak|canoe|paddle ?board|paddling|sup)s?\b|\bcanoe livery\b/i,"kayak"],
+  [/\b(bike|bicycle|cycling|segway) (tours?|rentals?|hire)\b/i,"bike"],[/\bday trips?\b/i,"daytrip"],
+  [/\b(river ?boat|boat tours?|harbou?r tours?|sightseeing cruises?|cruises?)\b/i,"cruise"],[/\bfood tours?\b/i,"foodtour"],[/\bcooking (class|school)\b/i,"cooking"],[/\bwalking tours?\b/i,"walking"],[/\bescape (room|game)s?\b/i,"escape"]],
  noCats:["park","nature","trail","library","restaurant","cafe","market","farm","playground","dog_park","garden","beach","brewery"]};
 function viatorCity(){return ((state.loc&&state.loc.name)||"").replace(/^📡 /,"").split(",")[0].trim()}
-function viatorUrl(cat,city){const camp="dd-"+cat.toLowerCase().replace(/[^a-z0-9]+/g,"");const q=`pid=${VIATOR.pid}&mcid=${VIATOR.mcid}&medium=${VIATOR.medium}&campaign=${camp}`;
- const cp=VIATOR.cityPages[city.toLowerCase()];if(cat==="things to do"&&cp)return cp+"?"+q;
- return VIATOR.base+"?text="+encodeURIComponent(cat+" "+city).replace(/%20/g,"+")+"&"+q}
-function viatorCat(i){if(i.ev||i.tm||i.freeEv||i.market)return null;
+function viatorUrl(type,city){const t=VIATOR.types[type];if(!t||!/^[a-z0-9-]+$/.test(t[1]))return null;const q=`pid=${VIATOR.pid}&mcid=${VIATOR.mcid}&medium=${VIATOR.medium}&campaign=${t[1]}`;
+ const cp=VIATOR.cityPages[city.toLowerCase()];if(type==="things"&&cp)return cp+"?"+q;
+ return VIATOR.base+"?text="+encodeURIComponent(t[0]+" "+city).replace(/%20/g,"+")+"&"+q}
+function viatorCat(i){if(i.ev||i.event||i.tm||i.freeEv||i.market||i.hol)return null;
  if(i.anywhere)return VIATOR.ideas[i.name]||null;
- const c=i.c||classify(i.tags||{});if(!c||VIATOR.noCats.indexOf(c)>=0)return null;
- for(const r of VIATOR.nameRules)if(r[0].test(i.name||""))return r[1];
- if(c==="attraction"&&(!VIATOR.sightsRx.test(i.name||"")||VIATOR.notSightsRx.test(i.name||"")))return null;return VIATOR.places[c]||null}
-function nameHtml(i){const city=viatorCity(),cat=city?viatorCat(i):null;if(!cat)return esc(i.name);
- return `<a class="vlink" href="${esc(viatorUrl(cat,city))}" target="_blank" rel="sponsored noopener" title="Search similar ${esc(cat)} options in ${esc(city)} on Viator (affiliate link)">${esc(i.name)}</a> <small class="via">via Viator ↗</small>`}
+ const c=i.c||classify(i.tags||{}),n=i.name||"";if(c&&VIATOR.noCats.indexOf(c)>=0)return null;
+ for(const r of VIATOR.nameRules)if(r[0].test(n))return r[1];if(!c)return null;
+ if(c==="gallery")return VIATOR.galleryRx.test(n)?"museum":null;
+ if(c==="attraction"){if(VIATOR.galleryRx.test(n))return "museum";if(!VIATOR.sightsRx.test(n)||VIATOR.notSightsRx.test(n))return null}
+ if(c==="museum"&&/\b(building|apartments?|house)$/i.test(n))return null;
+ return VIATOR.places[c]||null}
+function nameHtml(i){const city=viatorCity(),type=city?viatorCat(i):null,u=type?viatorUrl(type,city):null;if(!u)return esc(i.name);
+ return `<a class="vlink" href="${esc(u)}" target="_blank" rel="sponsored noopener" title="Search tours &amp; experiences for ${esc(VIATOR.types[type][0])} in ${esc(city)} on Viator (affiliate link)">${esc(i.name)}</a> <small class="via">via Viator ↗</small>`}
 const CATS={
 park:["Park","🌳","out",["chill","family","active","romantic"],1,30,0],
 nature:["Nature reserve","🦌","out",["chill","adventurous","romantic"],1,12,0],
@@ -175,6 +186,8 @@ const ANYWHERE=[
  ["Plan a dream trip together","🗺","in",["cozy","romantic","nerdy"],2,4,0,null],["Volunteer for an afternoon","🤝","out",["social","family"],1,12,0,null],
  ["Wine-and-cheese tasting at home","🧀","in",["romantic","cozy"],2,6,2,null],["Geocaching treasure hunt","📍","out",["adventurous","nerdy","family"],1,6,0,["park","nature"]],
  ["Open-mic or comedy night","🎙","in",["social","creative"],1,8,1,["brewery","theatre"]],["Sports game or local match","🏟","in",["social","active"],1,12,2,["sports"]],
+ ["Ghost or history walking tour","👻","out",["adventurous","nerdy","social"],1,10,2,["attraction","museum"]],["Kayak or paddleboard outing","🛶","out",["active","adventurous","romantic"],1,6,2,["beach","nature"]],
+ ["Sunset or river cruise","🛥","out",["romantic","chill","social"],1,10,3,["beach","viewpoint"]],
  ["Fancy dinner, dress up","🍽","in",["romantic"],2,4,3,["restaurant"]],["Cozy bookstore + café afternoon","📖","in",["cozy","chill","nerdy"],1,4,1,["cafe","library"]]];
 // recurring deal patterns: [match regex on brand/name, cat or null, weekdays (0=Sun), text]
 const DEALS=[

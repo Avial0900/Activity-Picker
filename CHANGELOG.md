@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.10 — 2026-10-29
+
+### Changed
+- Viator links still appear only on suggestion names (plus the small "via Viator ↗" label). There are no separate Viator lines; matching is now wider.
+  - Museums: OSM `tourism=museum`, plus galleries or attractions whose name is museum-like. They link to "museum tour {city}" (`dd-museum`). Entries whose name ends in "Building" or "House" are skipped.
+  - New name patterns: bike tours/rentals (`dd-biketour`), ghost/haunted tours (`dd-ghosttour`), history/heritage tours (`dd-historytour`), kayak/canoe/paddleboard (`dd-kayak`), day trips (`dd-daytrip`).
+  - Landmark rule widened: monastery, abbey, aqueduct, ruins and historic site now count; apartments, stores, shops and farms are excluded.
+  - Date night ideas now linked: Museum wander → museum tour, Bike ride → bike tour, Scenic drive → day trip.
+  - New ideas: "Ghost or history walking tour", "Kayak or paddleboard outing", "Sunset or river cruise". Each one's name is its link.
+  - The `VIATOR` config now maps each type to [search words, campaign] in one table.
+  - Tooltip now reads "Search tours & experiences for … in {city} on Viator", so it doesn't imply a ticket is needed (e.g. free museums).
+  - Still never linked: events, the free feed, holidays, markets, parks, nature areas, trails, gardens, libraries, restaurants, cafés, bars, playgrounds, beaches.
+
 ## v1.9 — 2026-10-29
 
 ### Added
