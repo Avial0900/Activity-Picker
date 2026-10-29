@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.12 — 2026-10-29
+- **Tab/heading rename:** second tab is now "🚲☕💕 Activities/Date night" (wraps cleanly on mobile via `<wbr>`/`&nbsp;`; `.tab` wraps at ≤520px). Panel heading renamed "💡 Date night ideas" → "💡 Things to do together". `?tab=date` still opens this tab.
+- **Ideas 57 → 87:** 30 new things to do together — planetarium show, botanical garden/conservatory, lookouts, sunsets, drive-in, roller skating, trampoline park, pick-your-own, thrift/antique hunt, bookstore crawl, live music, gallery hop, kite flying, sledding; seasonal (snow fort, leaf pile, holiday lights, backyard campout, s'mores); at home (card games, bake cookies, indoor picnic, movie marathon, dance party, LEGO build-off, paint-and-sip, homemade pizza, scavenger hunt, charades/Pictionary, two-person book club).
+- Ideas now carry season/weather/at-home tags (`IDEA_OPT`, `ideaFit`): snow ideas only with snow/freezing winter weather, clear-sky ideas hidden in rain, at-home picks boosted in rough weather, southern-hemisphere seasons flipped. First view interleaves at-home and out-and-about ideas (every 3rd slot; every 2nd when it's rainy). Cards show "At home".
+- **Places:** planetariums are now found and ranked (tier 1, museum-like). Viator links for "Planetarium show" and planetarium places map to museum searches; still name-only, never on gardens, lookouts, at-home ideas, movies, food, events, markets, libraries or free stuff.
+- **Desktop background:** soft landscape illustration (`bg-landscape.webp`, `.jpg` fallback, 1280×720) as a fixed `body::before` layer, only at ≥900px (mobile never downloads it). Opacity **0.40** in light mode, 0.12 + dimmed in dark mode; cards remain solid; no layout shift.
+
 ## v1.11 — 2026-10-29
 
 ### Added
