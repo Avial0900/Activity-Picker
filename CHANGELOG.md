@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.5.1 — 2026-10-28
+- Public holidays: markets (open and unverified) and places with listed hours but no PH rule show "🎌 Holiday — hours may differ".
+- Free events feed (data/free-events.json, 1,336 events): fetched after a 0.7s delay, off the critical path (15s timeout).
+  Indexed once, so filtering takes about 1-3 ms per date change.
+- Multi-day events (e.g. light displays) show on every day of their range with "runs through <date>"; midnight placeholder start times are hidden.
+- Vibe matching hardened against noisy keyword tags: tags only count when the title agrees (e.g. "Computer Basics" is no longer
+  "musical"/"romantic"); a category is re-checked against the title (e.g. "How To Use Libby" is not a concert, chess is not a sport);
+  "outdoors" is ignored for indoor events; adult-only titles lose "family".
+- Practical library services (tutoring, resume, Medicare, computer basics, ESL…) rank last and don't match vibes.
+- Exact duplicate listings (same title, time and venue) are collapsed; the events list is capped at 5 with Show more.
+- Changing the date while the free-events file, the holiday list, or typical weather is still loading does not start a second copy of that request.
+
 ## v1.5 — 2026-10-28
 - 🧺 Markets open that day (in the events section): OSM marketplaces and farmers markets from Photon, Nominatim (with opening hours)
   and Overpass when it responds. Missing hours are filled in with one Nominatim lookup. Hard timeouts (25s total), never blocks
