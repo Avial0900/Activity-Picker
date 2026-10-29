@@ -7,7 +7,7 @@
 @media(prefers-color-scheme:dark){:root{--bg:#16171b;--card:#212329;--fg:#eee;--mut:#9a9ca3;--acc:#ff8a5c;--acc2:#4cc9b8;--bd:#33363e;--chip:#2c2f36}}
 *{box-sizing:border-box}body{margin:0;font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--fg)}
 header{padding:18px 16px 6px;text-align:center}h1{margin:0;font-size:1.6rem}h1 span{color:var(--acc)}header p{margin:4px 0;color:var(--mut);font-size:.9rem}
-main{max-width:760px;margin:auto;padding:8px 12px 60px}
+main{max-width:760px;margin:auto;padding:8px 12px 16px}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin:10px 0}
 h2{font-size:1rem;margin:0 0 8px}label{font-size:.85rem;color:var(--mut);display:block;margin:8px 0 4px}
 input,select,button{font:inherit;color:inherit}input[type=text],select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg)}
@@ -28,6 +28,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 .pick{border:2px solid var(--acc)}.cnt{font-size:.8rem;color:var(--mut);font-weight:400}.more{width:100%;margin-top:6px}.badge{display:inline-block;font-size:.72rem;padding:1px 7px;border-radius:9px;background:var(--acc);color:#fff;vertical-align:middle}.badge.free{background:#2e8b57}.subh{font-size:1rem;margin:14px 0 4px}details.unv{margin:6px 0;font-size:.88rem}details.unv summary{cursor:pointer;color:var(--mut)}.unvi{padding:5px 0;border-bottom:1px solid rgba(128,128,128,.2)}details.tmset{margin-top:10px;font-size:.85rem;color:var(--mut)}details.tmset input{width:100%;margin:6px 0;font-size:16px}.holn{font-size:.82rem;color:#7a4b00;background:#fff3d6;border-radius:6px;padding:2px 8px;display:inline-block;margin:3px 0}.hol{background:#efe3ff;color:#4b2a7a;border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.9rem}.evimg{float:right;width:72px;height:72px;object-fit:cover;border-radius:10px;margin-left:8px}.near{font-size:.82rem;margin:3px 0}.linkgrid a{display:inline-block;margin:4px 6px 4px 0;padding:6px 10px;border-radius:999px;background:var(--chip);color:var(--fg);text-decoration:none;font-size:.85rem}@media(prefers-color-scheme:dark){.hol{background:#2f2540;color:#d9c6ff}}.unknown{background:#e4e4e4;color:#444}.wxsum{margin-top:8px;font-size:.9rem}.closed{color:#c0392b;font-size:.82rem}small{color:var(--mut)}
 #resCard{padding-top:0}.tabs{position:sticky;top:0;z-index:5;display:flex;gap:4px;margin:0 -14px 10px;padding:8px 8px 0;background:var(--card);border-bottom:1px solid var(--bd);border-radius:14px 14px 0 0}.tab{flex:1 1 auto;min-width:0;white-space:nowrap;border:0;border-bottom:3px solid transparent;border-radius:10px 10px 0 0;background:transparent;color:var(--mut);font:inherit;font-size:.9rem;font-weight:600;padding:8px 6px;cursor:pointer;position:relative}.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--acc);background:var(--chip)}.tab:focus-visible{outline:2px solid var(--acc2);outline-offset:-2px}.tc{font-weight:400;font-size:.78rem}.ts{display:none}.tdot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--acc);margin-left:3px;vertical-align:top}.tdot[hidden]{display:none}.spin{display:inline-block;width:10px;height:10px;border:2px solid var(--bd);border-top-color:var(--acc);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}@keyframes sp{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.spin{animation:none}}.tp>h2{font-size:1.05rem}@media(max-width:520px){.tl{display:none}.ts{display:inline}.tab{font-size:.82rem;padding:8px 3px}.tabs{gap:2px;padding:6px 4px 0}}
 #loc{padding-right:46px}#locClr{position:absolute;right:2px;top:2px;width:42px;height:40px;border:0;background:transparent;color:var(--mut);font-size:1.1rem;line-height:1;padding:0;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}#locClr[hidden]{display:none}#locClr:hover,#locClr:focus-visible{color:var(--fg);background:var(--chip)}
+.foot{max-width:760px;margin:0 auto;padding:4px 16px 28px;text-align:center;font-size:.75rem;line-height:1.5;color:var(--mut)}.foot p{margin:3px 0}.foot a{color:var(--mut)}
 </style></head><body>
 <header><h1>🎲 Dilly-<span>Dally</span></h1><p>What should we do?</p></header>
 <main>
@@ -50,8 +51,16 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <section class="card" id="resCard"><div class="tabs" role="tablist" aria-label="Results"><button type="button" class="tab" role="tab" id="tab-pl" data-k="pl" aria-controls="secPlaces" aria-selected="true" tabindex="0"><span aria-hidden="true">📍</span> <span class="tl">Places of interest</span><span class="ts">Places</span> <span class="tc" id="tc-pl"></span><span class="tdot" id="td-pl" hidden title="Vibe-matched events"></span></button><button type="button" class="tab" role="tab" id="tab-id" data-k="id" aria-controls="secIdeas" aria-selected="false" tabindex="-1"><span aria-hidden="true">💕</span> <span class="tl">Date night</span><span class="ts">Date night</span> <span class="tc" id="tc-id"></span><span class="tdot" id="td-id" hidden title="Vibe-matched events"></span></button><button type="button" class="tab" role="tab" id="tab-ev" data-k="ev" aria-controls="secEvents" aria-selected="false" tabindex="-1"><span aria-hidden="true">🎉</span> <span class="tl">Events</span><span class="ts">Events</span> <span class="tc" id="tc-ev"></span><span class="tdot" id="td-ev" hidden title="Vibe-matched events"></span></button></div><div class="tp" id="secPlaces" role="tabpanel" aria-labelledby="tab-pl" tabindex="0"><h2>📍 Places of interest <span class="cnt" id="plCount"></span></h2><div class="status" id="plStatus"></div><div id="results"></div><button class="more" id="plMore" hidden>Show more</button></div>
 <div class="tp" id="secIdeas" role="tabpanel" aria-labelledby="tab-id" tabindex="0" hidden><h2 style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">💡 Date night ideas <span class="cnt" id="idCount"></span><button type="button" id="shuffle" style="padding:6px 10px;font-size:.85rem">🔀 Shuffle</button></h2><div id="ideas"></div><button class="more" id="idMore" hidden>Show more</button></div>
 <div class="tp" id="secEvents" role="tabpanel" aria-labelledby="tab-ev" tabindex="0" hidden><h2>🎉 <span id="evTitle">Happening nearby</span> <span class="cnt" id="evCount"></span></h2><div class="status" id="evStatus"></div><div id="events"></div><button class="more" id="evMore" hidden>Show more</button><div id="evLinks"></div><div id="tmSet"></div></div></section>
-<p style="text-align:center"><small id="attrib">Data: Open-Meteo, OpenStreetMap.</small><br><small> Deals shown are <b>typical patterns — always verify</b>.</small></p>
+<p style="text-align:center"><small id="attrib">Data: OpenStreetMap.</small><br><small> Deals shown are <b>typical patterns — always verify</b>.</small></p>
 </main>
+<footer class="foot" id="siteFoot">
+<p><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a></p>
+<p>Weather: <a href="https://www.weather.gov/" target="_blank" rel="noopener">National Weather Service</a> · <a href="https://www.met.no/en" target="_blank" rel="noopener">MET Norway</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>) · <a href="https://www.visualcrossing.com/" target="_blank" rel="noopener">Visual Crossing</a></p>
+<p><a href="https://www.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a> · <a href="https://www.ticketmaster.com/" target="_blank" rel="noopener">Ticketmaster</a> · Free local events compiled from public library and city calendars</p>
+<p>We may earn a commission from links on this site.</p>
+<p id="privacyLink" hidden><a href="./privacy.html">Privacy</a></p>
+</footer>
+
 <script>
 "use strict";
 // ===== CONFIG =====
@@ -59,6 +68,8 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 // Leave empty to hide that feature. Get one at https://developer.ticketmaster.com (free, no credit card).
 const TICKETMASTER_KEY="";
 // v1.6: Ticketmaster via the Dilly-Dally Cloudflare Worker (key stays server-side). Fill in after deploy, e.g. "https://dilly-dally-events.<sub>.workers.dev/events".
+// Set to true once privacy.html is published next to index.html.
+const SHOW_PRIVACY_LINK=false;
 const EVENTS_PROXY_URL="https://dilly-dally-events.dilly-dally.workers.dev/events";
 function userTmKey(){try{return (localStorage.getItem("dd_tm_key")||"").trim()}catch(e){return ""}}
 function tmKey(){return userTmKey()||TICKETMASTER_KEY}
@@ -163,7 +174,7 @@ let locGen=0;let state={loc:null,wx:null,day:0,places:[],moods:new Set(),placesF
 const LS=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-async function fetchJ(url,opt,ms){opt=opt||{};ms=ms||25000;var host=url.split("/")[2];var c=typeof AbortController!=="undefined"?new AbortController():null;var t=c?setTimeout(function(){c.abort()},ms):0;
+async function fetchJ0(url,opt,ms){opt=opt||{};ms=ms||25000;var host=url.split("/")[2];var c=typeof AbortController!=="undefined"?new AbortController():null;var t=c?setTimeout(function(){c.abort()},ms):0;
  try{var r;try{r=await fetch(url,Object.assign({},opt,c?{signal:c.signal}:{}))}catch(e){if(e&&e.name==="AbortError")throw new Error(host+": timed out after "+Math.round(ms/1000)+"s");throw new Error(host+": network blocked/unreachable ("+(e&&e.message||e)+")"+(location.protocol==="file:"?" — open this file in Safari/Chrome instead of a previewer":""))}
  if(!r.ok)throw new Error(host+": HTTP "+r.status);try{return await r.json()}catch(e){throw new Error(host+": bad JSON response")}}finally{clearTimeout(t)}}
 function retryHtml(msg,fn){return `<span class="err">⚠ ${esc(msg)}</span> <button onclick="${fn}">Retry</button>`}
@@ -182,12 +193,13 @@ $("loc").addEventListener("input",()=>{clearTimeout(dT);const q=$("loc").value.t
 document.addEventListener("click",e=>{if(!$("sugg").contains(e.target))$("sl").hidden=true});
 let nomLast=0,geoCache={};
 async function geocode(q){const ck=q.toLowerCase();if(geoCache[ck])return geoCache[ck];let list=[];
- try{const j=await fetchJ("https://geocoding-api.open-meteo.com/v1/search?count=8&language=en&format=json&name="+encodeURIComponent(q.split(",")[0].trim()),{},10000);
-  list=(j.results||[]).map(r=>({name:[r.name,r.admin1,r.country_code].filter(Boolean).join(", "),lat:r.latitude,lon:r.longitude}));
-  const extra=q.split(",").slice(1).join(" ").trim().toLowerCase();if(extra)list.sort((a,b)=>(b.name.toLowerCase().indexOf(extra)>=0)-(a.name.toLowerCase().indexOf(extra)>=0));}catch(e){}
+ try{const j=await fetchJ0("https://photon.komoot.io/api/?limit=8&q="+encodeURIComponent(q),{},8000);const seen={};
+  list=(j.features||[]).map(f=>{const r=f.properties||{},c=f.geometry&&f.geometry.coordinates;if(!c)return null;const nm=r.name||r.street||r.city||"";
+   return {name:[nm,r.city&&r.city!==nm?r.city:"",r.state&&(r.state!==nm||r.type!=="state")?r.state:"",(r.countrycode||"").toUpperCase()].filter(Boolean).join(", "),lat:+c[1],lon:+c[0],cc:(r.countrycode||"").toUpperCase(),pk:/^(state|county|region|province|country|district)$/.test(r.type||"")||/^(state|county|region|province|country)$/.test(r.osm_value||"")?-1:0}}).filter(x=>x&&x.name);
+  const extra=q.split(",").slice(1).join(" ").trim().toLowerCase();list=list.map((x,i)=>[x,i]).sort((a,b)=>(extra?(b[0].name.toLowerCase().indexOf(extra)>=0)-(a[0].name.toLowerCase().indexOf(extra)>=0):0)||b[0].pk-a[0].pk||a[1]-b[1]).map(x=>x[0]);list=list.filter(x=>!seen[x.name]&&(seen[x.name]=1));}catch(e){}
  if(!list.length){const wait=nomLast+1100-Date.now();if(wait>0)await sleep(wait);nomLast=Date.now();
-  try{const j=await fetchJ("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&q="+encodeURIComponent(q),{},10000);
-   list=j.map(r=>({name:r.display_name.split(",").slice(0,4).join(","),lat:+r.lat,lon:+r.lon}))}catch(e){}}
+  try{const j=await fetchJ("https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&q="+encodeURIComponent(q),{},10000);
+   list=j.map(r=>({name:r.display_name.split(",").slice(0,4).join(","),lat:+r.lat,lon:+r.lon,cc:((r.address||{}).country_code||"").toUpperCase()}))}catch(e){}}
  if(list.length)geoCache[ck]=list;return list}
 let shown={q:"",list:[]};
 async function search(q){lastQ=q;const list=await geocode(q);
@@ -217,29 +229,61 @@ function niceDate(str){return new Date(str+"T12:00").toLocaleDateString("en-US",
 state.date=(function(){const d=LS("dd_date");return d&&d>=todayStr()?d:todayStr()})();state.typ={};state.typErr={};const typPend={};
 function curW(){const d=state.date;if(state.wx){for(const w of state.wx)if(w.date===d)return w}const k=locKey()+"|"+d;return state.typ[k]||null}
 function locKey(){return state.loc?(+state.loc.lat).toFixed(3)+","+(+state.loc.lon).toFixed(3):""}
-async function loadWx(){if(!state.loc)return;const {lat,lon}=state.loc;const lk=locKey();state.wx=null;state.wxErr="";$("wxStatus").textContent="Loading forecast…";
- try{const j=await fetchJ(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&hourly=temperature_2m,precipitation_probability,weather_code&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto&forecast_days=16`);
-  if(locKey()!==lk)return;const d=j.daily;state.wx=d.time.map((t,i)=>({kind:"forecast",date:t,hi:Math.round(d.temperature_2m_max[i]),lo:Math.round(d.temperature_2m_min[i]),pp:(d.precipitation_probability_max[i]==null?0:d.precipitation_probability_max[i]),wind:Math.round(d.wind_speed_10m_max[i]),code:d.weather_code[i],
-   hourly:j.hourly.time.map((h,k)=>({h,t:j.hourly.temperature_2m[k],p:j.hourly.precipitation_probability[k]})).filter(x=>x.h.indexOf(t)===0)}));
-  state.wx.forEach(w=>w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,w.code));state.wxErr="";}
- catch(e){if(locKey()!==lk)return;state.wx=null;state.wxErr="Forecast failed: "+e.message}
- if(locKey()!==lk)return;selectDate(state.date)}
-function forecastEnd(){return state.wx&&state.wx.length?state.wx[state.wx.length-1].date:addDays(todayStr(),15)}
+// v1.8 weather: NWS (US) -> MET Norway via our Worker (worldwide, ~9-10 days) -> Visual Crossing via Worker (far dates). (all free-tier OK for commercial use).
+function isUS(lat,lon){return (lat>24&&lat<50&&lon>-125&&lon<-66)||(lat>51&&lat<72&&lon>-170&&lon<-129)||(lat>18.5&&lat<22.5&&lon>-161&&lon<-154)||(lat>17.8&&lat<18.6&&lon>-67.5&&lon<-65)}
+function nwsCode(t){t=(t||"").toLowerCase();return /thunder|t-storm/.test(t)?95:/snow|flurr|blizzard/.test(t)?(/shower/.test(t)?85:73):/sleet|freezing|ice pellet|wintry/.test(t)?66:/shower/.test(t)?(/heavy/.test(t)?82:80):/rain|drizzle/.test(t)?(/heavy/.test(t)?65:/light|drizzle|slight/.test(t)?61:63):/fog|haze|smoke|mist/.test(t)?45:/mostly cloudy|overcast|^cloudy|\bcloudy/.test(t)?3:/partly/.test(t)?2:/mostly sunny|mostly clear|fair/.test(t)?1:/sunny|clear/.test(t)?0:2}
+function metCode(sym){sym=(sym||"").replace(/_(day|night|polartwilight)$/,"");const M={clearsky:0,fair:1,partlycloudy:2,cloudy:3,fog:45,lightrain:61,rain:63,heavyrain:65,lightrainshowers:80,rainshowers:80,heavyrainshowers:82,lightsleet:66,sleet:66,heavysleet:67,lightsleetshowers:66,sleetshowers:66,heavysleetshowers:67,lightsnow:71,snow:73,heavysnow:75,lightsnowshowers:85,snowshowers:85,heavysnowshowers:86};
+ if(/thunder/.test(sym))return 95;return M[sym]!=null?M[sym]:2}
+function metPop(sym,mm){sym=(sym||"").replace(/_(day|night|polartwilight)$/,"");let p=/thunder|heavy/.test(sym)?80:/^(rain|sleet|snow)$/.test(sym)?70:/^light(rain|sleet|snow)$/.test(sym)?50:/showers/.test(sym)?40:/cloudy/.test(sym)?10:sym==="fog"?10:sym==="partlycloudy"?5:0;if(mm>=2)p=Math.max(p,70);else if(mm>=0.5)p=Math.max(p,40);return p}
+const cToF=c=>c*9/5+32;
+async function wxNWS(lat,lon){const pt=await fetchJ0(`https://api.weather.gov/points/${(+lat).toFixed(4)},${(+lon).toFixed(4)}`,{headers:{Accept:"application/geo+json"}},10000);const P=pt.properties||{};if(!P.forecast)throw new Error("api.weather.gov: no forecast for this point");
+ const [f,h]=await Promise.all([fetchJ0(P.forecast,{headers:{Accept:"application/geo+json"}},12000),fetchJ0(P.forecastHourly,{headers:{Accept:"application/geo+json"}},12000).catch(()=>null)]);
+ const days={},order=[];const per=(f.properties||{}).periods||[];
+ per.forEach(x=>{const d=x.startTime.slice(0,10);if(!days[d]){days[d]={date:d,hi:null,lo:null,pp:0,wind:0,code:null,ncode:null};order.push(d)}const w=days[d];
+  const t=x.temperatureUnit==="C"?cToF(x.temperature):x.temperature;const pp=x.probabilityOfPrecipitation&&x.probabilityOfPrecipitation.value!=null?x.probabilityOfPrecipitation.value:0;
+  const ws=(String(x.windSpeed||"").match(/\d+/g)||[]).map(Number);const wmax=ws.length?Math.max.apply(null,ws):0;
+  if(x.isDaytime){w.hi=t;w.code=nwsCode(x.shortForecast);w.pp=Math.max(w.pp,pp);w.wind=Math.max(w.wind,wmax)}else{w.lo=t;w.ncode=nwsCode(x.shortForecast);if(w.hi==null){w.pp=Math.max(w.pp,pp);w.wind=Math.max(w.wind,wmax)}}});
+ const hrs=h&&h.properties&&h.properties.periods?h.properties.periods.map(x=>({h:x.startTime.slice(0,16),t:x.temperatureUnit==="C"?cToF(x.temperature):x.temperature,p:x.probabilityOfPrecipitation&&x.probabilityOfPrecipitation.value!=null?x.probabilityOfPrecipitation.value:0})):[];
+ const out=order.map(d=>{const w=days[d];if(w.hi==null){const hs=hrs.filter(x=>x.h.indexOf(d)===0);w.hi=hs.length?Math.max.apply(null,hs.map(x=>x.t)):w.lo}if(w.lo==null){const hs=hrs.filter(x=>x.h.indexOf(d)===0);w.lo=hs.length?Math.min.apply(null,hs.map(x=>x.t)):w.hi}
+  return {kind:"forecast",src:"nws",date:d,hi:Math.round(w.hi),lo:Math.round(w.lo),pp:Math.round(w.pp),wind:Math.round(w.wind),code:w.code!=null?w.code:w.ncode,hourly:hrs.filter(x=>x.h.indexOf(d)===0)}});
+ if(!out.length)throw new Error("api.weather.gov: empty forecast");return out}
+async function wxMET(lat,lon){const qs=`lat=${(+lat).toFixed(4)}&lon=${(+lon).toFixed(4)}`;let j;
+ if(API_BASE){try{j=await fetchJ0(API_BASE+"/weather/met?"+qs,{},12000)}catch(e){if(!/HTTP (403|404|405)|blocked|unreachable/.test(e.message))throw e}}
+ if(!j)j=await fetchJ0("https://api.met.no/weatherapi/locationforecast/2.0/compact?"+qs,{},12000); // fallback only if our relay is missing
+ const ts=(j.properties||{}).timeseries||[];if(!ts.length)throw new Error("api.met.no: empty forecast");
+ const off=Math.round(lon/15)*3600e3;const days={},order=[];
+ ts.forEach(x=>{const L=new Date(Date.parse(x.time)+off).toISOString();const d=L.slice(0,10),hh=+L.slice(11,13);const det=(x.data.instant||{}).details||{};
+  const n1=x.data.next_1_hours,n6=x.data.next_6_hours,nx=n1||n6;const sym=nx&&nx.summary?nx.summary.symbol_code:"";const mm=nx&&nx.details?nx.details.precipitation_amount||0:0;
+  if(!days[d]){days[d]={date:d,t:[],wind:0,day:[],all:[],hrs:[]};order.push(d)}const w=days[d];const tf=cToF(det.air_temperature);w.t.push(tf);w.wind=Math.max(w.wind,(det.wind_speed||0)*2.237);
+  const pop=metPop(sym,n1?mm:mm/3);if(sym){w.all.push([metCode(sym),pop]);if(hh>=9&&hh<=20)w.day.push([metCode(sym),pop])}if(n1)w.hrs.push({h:L.slice(0,13)+":00",t:tf,p:pop})});
+ const sev=c=>c>=95?9:c>=71&&c<=86?8:c>=66&&c<=67?7:c>=80?6:c>=61?5:c===45?3:c;
+ return order.filter(d=>days[d].t.length>=(d===order[0]?1:4)).map(d=>{const w=days[d],pool=w.day.length?w.day:w.all;let code=2,pp=0;
+  if(pool.length){const cs=pool.map(x=>x[0]).sort((a,b)=>sev(b)-sev(a));const wet=pool.filter(x=>x[0]>=45);code=wet.length>=Math.max(2,pool.length/4)?cs[0]:cs[Math.floor(cs.length/2)];pp=Math.max.apply(null,pool.map(x=>x[1]))}
+  return {kind:"forecast",src:"met",date:d,hi:Math.round(Math.max.apply(null,w.t)),lo:Math.round(Math.min.apply(null,w.t)),pp,wind:Math.round(w.wind),code,hourly:w.hrs}})}
+async function loadWx(){if(!state.loc)return;const {lat,lon}=state.loc;const lk=locKey();state.wx=null;state.wxErr="";state.wxSrc=[];state.wxT={};$("wxStatus").textContent="Loading forecast…";
+ const t0=Date.now(),errs=[];const us=state.loc.cc?state.loc.cc==="US":isUS(+lat,+lon);
+ const nws=us?wxNWS(lat,lon).then(r=>{state.wxT.nws=Date.now()-t0;return r},e=>{state.wxT.nws=Date.now()-t0;errs.push(e.message);return null}):Promise.resolve(null);
+ const met=wxMET(lat,lon).then(r=>{state.wxT.met=Date.now()-t0;return r},e=>{state.wxT.met=Date.now()-t0;errs.push(e.message);return null});
+ const a=await nws;if(locKey()!==lk)return;
+ if(a){state.wx=a;state.wxSrc=["nws"];a.forEach(w=>w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,w.code));selectDate(state.date)}
+ const b=await met;if(locKey()!==lk)return;
+ if(b){const have={};(state.wx||[]).forEach(w=>have[w.date]=1);const add=b.filter(w=>!have[w.date]&&w.date>=todayStr());add.forEach(w=>w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,w.code));
+  if(add.length){state.wx=(state.wx||[]).concat(add).sort((x,y)=>x.date<y.date?-1:1);state.wxSrc.push("met")}}
+ if(!state.wx)state.wxErr="Forecast failed: "+errs.join("; ");else state.wxErr="";
+ selectDate(state.date)}
+function forecastEnd(){return state.wx&&state.wx.length?state.wx[state.wx.length-1].date:addDays(todayStr(),9)}
 async function loadTypical(date){if(!state.loc)return;const k=locKey()+"|"+date;if(state.typ[k]||typPend[k])return;typPend[k]=1;const {lat,lon}=state.loc;
- $("wxStatus").textContent="Loading typical weather for this date (10-year history)…";
- const end=addDays(todayStr(),-7),start=(+todayStr().slice(0,4)-11)+"-01-01";
- try{const j=await fetchJ(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${start}&end_date=${end}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto`,{},30000);
-  const d=j.daily,tgt=new Date("2001"+date.slice(4)+"T12:00");let hi=0,lo=0,wet=0,wind=0,n=0;
-  for(let i=0;i<d.time.length;i++){const x=new Date("2001"+d.time[i].slice(4)+"T12:00");let diff=Math.abs(x-tgt)/864e5;diff=Math.min(diff,365-diff);
-   if(diff<=3.5&&d.temperature_2m_max[i]!=null){hi+=d.temperature_2m_max[i];lo+=d.temperature_2m_min[i];wind+=d.wind_speed_10m_max[i]||0;if((d.precipitation_sum[i]||0)>=1)wet++;n++}}
-  if(!n)throw new Error("no history for this date");
-  const w={kind:"typical",date,hi:Math.round(hi/n),lo:Math.round(lo/n),pp:Math.round(wet/n*100),wind:Math.round(wind/n),code:-1,hourly:[],n};
+ $("wxStatus").textContent="Loading weather for this date…";
+ try{if(!API_BASE)throw new Error("not configured");let j;
+  try{j=await fetchJ0(`${API_BASE}/weather/history?lat=${(+lat).toFixed(3)}&lon=${(+lon).toFixed(3)}&date=${date}`,{},15000)}catch(e){throw new Error(/HTTP (503|404)/.test(e.message)?"not configured":e.message)}
+  if(j.hi==null||j.lo==null)throw new Error("no data for this date");
+  const w={kind:"typical",src:"vc",date,hi:Math.round(j.hi),lo:Math.round(j.lo),pp:Math.round(j.pp!=null?j.pp:0),wind:Math.round(j.wind||0),code:-1,hourly:[],cond:j.conditions||"",fc:j.source==="fcst"};
   w.cls=dayClass(w.hi,w.lo,w.pp,w.wind,0);state.typ[k]=w;delete state.typErr[k]}
  catch(e){state.typErr[k]=e.message}
  delete typPend[k];
  if(state.date===date&&locKey()+"|"+date===k){drawDays();render()}}
 function selectDate(d,user){if(!d||d<todayStr())d=todayStr();const bump=!!(state.wx&&state.wx.length)&&d<state.wx[0].date;if(bump)d=state.wx[0].date;state.date=d;if(user&&!bump)save("dd_date",d);drawDays();render();
- if(state.loc&&(d>forecastEnd()||(!state.wx&&d>addDays(todayStr(),15))))loadTypical(d)}
+ if(state.loc&&(d>forecastEnd()||(!state.wx&&d>addDays(todayStr(),9))))loadTypical(d)}
 function drawDays(){const lbl={nice:"Nice out",mixed:"Mixed",indoor:"Indoor weather",unknown:"Weather unknown"};
  $("planTitle").textContent="Plans for "+niceDate(state.date);
  const di=$("dateIn");di.min=todayStr();di.value=state.date;
@@ -250,10 +294,10 @@ function drawDays(){const lbl={nice:"Nice out",mixed:"Mixed",indoor:"Indoor weat
   b.onclick=()=>selectDate(ds,true);box.append(b)}
  const w=curW(),k=locKey()+"|"+state.date;let h="";
  if(!state.loc)h=`<span class="status">Pick a location to see the weather.</span>`;
- else if(w){h=`<div class="wxsum"><b>${w.kind==="forecast"?WMO(w.code)+" Forecast":"📊 Typical for this date (not a forecast)"}</b> · ${w.hi}° / ${w.lo}°F · ${w.kind==="forecast"?"💧"+w.pp+"% chance of rain":"💧 rain on "+w.pp+"% of past days"} · 💨 ${w.wind} mph <span class="tag ${w.cls}">${lbl[w.cls]}</span>`+(w.kind==="typical"?`<br><small>Average of ${w.n} days within ±3 days of this date over ~10 years (Open-Meteo archive).</small>`:"")+`</div>`;
+ else if(w){h=`<div class="wxsum"><b>${w.kind==="forecast"?WMO(w.code)+" Forecast":(w.fc?"🔭 Long-range forecast":"📊 Typical for this date (not a forecast)")}</b> · ${w.hi}° / ${w.lo}°F · ${w.kind==="forecast"?"💧"+w.pp+"% chance of rain":"💧 rain on "+w.pp+"% of past days"} · 💨 ${w.wind} mph <span class="tag ${w.cls}">${lbl[w.cls]}</span>`+(w.kind==="typical"?`<br><small>${w.cond?esc(w.cond)+" · ":""}${w.fc?"Long-range forecast":"Based on past weather for this date"} (Visual Crossing).</small>`:`<br><small>${w.src==="nws"?"National Weather Service":"MET Norway"} forecast</small>`)+`</div>`;
   const aft=w.hourly.filter(x=>{const hh=+x.h.slice(11,13);return hh>=10&&hh<=20});
   if(aft.length){const best=aft.reduce((a,b)=>(b.p<a.p||b.p===a.p&&b.t>a.t)?b:a);h+=`<div class="status">Best outdoor window ~${new Date(best.h).toLocaleTimeString("en-US",{hour:"numeric"})} (${Math.round(best.t)}°F, ${best.p}% rain)</div>`}}
- else if(state.typErr[k])h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span> outdoor options not filtered.</div>`+retryHtml("Typical-weather lookup failed: "+state.typErr[k],"loadTypical(state.date)");
+ else if(state.typErr[k])h=state.typErr[k]==="not configured"?`<div class="wxsum"><span class="tag unknown">Weather unknown</span> Forecast not available this far out yet — outdoor options not filtered.</div>`:`<div class="wxsum"><span class="tag unknown">Weather unknown</span> outdoor options not filtered.</div>`+retryHtml("Weather lookup for this date failed: "+state.typErr[k],"loadTypical(state.date)");
  else if(state.date<=forecastEnd()&&state.wxErr)h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span></div>`+retryHtml(state.wxErr,"loadWx()");
  else if(state.wx&&state.date<=forecastEnd())h=`<div class="wxsum"><span class="tag unknown">Weather unknown</span> no forecast for this date here.</div>`;
  else h=`<span class="status">Loading weather…</span>`;
@@ -333,6 +377,12 @@ async function nomSource(lat,lon,mi,key,onBatch,deadline){const dl=mi/69,dn=mi/(
 const PH=[["fun",["tourism:museum","tourism:gallery","amenity:cinema","amenity:theatre","leisure:bowling_alley","leisure:amusement_arcade","leisure:escape_game","leisure:miniature_golf","tourism:zoo","tourism:aquarium","tourism:theme_park","leisure:water_park","amenity:arts_centre"]],
 ["parks",["leisure:park","leisure:garden","leisure:nature_reserve","natural:beach","tourism:viewpoint","leisure:dog_park"]],["food",["amenity:restaurant","amenity:cafe"]],
 ["drinks",["craft:brewery","amenity:pub","amenity:bar","amenity:marketplace","shop:farm"]],["more",["tourism:attraction","amenity:library","leisure:sports_centre","leisure:ice_rink","leisure:swimming_pool","leisure:golf_course","leisure:playground"]]];
+
+// v1.8: Nominatim/Overpass go through our caching Worker when it has those routes; direct call if the proxy errors.
+const API_BASE=EVENTS_PROXY_URL?EVENTS_PROXY_URL.replace(/\/events\/?$/,""):"";let osmProxyOff=false;
+function osmProxied(url){if(!API_BASE||osmProxyOff)return "";let m=url.match(/^https:\/\/nominatim\.openstreetmap\.org\/(search|reverse|lookup)\?(.*)$/);if(m)return API_BASE+"/osm/nominatim/"+m[1]+"?"+m[2];
+ m=url.match(/^https:\/\/overpass(?:-api\.de|\.kumi\.systems)\/api\/interpreter\?(.*)$/);if(m)return API_BASE+"/osm/overpass?"+m[1];return ""}
+async function fetchJ(url,opt,ms){const px=osmProxied(url);if(px){try{return await fetchJ0(px,opt,ms)}catch(e){if(/HTTP (403|404|405)/.test(e.message))osmProxyOff=true}}return fetchJ0(url,opt,ms)}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function photon(lat,lon,mi,key,onBatch,deadline){const km=Math.max(1,Math.min(mi*1.609,50)).toFixed(1);let ok=0,last="";
  let ix=0;async function worker(w){await sleep(w*400);while(ix<PH.length){const k=ix++;if(state.placesFor!==key||Date.now()>deadline)return;const tags=PH[k][1];
@@ -341,7 +391,7 @@ async function photon(lat,lon,mi,key,onBatch,deadline){const km=Math.max(1,Math.
   if(j){ok++;const els=[];for(const f of j.features||[]){const pp=f.properties||{};const xy=f.geometry&&f.geometry.coordinates;if(!pp.name||!xy||xy.length<2)continue;const t={name:pp.name};if(pp.osm_key)t[pp.osm_key]=pp.osm_value;els.push({type:{N:"node",W:"way",R:"relation"}[pp.osm_type]||"node",id:pp.osm_id,lat:xy[1],lon:xy[0],tags:t})}onBatch(els)}
   await sleep(300+Math.random()*150)}}
  await Promise.all([worker(0),worker(1)]);return ok?"":(last||"timed out")}
-function updAttrib(){const a=["Weather: Open-Meteo"+(curW()&&curW().kind==="typical"?" (historical archive)":" forecast"),"Places: "+(state.src||"OpenStreetMap"),"Search: Open-Meteo Geocoding / Nominatim","Wikipedia (CC BY-SA)"];$("attrib").textContent=a.join(" · ")+" · © OpenStreetMap contributors"}
+function updAttrib(){const w=curW();const a=["Weather: "+(w?(w.src==="nws"?"National Weather Service":w.src==="met"?"MET Norway (CC BY 4.0)":"Visual Crossing"):"NWS / MET Norway"),"Places: "+(state.src||"OpenStreetMap"),"Search: Photon / Nominatim","Wikipedia (CC BY-SA)"];$("attrib").textContent=a.join(" · ")+" · © OpenStreetMap contributors"}
 function hav(a,b,c,d){const R=3958.8,r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 // ---------- scoring
 function wantSetting(){const s=$("setting").value;if(s!=="auto")return s;const w=curW();if(!w||w.cls==="unknown")return"any";return w.cls==="nice"?"outdoor":w.cls==="indoor"?"indoor":"any"}
@@ -631,4 +681,5 @@ function clearLoc(){locGen++;placeGen++;evGen++;mkGen++;clearTimeout(dT);lastQ="
  $("evStatus").textContent="";$("plStatus").textContent="Pick a location to find places nearby.";refreshTabs();$("loc").focus()}
 $("locClr").onclick=clearLoc;
 (function(){const _sl=setLoc;setLoc=function(p){_sl(p);clrVis()}})();clrVis();
+if(SHOW_PRIVACY_LINK)$("privacyLink").hidden=false;
 </script></body></html>
