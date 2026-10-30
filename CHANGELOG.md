@@ -1,6 +1,27 @@
 # Changelog
 
-## v1.13.1 — 2026-10-29 (hotfix)
+## v1.14.1 — 2026-10-30 (built on v1.14)
+- **No direct browser fallbacks when our relay answers with an upstream error:** Overpass and Nominatim calls go straight to `overpass-api.de` / `overpass.kumi.systems` / `nominatim.openstreetmap.org` only if the Worker route is missing (HTTP 403/404/405) or the Worker itself can't be reached. A Worker 502/429/timeout means the public server is down or limiting too, so the call now just fails quietly. Before, it was retried from the browser, which failed CORS in Safari, logged console errors and added up to ~8 s per call. Places still fill from Photon, Wikipedia and Nominatim while Overpass is down.
+- **MET Norway only through the Worker:** the direct `api.met.no` fallback was removed (MET requires an identifying User-Agent, which browsers can't send, and it failed CORS in Safari). NWS is unchanged for US forecasts.
+- **"City, ST" share links:** a two-letter US state abbreviation at the end of a place name (e.g. `?q=Garden City, MI`) with US coordinates is now read as the state, not as a country code. Holidays use `US` (not `MI`), and the US-only Eventbrite/Meetup/Bandsintown links work again.
+- **Holiday lookup is silent when it fails:** a date.nager.at outage no longer shows a red error and Retry button on the Events tab. Holidays simply don't appear; `state.ev.holErr` is kept for debugging.
+
+## v1.14 — 2026-10-29
+- **Places and Activities dividers:** with moods picked, matching items come first, then a thin divider: "Other things nearby" / "Other ideas", or "No places (ideas) found that match that vibe (those vibes), here are some others:" when nothing matches. Counts and "Show more" still work; there is no divider without moods.
+- **Deeper place vibes:** historic buildings, plaques and memorials are now nerdy (primary) and chill, never adventurous. New OSM types, still in the single Overpass query through the Worker /osm route:
+  - climbing, trampoline, kayak/boat rental, go-karts, axe throwing, zip line/ropes
+  - tea rooms, bookshops, board-game shops/cafés, dessert
+  - science centers, observatories, makerspaces
+  - bakeries, food halls, wineries/cider (ranked below attractions)
+  - dance studios, paint-and-sip/pottery studios
+  
+  With moods picked, the result pool can hold up to 8 matching items per type (up from 4).
+- **Idea abundance:** 110 new ideas (coloring books, karaoke out and at home, thrift shopping and more), all with honest mood profiles. All 197 ideas are in the pool with or without a mood (the no-mood list now differs from v1.13 but keeps the at-home slotting, weather/season rules and the varied top 5). Every vibe now has 33+ ideas. The Viator rules are unchanged; name-only links were added for the cooking class and the food tour.
+- **"Social" means other people around:** social was removed from 35 ideas a couple or family does on its own (batting cages, golf range, language app race, home dance party, escape room, bowling, arcade, card/board/video game nights, rooftop drinks, etc.). It stays on pickup games, pickleball, fun runs, karaoke, trivia, game cafés, group classes, festivals, open mics, volunteering, hosting, and dance classes.
+- **Weather on "Let the weather decide":** nice weather now gives outdoor ideas only a mild boost (+1.5); indoor ideas no longer drop below the vibe divider. Bad weather still demotes outdoor ideas; explicit Indoor/Outdoor settings and Places ranking are unchanged.
+- **22 more group ideas** (run club, group hike, library class, dance social, pub quiz, board game meetup, pottery class, garden volunteer day, Friendsgiving, holiday market, watch party, bonfire, tailgate, group bike ride, cookie swap, craft night, museum members' night, choir/drum circle, bowling league, ugly-sweater party, white-elephant swap); 219 ideas total.
+- **Places dedupe:** near-duplicate names within ~150 m collapse into one card (normalized names of 6+ characters, edit distance ≤ 2, e.g. "Urban Kyaks" vs "Urban Kayaks"); the record with more tags is kept.
+- **Free-events loader:** uses `bbox_unpadded` expanded by the radius (with the cos(lat) correction) when present and valid, otherwise the padded bbox. Works with the slimmer region files (no id/address/region/country/cost/source fields).
 - **Find activities starts the search (results no longer auto-update):** editing any field (Where, including picking a suggestion, "Use my location" or the ✕ clear button; date strip or date picker; moods; people; budget; radius; setting) no longer rebuilds results. Results are built from a snapshot of the form taken when "Find activities" is tapped (or Enter in Where); late weather/places/events fetches fill in that search only. First load without URL params shows no results ("Fill in what you can, then tap Find activities"; a saved place is pre-filled). Share links with params still auto-run once.
   - After a search, changed settings highlight the button and show "Settings changed. Tap Find activities to update the results."; the cue clears when settings match the results again or after Find.
   - Find shows "⏳ Finding…" (disabled) until results render, then scrolls to the results if they're below the fold. Find with unchanged settings re-shuffles ideas and re-runs. Empty Where shows an inline message; the ✕ button clears only the field and keeps the current results.

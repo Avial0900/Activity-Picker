@@ -108,7 +108,7 @@ const MOODS=["chill","adventurous","social","creative","romantic","active","cozy
 // category: [label, emoji, io (in/out/both), moods, minPpl, maxPpl, cost 0-3]
 // v1.4.1 ranking tiers: 1 = attractions, 2 = other activities, 3 = food & drink (ranked last unless "foodie" mood)
 const TIER={planetarium:1,museum:1,park:1,library:1,gallery:1,zoo:1,aquarium:1,attraction:1,garden:1,nature:1,viewpoint:1,trail:1,beach:1,theatre:1,cinema:1,
- brewery:3,cafe:3,restaurant:3,fast_food:3,bar:3,pub:3,market:3};
+ brewery:3,cafe:3,restaurant:3,fast_food:3,bar:3,pub:3,market:3,bakery:3,dessert:3,foodhall:3,winery:3,science:1,observatory:1};
 // ===== Viator affiliate links (name of a bookable suggestion links to a Viator search; tracked only via campaign codes) =====
 const VIATOR={base:"https://www.viator.com/searchResults/all",pid:"P00328934",mcid:"42383",medium:"link",
  cityPages:{"detroit":"https://www.viator.com/Detroit/d22934"}, // optional destination pages, used for 'things to do' only
@@ -118,7 +118,7 @@ const VIATOR={base:"https://www.viator.com/searchResults/all",pid:"P00328934",mc
   bike:["bike tour","dd-biketour"],ghost:["ghost tour","dd-ghosttour"],history:["history tour","dd-historytour"],kayak:["kayak","dd-kayak"],daytrip:["day trip","dd-daytrip"]},
  ideas:{"Paint night (or paint-and-sip)":"painting","Escape room challenge":"escape","Pottery or craft workshop":"pottery","Try a cuisine you've never had":"foodtour","Dessert-only dinner crawl":"foodtour",
   "Brewery or wine tasting flight":"wine","Neighborhood photo walk":"walking","Museum wander + rate the art":"museum","Bike ride to somewhere new":"bike","Take a scenic drive":"daytrip",
-  "Ghost or history walking tour":"ghost","Kayak or paddleboard outing":"kayak","Sunset or river cruise":"cruise","Planetarium show":"museum"},
+  "Ghost or history walking tour":"ghost","Kayak or paddleboard outing":"kayak","Sunset or river cruise":"cruise","Planetarium show":"museum","Take a cooking class together":"cooking","Go on a food tour":"foodtour"},
  places:{escape:"escape",attraction:"things",museum:"museum",planetarium:"museum"},
  museumWordRx:/\b(museums?|museu|museo|musée|gallery|galleries|galerie|galería|galeria|art institute|institute of arts?|exhibit(ion)?s?|planetarium|science cent(er|re))\b|博物館|美術館/i,
  galleryRx:/\b(museum|museu|museo|musée|museum of art|art institute|institute of arts)\b|博物館|美術館/i,
@@ -175,13 +175,41 @@ playground:["Playground","🛝","out",["family","active"],1,20,0],
 attraction:["Attraction","📸","both",["adventurous","family","nerdy"],1,20,2],
 dog_park:["Dog park","🐕","out",["chill","social"],1,8,0],
 garden:["Garden","🌷","out",["chill","romantic","creative"],1,10,0],
+trampoline:["Trampoline park","🤸","in",["adventurous","active","family"],1,20,2],
+karting:["Go-karts","🏎","both",["adventurous","social"],1,12,2],
+axe:["Axe throwing","🪓","in",["adventurous","social"],2,10,2],
+ropes:["Zip line / ropes course","🌲","out",["adventurous","active"],1,12,3],
+boatrental:["Kayak / boat rental","🛶","out",["adventurous","active"],1,8,2],
+tearoom:["Tea room","🫖","in",["cozy","chill"],1,6,1],
+bookshop:["Bookshop","📖","in",["cozy","nerdy"],1,6,1],
+boardgame:["Board-game café / shop","🎲","in",["cozy","social","nerdy"],2,8,1],
+dessert:["Dessert spot","🍨","in",["cozy","foodie"],1,8,1],
+science:["Science center","🔬","in",["nerdy","family"],1,15,2],
+observatory:["Observatory","🔭","out",["nerdy","romantic"],1,10,0],
+makerspace:["Makerspace","🛠","in",["nerdy","creative"],1,8,1],
+bakery:["Bakery","🥐","in",["foodie","cozy"],1,6,1],
+foodhall:["Food hall","🍱","in",["foodie","social"],1,20,1],
+winery:["Winery / cidery","🍷","both",["foodie","romantic"],2,10,2],
+dance:["Dance studio / hall","💃","in",["creative","active","social"],2,20,2],
+studio:["Paint-and-sip / pottery studio","🖌","in",["creative","social"],1,10,2],
 planetarium:["Planetarium","🔭","in",["nerdy","romantic","family","chill"],1,12,2]};
 function classify(t){
  const l=t.leisure,a=t.amenity,to=t.tourism,s=t.sport,sh=t.shop;
+ const nm=t.name||"",cu=t.cuisine||"";
+ if(l==="trampoline_park")return"trampoline"; if(s==="karting")return"karting"; if(s==="axe_throwing"||/\baxe[- ]?throw/i.test(nm))return"axe";
+ if(t.aerialway==="zip_line"||l==="adventure_park"||l==="high_ropes_course")return"ropes"; if(a==="boat_rental")return"boatrental";
+ if(s==="climbing"&&nm&&!t.natural&&l!=="pitch")return"climbing"; if(l==="hackerspace")return"makerspace"; if(t.man_made==="observatory")return"observatory";
+ if(l==="dance"||a==="dancing_school")return"dance";
+ if(t.craft==="pottery"||/paint(ing)? ?(and|&|n'?) ?sip|pinot'?s palette|painting with a twist|paint your own|pottery|ceramics studio/i.test(nm)&&(sh||a==="arts_centre"||t.craft||l))return"studio";
+ if(sh==="books")return"bookshop"; if(sh==="tea"||/\btea ?(room|house|shop)\b/i.test(nm)||a==="cafe"&&/\btea\b/.test(cu)&&!/coffee/.test(cu))return"tearoom";
+ if(sh==="games"||/board ?games?|game caf/i.test(nm)&&(a==="cafe"||sh||a==="pub"))return"boardgame";
+ if(a==="ice_cream"||sh==="pastry"||sh==="confectionery"||sh==="chocolate"||a==="cafe"&&/dessert|ice_cream|frozen_yogurt|donut|crepe/.test(cu))return"dessert";
+ if(sh==="bakery")return"bakery"; if(a==="food_court")return"foodhall"; if(t.craft==="winery"||t.craft==="cider")return"winery";
  if(l==="escape_game")return"escape"; if(l==="bowling_alley"||s==="10pin"||s==="bowls"&&l==="sports_centre")return"bowling";
  if(s==="climbing"&&(l==="sports_centre"||l==="fitness_centre"))return"climbing";
  if(l==="amusement_arcade"||l==="adult_gaming_centre")return"arcade"; if(l==="water_park"||to==="theme_park")return"themepark";
  if(a==="planetarium"||/planetarium/i.test(t.name||"")&&(to==="museum"||to==="attraction"))return"planetarium";
+ if(to==="museum"&&(t.museum==="science"||/science (center|centre)|science museum|discovery (center|centre)/i.test(nm)))return"science";
  if(to==="zoo")return"zoo"; if(to==="aquarium")return"aquarium"; if(to==="museum")return"museum"; if(to==="gallery"||a==="arts_centre")return"gallery";
  if(a==="cinema")return"cinema"; if(a==="theatre")return"theatre"; if(a==="library")return"library"; if(l==="ice_rink")return"icerink";
  if(l==="swimming_pool"||l==="sports_centre"&&s==="swimming")return"swim"; if(l==="miniature_golf")return"minigolf"; if(l==="golf_course")return"golf";
@@ -236,12 +264,130 @@ const ANYWHERE=[
  ["Paint-and-sip at home","🖌","in",["creative","romantic","cozy"],1,6,1,null,{home:1}],["Make homemade pizza","🍕","in",["foodie","family","cozy","creative"],1,8,1,null,{home:1}],
  ["Indoor scavenger hunt","🔎","in",["family","social","adventurous"],2,10,0,null,{home:1}],["Charades or Pictionary night","🎭","in",["social","family","creative"],3,12,0,null,{home:1}],
  ["Two-person book club","📖","in",["cozy","nerdy","romantic"],2,2,0,null,{home:1}],
- ["Fancy dinner, dress up","🍽","in",["romantic"],2,4,3,["restaurant"]],["Cozy bookstore + café afternoon","📖","in",["cozy","chill","nerdy"],1,4,1,["cafe","library"]]];
+ ["Fancy dinner, dress up","🍽","in",["romantic"],2,4,3,["restaurant"]],["Cozy bookstore + café afternoon","📖","in",["cozy","chill","nerdy"],1,4,1,["cafe","library"]],
+ // v1.14 additions (moods list = mood profile: primary first)
+ ["Coloring books + tea","🖍","in",["cozy","creative","chill"],1,6,0,null,{"home":1}],
+ ["Hot cocoa crawl","☕","in",["cozy","foodie","romantic"],1,6,1,["cafe","dessert"]],
+ ["1000-piece jigsaw challenge","🧩","in",["cozy","chill","nerdy"],1,6,0,null,{"home":1}],
+ ["Fondue night","🫕","in",["cozy","foodie","romantic"],2,6,1,null,{"home":1}],
+ ["Scrapbook your year together","📒","in",["cozy","creative"],1,4,0,null,{"home":1}],
+ ["Origami afternoon","🦢","in",["creative","chill","nerdy"],1,6,0,null,{"home":1}],
+ ["Bookshop poetry or author reading","📖","in",["cozy","nerdy","romantic"],1,6,0,["bookshop","library"]],
+ ["Afternoon tea at a tea room","🫖","in",["cozy","romantic","foodie"],1,6,2,["tearoom","cafe"]],
+ ["Board game café","🎲","in",["social","cozy","nerdy"],2,8,1,["boardgame","cafe"]],
+ ["Read aloud by candlelight","🕯","in",["cozy","romantic"],2,2,0,null,{"home":1}],
+ ["Soup-making Sunday","🍲","in",["cozy","foodie","family"],1,8,1,null,{"home":1}],
+ ["DIY hot chocolate bar","🍫","in",["cozy","family","foodie"],1,8,1,null,{"home":1}],
+ ["Bake bread from scratch","🍞","in",["cozy","foodie","creative"],1,4,1,null,{"home":1}],
+ ["Old photo album night","📸","in",["cozy","romantic","chill"],1,6,0,null,{"home":1}],
+ ["Carve or paint pumpkins","🎃","in",["creative","family","cozy"],1,8,1,null,{"home":1,"season":"fall"}],
+ ["Haunted house or Halloween walk","👻","out",["adventurous","social"],2,10,2,["attraction"],{"season":"fall"}],
+ ["Get lost in a corn maze","🌽","out",["adventurous","family"],1,10,1,["farm"],{"season":"fall","wx":"dry"}],
+ ["Cider mill donuts + cider","🍩","out",["foodie","cozy","family"],1,10,1,["farm"],{"season":"fall"}],
+ ["Hayride at a farm","🚜","out",["family","cozy"],1,15,1,["farm"],{"season":"fall","wx":"dry"}],
+ ["Fall color drive","🍁","out",["romantic","chill"],1,4,0,["viewpoint","nature","park"],{"season":"fall"}],
+ ["Thrift shopping: find each other a weird treasure","🛍","in",["adventurous","creative","chill"],1,4,1,null],
+ ["Axe throwing","🪓","in",["adventurous", "active"],2,8,2,["axe"]],
+ ["Go-kart race","🏎","in",["adventurous", "active"],1,8,2,["karting"]],
+ ["Zip line or ropes course","🌲","out",["adventurous","active"],1,8,3,["ropes"],{"season":"notwinter","wx":"dry"}],
+ ["Explore a neighborhood you've never been to","🗺","out",["adventurous","foodie"],1,6,1,null],
+ ["International grocery store adventure","🛒","in",["adventurous","foodie"],1,4,1,null],
+ ["Night hike with headlamps","🔦","out",["adventurous","active"],1,6,0,["trail","nature"],{"season":"notwinter","wx":"dry"}],
+ ["VR arcade or indoor skydiving","🥽","in",["adventurous","nerdy"],1,6,3,["arcade"]],
+ ["Try a first-time class (archery, aerial, circus)","🏹","in",["adventurous","active"],1,6,2,["sports"]],
+ ["Public-art hunt around town","🗿","out",["adventurous","creative"],1,6,0,null,{"wx":"dry"}],
+ ["Take a cooking class together","👩‍🍳","in",["foodie","creative","social"],1,8,3,null],
+ ["Go on a food tour","🥟","out",["foodie","adventurous","social"],1,10,3,["restaurant"]],
+ ["Podcast walk","🎧","out",["chill","active"],1,2,0,["park","trail"],{"wx":"dry"}],
+ ["Sunrise walk","🌄","out",["chill","romantic"],1,4,0,["park","viewpoint","beach"],{"wx":"dry"}],
+ ["Read side by side at a café","📚","in",["chill","cozy","nerdy"],1,4,1,["cafe","bookshop"]],
+ ["Birdwatching walk","🐦","out",["chill","nerdy","family"],1,6,0,["nature","park"],{"wx":"dry"}],
+ ["Window-shopping stroll downtown","🪟","out",["chill", "romantic"],1,6,0,null],
+ ["At-home yoga session","🧘","in",["chill","active"],1,4,0,null,{"home":1}],
+ ["Watercolor in the park","🎨","out",["creative","chill"],1,6,1,["park","garden"],{"season":"notwinter","wx":"dry"}],
+ ["Salsa or swing dance class","💃","in",["active","romantic","social"],2,10,2,["dance"]],
+ ["Batting cages","⚾","out",["active", "family"],1,6,1,["sports"],{"season":"notwinter","wx":"dry"}],
+ ["Pickleball match","🏓","both",["active","social"],2,8,1,["sports","park"]],
+ ["Run a fun run or 5K together","🏃","out",["active","social"],1,12,1,["park","trail"],{"wx":"dry"}],
+ ["Laser tag battle","🔫","in",["active", "family"],2,12,2,["arcade"]],
+ ["Leaf-peeping hike","🍂","out",["active","chill"],1,8,0,["trail","nature"],{"season":"fall","wx":"dry"}],
+ ["Ping-pong or pool at a bar","🎱","in",["active", "chill"],2,4,1,["brewery"]],
+ ["Bike to brunch","🚲","out",["active","foodie"],1,4,1,["cafe","restaurant"],{"season":"notwinter","wx":"dry"}],
+ ["Karaoke bar night","🎤","in",["social","romantic"],2,12,1,["brewery"]],
+ ["Family karaoke showdown at home","🎙","in",["social","family"],2,10,0,null,{"home":1}],
+ ["Host a potluck","🥘","in",["social","foodie"],3,15,1,null,{"home":1}],
+ ["Murder-mystery dinner party","🕵","in",["social","nerdy","creative"],4,12,1,null,{"home":1}],
+ ["Drop-in improv class","🎭","in",["social","creative"],2,12,2,["theatre"]],
+ ["Watch the big game at a sports bar","📺","in",["social"],2,12,1,["brewery"]],
+ ["Walk dogs at an animal shelter","🐶","out",["family", "chill"],1,6,0,null],
+ ["Candlelit dinner at home","🕯","in",["romantic","foodie","cozy"],2,2,1,null,{"home":1}],
+ ["Stargazing drive","🌌","out",["romantic","adventurous"],1,4,0,["viewpoint","nature","observatory"],{"wx":"clear"}],
+ ["Couples spa day","💆","in",["romantic","chill"],2,2,3,null],
+ ["Rooftop or patio drinks","🍸","out",["romantic", "chill"],2,6,2,["brewery"],{"season":"warm","wx":"dry"}],
+ ["Slow dance in the kitchen","💞","in",["romantic","cozy"],2,2,0,null,{"home":1}],
+ ["Recreate your first date","💑","both",["romantic"],2,2,1,null],
+ ["Museum late night","🌙","in",["nerdy", "romantic"],1,6,2,["museum","science"]],
+ ["Paint-your-own pottery studio","🖌","in",["creative","family","chill"],1,8,2,["studio","gallery"]],
+ ["Vinyl record hunt","💿","in",["nerdy","chill"],1,4,1,null],
+ ["Antique mall wander","🕰","in",["nerdy","chill","cozy"],1,4,1,null],
+ ["Shoot a short film on your phone","🎬","in",["creative", "family"],2,8,0,null,{"home":1}],
+ ["Write a song together","🎸","in",["creative","romantic"],2,4,0,null,{"home":1}],
+ ["Photo scavenger hunt","📸","out",["creative", "adventurous"],2,10,0,null,{"wx":"dry"}],
+ ["Sketch at a museum","✏","in",["creative","nerdy","chill"],1,4,1,["museum","gallery"]],
+ ["Arrange a market bouquet","💐","in",["creative","romantic"],1,4,1,null,{"home":1}],
+ ["Make friendship bracelets","🧵","in",["creative","family","chill"],1,8,0,null,{"home":1}],
+ ["Library makerspace session (3D print, laser cut)","🖨","in",["nerdy","creative"],1,4,0,["makerspace","library"]],
+ ["Science center visit","🔬","in",["nerdy","family"],1,10,2,["science","museum","planetarium"]],
+ ["Observatory open night","🔭","out",["nerdy","romantic"],1,8,0,["observatory","viewpoint"],{"wx":"clear"}],
+ ["Documentary + debate night","📺","in",["nerdy","chill"],1,6,0,null,{"home":1}],
+ ["Learn a language together (app race)","🗣","in",["nerdy", "cozy"],2,4,0,null,{"home":1}],
+ ["Lecture or author talk","🎓","in",["nerdy"],1,6,0,["library","bookshop"]],
+ ["Chess at a café","♟","in",["nerdy","chill"],2,2,1,["cafe","boardgame"]],
+ ["Build a model rocket or kit","🚀","in",["nerdy","family","creative"],1,6,1,null,{"home":1}],
+ ["Historic-sites walk","🏛","out",["nerdy","chill"],1,8,0,["attraction"],{"wx":"dry"}],
+ ["Children's museum or play café","🧸","in",["family"],2,10,1,["museum"]],
+ ["Nature scavenger hunt","🍃","out",["family","adventurous"],1,10,0,["park","nature"],{"wx":"dry"}],
+ ["Puppet show or kids' theater","🎪","in",["family","creative"],2,12,1,["theatre"]],
+ ["Backyard obstacle course","🏁","out",["family","active"],2,10,0,null,{"home":1,"season":"notwinter","wx":"dry"}],
+ ["Library story time + book haul","📗","in",["family","cozy"],2,10,0,["library"]],
+ ["Pancake breakfast in pajamas","🥞","in",["family","cozy","foodie"],1,8,1,null,{"home":1}],
+ ["Build a cardboard castle","📦","in",["family","creative"],1,8,0,null,{"home":1}],
+ ["Petting farm visit","🐐","out",["family","chill"],1,10,1,["farm","zoo"],{"season":"notwinter"}],
+ ["Bakery crawl","🥐","in",["foodie","cozy"],1,4,1,["bakery","cafe"]],
+ ["Food hall grazing","🍱","in",["foodie", "chill"],1,10,1,["foodhall","restaurant"]],
+ ["Cidery or winery visit","🍏","both",["foodie","romantic"],2,8,2,["winery","brewery"]],
+ ["Make sushi at home","🍣","in",["foodie","creative"],1,4,2,null,{"home":1}],
+ ["Taco or ramen crawl","🌮","in",["foodie", "adventurous"],1,8,2,["restaurant"]],
+ ["Bake-off challenge","🎂","in",["foodie", "family"],2,8,1,null,{"home":1}],
+ ["Chocolate or cheese shop tasting","🧀","in",["foodie","romantic"],1,4,2,["dessert"]],
+ ["Deli-sandwich picnic in the park","🥪","out",["foodie","chill","family"],1,8,1,["park"],{"season":"notwinter","wx":"dry"}],
+ ["Brunch date","🍳","in",["foodie","romantic","cozy"],2,4,2,["cafe","restaurant"]],
+ ["Apple picking","🍎","out",["family","foodie","chill"],1,10,1,["farm"],{"season":"fall","wx":"dry"}],
+ ["Mini golf at night","⛳","out",["romantic", "chill"],2,6,1,["minigolf"],{"season":"notwinter","wx":"dry"}],
+ ["Roller-rink date night","🛼","in",["romantic","active"],2,4,1,null],
+ ["Arcade high-score battle","👾","in",["nerdy", "family"],2,6,1,["arcade"]],
+ ["Bowling league-style night","🎳","in",["active", "family"],3,12,2,["bowling"]],
+ ["Kayak a calm river","🛶","out",["adventurous","chill"],1,6,2,["boatrental","beach"],{"season":"warm","wx":"dry"}],
+ ["Ice skating at an outdoor rink","⛸","out",["romantic","active","family"],1,10,1,["icerink","park"],{"season":"holiday"}],
+ ["Bonfire + ghost stories","🔥","out",["cozy", "adventurous"],2,10,0,null,{"season":"firepit","wx":"dry"}],
+ ["Comedy club night","😂","in",["social","chill"],2,8,2,["theatre","brewery"]],
+ ["Trivia at a brewery","🍻","in",["nerdy","social","foodie"],2,8,1,["brewery"]],
+ ["Volunteer at a food bank","🥫","in",["social","family"],2,12,0,null],
+ ["Couples cooking challenge with a mystery box","📦","in",["creative", "foodie"],2,4,1,null,{"home":1}],
+ ["Learn to juggle or yo-yo","🤹","in",["active","nerdy","family"],1,6,0,null,{"home":1}],
+ ["Lantern or candlelight walk","🏮","out",["romantic","cozy","chill"],1,6,0,["park","garden"],{"wx":"dry"}],
+["Host a backyard game day", "🏸", "out", ["social", "family", "active"], 3, 20, 0, null, {"home": 1, "season": "notwinter", "wx": "dry"}],["Join a group hike or walking club", "🥾", "out", ["social", "active"], 2, 20, 0, ["trail", "park"], {"wx": "dry"}],["Drop in on a run club", "👟", "out", ["social", "active"], 1, 30, 0, ["park", "brewery"], {"wx": "dry"}],["Take a community class at the library", "📚", "in", ["social", "nerdy", "creative"], 1, 20, 0, ["library"]],["Go to a dance social", "💃", "in", ["social", "romantic", "active"], 2, 40, 1, ["dance"]],["Pub quiz with friends", "🍻", "in", ["social", "nerdy"], 2, 8, 1, ["brewery", "restaurant"]],["Board game meetup", "🎲", "in", ["social", "nerdy"], 2, 12, 0, ["boardgame", "library"]],["Group pottery class", "🏺", "in", ["creative", "social"], 2, 12, 2, ["studio"]],["Community garden volunteer day", "🌱", "out", ["social", "family", "chill"], 1, 20, 0, ["garden", "park"], {"season": "notwinter", "wx": "dry"}],["Friendsgiving potluck", "🦃", "in", ["social", "foodie", "cozy"], 4, 16, 1, null, {"home": 1, "season": "fall"}],["Holiday market with friends", "🎄", "out", ["social", "foodie"], 2, 10, 1, ["market"], {"season": "holiday"}],["Host a sports watch party", "📺", "in", ["social", "family"], 3, 15, 1, null, {"home": 1}],["Bonfire with friends", "🔥", "out", ["social", "cozy"], 3, 12, 0, null, {"home": 1, "season": "firepit", "wx": "dry"}],["Tailgate before a game", "🏈", "out", ["social", "foodie"], 3, 20, 1, ["sports"], {"season": "notwinter", "wx": "dry"}],["Group bike ride", "🚴", "out", ["social", "active", "adventurous"], 2, 20, 0, ["trail", "park"], {"season": "notwinter", "wx": "dry"}],["Cookie swap party", "🍪", "in", ["social", "foodie", "family"], 4, 16, 1, null, {"home": 1, "season": "holiday"}],["Craft night with friends", "✂️", "in", ["social", "creative", "cozy"], 3, 10, 1, null, {"home": 1}],["Museum members' night", "🏛", "in", ["social", "nerdy"], 2, 6, 2, ["museum"]],["Choir or drum circle drop-in", "🥁", "in", ["social", "creative"], 1, 30, 0, ["library", "park"]],["Bowling league night", "🎳", "in", ["social", "active"], 3, 10, 1, ["bowling"]],["Ugly-sweater party", "🎅", "in", ["social", "family"], 4, 20, 1, null, {"home": 1, "season": "holiday"}],["White-elephant gift swap", "🎁", "in", ["social", "family"], 4, 20, 1, null, {"home": 1, "season": "holiday"}]
+];
 // v1.13 mood profiles: [primary, up to 2 secondary]. Overlays CATS/ANYWHERE mood lists for ranking only (those arrays are unchanged).
-const CAT_PROF={"park":["chill", "family"],"nature":["adventurous", "chill"],"trail":["active", "adventurous"],"museum":["nerdy", "cozy"],"gallery":["creative", "romantic"],"cinema":["cozy", "romantic"],"bowling":["social", "family"],"escape":["adventurous", "nerdy", "social"],"climbing":["adventurous", "active"],"arcade":["social", "nerdy"],"themepark":["adventurous", "family"],"zoo":["family"],"aquarium":["family", "chill"],"theatre":["romantic", "creative"],"library":["cozy", "nerdy"],"icerink":["active", "romantic"],"swim":["active", "family"],"golf":["active", "social"],"minigolf":["social", "family"],"farm":["family", "foodie"],"brewery":["social", "foodie"],"cafe":["cozy", "foodie"],"restaurant":["foodie", "romantic"],"market":["foodie", "social"],"viewpoint":["romantic", "adventurous"],"beach":["chill", "active"],"sports":["active", "social"],"playground":["family"],"attraction":["adventurous", "nerdy"],"dog_park":["chill"],"garden":["chill", "romantic"],"planetarium":["nerdy", "romantic"]};
-const IDEA_PROF={"Go see a movie":["cozy", "chill"],"Paint night (or paint-and-sip)":["creative", "social"],"Take a scenic drive":["chill", "romantic"],"Sunset picnic":["romantic", "chill"],"Stargazing with a blanket":["romantic", "nerdy"],"Bowling + milkshakes":["social", "family"],"Mini golf showdown":["social", "family"],"Escape room challenge":["adventurous", "nerdy", "social"],"Arcade date — winner picks dessert":["social", "nerdy"],"Museum wander + rate the art":["nerdy", "creative"],"Coffee-shop crawl (3 cafés)":["cozy", "foodie"],"Try a cuisine you've never had":["foodie", "adventurous"],"Brewery or wine tasting flight":["foodie", "social"],"Live theater or a show":["romantic", "creative"],"Ice skating hand-in-hand":["romantic", "active"],"Climbing gym intro session":["adventurous", "active"],"Hike + trailside snack":["active", "adventurous"],"Farmers market + cook what you buy":["foodie", "creative"],"Botanical garden stroll":["chill", "romantic"],"Zoo or aquarium day":["family", "chill"],"Library date: pick books for each other":["cozy", "nerdy"],"Swim + hot cocoa after":["active", "family"],"Beach or lakeside walk":["chill", "romantic"],"Theme-park thrills":["adventurous", "social"],"Pub trivia night":["nerdy", "social"],"Golf range bucket":["active", "social"],"Pottery or craft workshop":["creative", "romantic"],"Dessert-only dinner crawl":["foodie", "romantic"],"Board game marathon":["social", "nerdy", "cozy"],"Themed movie night + homemade popcorn":["cozy", "chill"],"Bake something new together":["cozy", "foodie", "creative"],"Neighborhood photo walk":["creative", "chill"],"Puzzle + playlist night":["chill", "cozy"],"Living-room karaoke":["social", "creative"],"DIY trivia night":["nerdy", "social"],"Craft night (knit, collage, candles)":["creative", "cozy"],"Frisbee or pickup game in the park":["active", "social"],"Cook a recipe from a new country":["foodie", "adventurous", "creative"],"Video game tournament":["nerdy", "social"],"Write each other letters, swap later":["romantic", "creative"],"Build a blanket fort + movie":["cozy", "family"],"At-home spa night":["chill", "romantic"],"Sunrise breakfast picnic":["romantic", "adventurous"],"Bike ride to somewhere new":["adventurous", "active"],"Thrift-store challenge: $10 outfits":["creative", "social"],"Learn a dance from YouTube":["active", "social"],"Plan a dream trip together":["romantic", "chill"],"Volunteer for an afternoon":["social", "family"],"Wine-and-cheese tasting at home":["foodie", "romantic"],"Geocaching treasure hunt":["adventurous", "family"],"Open-mic or comedy night":["social", "creative"],"Sports game or local match":["social", "active"],"Ghost or history walking tour":["adventurous", "nerdy"],"Kayak or paddleboard outing":["adventurous", "active"],"Sunset or river cruise":["romantic", "chill"],"Planetarium show":["nerdy", "romantic"],"Botanical garden or conservatory visit":["chill", "romantic"],"Catch the view from a lookout":["adventurous", "romantic"],"Watch the sunset somewhere pretty":["romantic", "chill"],"Drive-in movie night":["romantic", "cozy"],"Roller skating throwback":["active", "social"],"Trampoline park jump-off":["active", "family"],"Pick-your-own at a farm or orchard":["family", "foodie"],"Thrift or antique treasure hunt":["creative", "chill"],"Bookstore crawl + pick a book for each other":["cozy", "nerdy"],"Live music night":["social", "romantic"],"Art walk or gallery hop":["creative", "chill"],"Fly a kite":["chill", "family"],"Go sledding":["active", "family"],"Build a snow fort":["family", "creative"],"Rake a giant leaf pile and jump in":["family", "active"],"Holiday lights drive-around":["cozy", "romantic"],"Backyard campout":["adventurous", "family"],"S'mores around a fire pit":["cozy", "family"],"Card game night (rummy, spit, crazy eights)":["social", "family"],"Bake cookies together":["cozy", "foodie", "family"],"Indoor picnic on the living-room floor":["romantic", "cozy"],"Movie marathon: pick a trilogy":["cozy", "chill"],"Home dance party":["active", "social"],"LEGO build-off":["creative", "nerdy"],"Paint-and-sip at home":["creative", "romantic"],"Make homemade pizza":["foodie", "family"],"Indoor scavenger hunt":["family", "adventurous"],"Charades or Pictionary night":["social", "family"],"Two-person book club":["nerdy", "cozy"],"Fancy dinner, dress up":["romantic", "foodie"],"Cozy bookstore + café afternoon":["cozy", "nerdy"]};
+const CAT_PROF={"park":["chill", "family"],"nature":["adventurous", "chill"],"trail":["active", "adventurous"],"museum":["nerdy", "cozy"],"gallery":["creative", "romantic"],"cinema":["cozy", "romantic"],"bowling":["social", "family"],"escape":["adventurous", "nerdy", "social"],"climbing":["adventurous", "active"],"arcade":["social", "nerdy"],"themepark":["adventurous", "family"],"zoo":["family"],"aquarium":["family", "chill"],"theatre":["romantic", "creative"],"library":["cozy", "nerdy"],"icerink":["active", "romantic"],"swim":["active", "family"],"golf":["active", "social"],"minigolf":["social", "family"],"farm":["family", "foodie"],"brewery":["social", "foodie"],"cafe":["cozy", "foodie"],"restaurant":["foodie", "romantic"],"market":["foodie", "social"],"viewpoint":["romantic", "adventurous"],"beach":["chill", "active"],"sports":["active", "social"],"playground":["family"],"attraction":["nerdy", "family"],"dog_park":["chill"],"garden":["chill", "romantic"],"planetarium":["nerdy", "romantic"],"trampoline":["adventurous", "active", "family"],"karting":["adventurous", "social"],"axe":["adventurous", "social"],"ropes":["adventurous", "active"],"boatrental":["adventurous", "active"],"tearoom":["cozy", "chill"],"bookshop":["cozy", "nerdy"],"boardgame":["cozy", "social", "nerdy"],"dessert":["cozy", "foodie"],"science":["nerdy", "family"],"observatory":["nerdy", "romantic"],"makerspace":["nerdy", "creative"],"bakery":["foodie", "cozy"],"foodhall":["foodie", "social"],"winery":["foodie", "romantic"],"dance":["creative", "active", "social"],"studio":["creative", "social"]};
+const IDEA_PROF={"Go see a movie": ["cozy", "chill"], "Paint night (or paint-and-sip)": ["creative", "social"], "Take a scenic drive": ["chill", "romantic"], "Sunset picnic": ["romantic", "chill"], "Stargazing with a blanket": ["romantic", "nerdy"], "Bowling + milkshakes": ["family", "active"], "Mini golf showdown": ["family", "chill"], "Escape room challenge": ["adventurous", "nerdy"], "Arcade date — winner picks dessert": ["nerdy", "romantic"], "Museum wander + rate the art": ["nerdy", "creative"], "Coffee-shop crawl (3 cafés)": ["cozy", "foodie"], "Try a cuisine you've never had": ["foodie", "adventurous"], "Brewery or wine tasting flight": ["foodie", "romantic"], "Live theater or a show": ["romantic", "creative"], "Ice skating hand-in-hand": ["romantic", "active"], "Climbing gym intro session": ["adventurous", "active"], "Hike + trailside snack": ["active", "adventurous"], "Farmers market + cook what you buy": ["foodie", "creative"], "Botanical garden stroll": ["chill", "romantic"], "Zoo or aquarium day": ["family", "chill"], "Library date: pick books for each other": ["cozy", "nerdy"], "Swim + hot cocoa after": ["active", "family"], "Beach or lakeside walk": ["chill", "romantic"], "Theme-park thrills": ["adventurous", "social"], "Pub trivia night": ["nerdy", "social"], "Golf range bucket": ["active", "chill"], "Pottery or craft workshop": ["creative", "romantic"], "Dessert-only dinner crawl": ["foodie", "romantic"], "Board game marathon": ["nerdy", "cozy"], "Themed movie night + homemade popcorn": ["cozy", "chill"], "Bake something new together": ["cozy", "foodie", "creative"], "Neighborhood photo walk": ["creative", "chill"], "Puzzle + playlist night": ["chill", "cozy"], "Living-room karaoke": ["social", "creative"], "DIY trivia night": ["nerdy", "cozy"], "Craft night (knit, collage, candles)": ["creative", "cozy"], "Frisbee or pickup game in the park": ["active", "social"], "Cook a recipe from a new country": ["foodie", "adventurous", "creative"], "Video game tournament": ["nerdy", "family"], "Write each other letters, swap later": ["romantic", "creative"], "Build a blanket fort + movie": ["cozy", "family"], "At-home spa night": ["chill", "romantic"], "Sunrise breakfast picnic": ["romantic", "adventurous"], "Bike ride to somewhere new": ["adventurous", "active"], "Thrift-store challenge: $10 outfits": ["creative", "chill"], "Learn a dance from YouTube": ["active", "creative"], "Plan a dream trip together": ["romantic", "chill"], "Volunteer for an afternoon": ["social", "family"], "Wine-and-cheese tasting at home": ["foodie", "romantic"], "Geocaching treasure hunt": ["adventurous", "family"], "Open-mic or comedy night": ["social", "creative"], "Sports game or local match": ["social", "active"], "Ghost or history walking tour": ["adventurous", "nerdy"], "Kayak or paddleboard outing": ["adventurous", "active"], "Sunset or river cruise": ["romantic", "chill"], "Planetarium show": ["nerdy", "romantic"], "Botanical garden or conservatory visit": ["chill", "romantic"], "Catch the view from a lookout": ["adventurous", "romantic"], "Watch the sunset somewhere pretty": ["romantic", "chill"], "Drive-in movie night": ["romantic", "cozy"], "Roller skating throwback": ["active", "romantic"], "Trampoline park jump-off": ["active", "family"], "Pick-your-own at a farm or orchard": ["family", "foodie"], "Thrift or antique treasure hunt": ["creative", "chill"], "Bookstore crawl + pick a book for each other": ["cozy", "nerdy"], "Live music night": ["social", "romantic"], "Art walk or gallery hop": ["creative", "chill"], "Fly a kite": ["chill", "family"], "Go sledding": ["active", "family"], "Build a snow fort": ["family", "creative"], "Rake a giant leaf pile and jump in": ["family", "active"], "Holiday lights drive-around": ["cozy", "romantic"], "Backyard campout": ["adventurous", "family"], "S'mores around a fire pit": ["cozy", "family"], "Card game night (rummy, spit, crazy eights)": ["family", "cozy"], "Bake cookies together": ["cozy", "foodie", "family"], "Indoor picnic on the living-room floor": ["romantic", "cozy"], "Movie marathon: pick a trilogy": ["cozy", "chill"], "Home dance party": ["active", "family"], "LEGO build-off": ["creative", "nerdy"], "Paint-and-sip at home": ["creative", "romantic"], "Make homemade pizza": ["foodie", "family"], "Indoor scavenger hunt": ["family", "adventurous"], "Charades or Pictionary night": ["family", "creative"], "Two-person book club": ["nerdy", "cozy"], "Fancy dinner, dress up": ["romantic", "foodie"], "Cozy bookstore + café afternoon": ["cozy", "nerdy"]};
 const VIBE_WORD={cozy:"warm and low-key",adventurous:"something new and a bit bold",chill:"relaxed, no pressure",active:"get moving",social:"fun with a crowd",creative:"make something together",romantic:"date-worthy",nerdy:"learn or geek out",family:"all ages",foodie:"good eats"};
 function moodProf(item,moods){if(item.prof)return item.prof;if(item.anywhere&&IDEA_PROF[item.name])return IDEA_PROF[item.name];if(item.market||item.meta[1]==="🧺"&&!item.anywhere)return ["foodie","social"];
+ if(!item.event&&item.c==="attraction"){const nm=item.name||"",tg=item.tags||{};
+  if(/comedy|improv/i.test(nm))return ["social","chill"];
+  if(/haunted|ghost|adventure|zip ?line|ropes|corn maze|go[- ]?kart|escape|climb|kayak|canoe|paddle|rapids|trampoline/i.test(nm))return ["adventurous","social"];
+  if(tg.historic||/\b(block|building|house|historic(al)?|memorial|monument|plaque|marker|depot|hall|church|cemetery|mansion|homestead|site)\b/i.test(nm)||/histor|memorial|monument|landmark/i.test(tg.description||""))return ["nerdy","chill"];
+  if(/habitat|wildlife|nature|marsh|wetland|woods/i.test(nm))return ["chill","nerdy"]}
  if(!item.event&&item.c&&CAT_PROF[item.c])return CAT_PROF[item.c];return (moods||[]).slice(0,3)}
 // recurring deal patterns: [match regex on brand/name, cat or null, weekdays (0=Sun), text]
 const DEALS=[
@@ -266,7 +412,7 @@ async function fetchJ0(url,opt,ms){opt=opt||{};ms=ms||25000;var host=url.split("
  try{var r;try{r=await fetch(url,Object.assign({},opt,c?{signal:c.signal}:{}))}catch(e){if(e&&e.name==="AbortError")throw new Error(host+": timed out after "+Math.round(ms/1000)+"s");throw new Error(host+": network blocked/unreachable ("+(e&&e.message||e)+")"+(location.protocol==="file:"?" — open this file in Safari/Chrome instead of a previewer":""))}
  if(!r.ok)throw new Error(host+": HTTP "+r.status);try{return await r.json()}catch(e){throw new Error(host+": bad JSON response")}}finally{clearTimeout(t)}}
 function retryHtml(msg,fn){return `<span class="err">⚠ ${esc(msg)}</span> <button onclick="${fn}">Retry</button>`}
-// v1.13.1 (hotfix): results only (re)build on "Find activities". AP = settings applied at the last Find; PEND = picked-but-unsubmitted location/date.
+// v1.13.1: results only (re)build on "Find activities". AP = settings applied at the last Find; PEND = picked-but-unsubmitted location/date.
 var AP=null,PEND={loc:null,date:null};function fv(id){return AP?AP[id]:$(id).value}
 // ---------- UI setup
 MOODS.forEach(m=>{const b=document.createElement("button");b.className="chip";b.textContent=m;b.onclick=()=>{b.classList.toggle("on");ddDirty()};$("moods").append(b)});
@@ -338,8 +484,8 @@ async function wxNWS(lat,lon){const pt=await fetchJ0(`https://api.weather.gov/po
   return {kind:"forecast",src:"nws",date:d,hi:Math.round(w.hi),lo:Math.round(w.lo),pp:Math.round(w.pp),wind:Math.round(w.wind),code:w.code!=null?w.code:w.ncode,hourly:hrs.filter(x=>x.h.indexOf(d)===0)}});
  if(!out.length)throw new Error("api.weather.gov: empty forecast");return out}
 async function wxMET(lat,lon){const qs=`lat=${(+lat).toFixed(4)}&lon=${(+lon).toFixed(4)}`;let j;
- if(API_BASE){try{j=await fetchJ0(API_BASE+"/weather/met?"+qs,{},12000)}catch(e){if(!/HTTP (403|404|405)|blocked|unreachable/.test(e.message))throw e}}
- if(!j)j=await fetchJ0("https://api.met.no/weatherapi/locationforecast/2.0/compact?"+qs,{},12000); // fallback only if our relay is missing
+ // v1.14.1: MET Norway only through our relay (it sends the User-Agent MET requires); no direct browser fallback (fails CORS in Safari).
+ j=API_BASE?await fetchJ0(API_BASE+"/weather/met?"+qs,{},12000):await fetchJ0("https://api.met.no/weatherapi/locationforecast/2.0/compact?"+qs,{},12000);
  const ts=(j.properties||{}).timeseries||[];if(!ts.length)throw new Error("api.met.no: empty forecast");
  const off=Math.round(lon/15)*3600e3;const days={},order=[];
  ts.forEach(x=>{const L=new Date(Date.parse(x.time)+off).toISOString();const d=L.slice(0,10),hh=+L.slice(11,13);const det=(x.data.instant||{}).details||{};
@@ -422,9 +568,15 @@ async function loadPlaces(){if(!state.loc)return;const gen=++placeGen;const {lat
  state.places=[];state.src="";const seen={},used={},srcErr={},ovErrs=[];let pending=3,stopped=false;const pend={Photon:1,Wikipedia:1,Nominatim:1};const deadline=Date.now()+45000;
  setTimeout(function(){if(gen!==placeGen||state.placesFor!==key||!(pending>0))return;stopped=true;pending=0;status()},45500);
  $("plStatus").textContent="Finding places nearby…";render();
+ // v1.14 near-duplicate names (e.g. "Urban Kyaks" vs "Urban Kayaks") within ~150 m: keep the record with more tags
+ function dupNorm(x){return String(x||"").toLowerCase().replace(/[^a-z0-9]+/g,"")}
+ function lev2(a,b){if(a===b)return true;if(Math.abs(a.length-b.length)>2)return false;let pr=[];for(let j=0;j<=b.length;j++)pr[j]=j;for(let i=1;i<=a.length;i++){const cu=[i];let mn=i;for(let j=1;j<=b.length;j++){cu[j]=Math.min(pr[j]+1,cu[j-1]+1,pr[j-1]+(a[i-1]===b[j-1]?0:1));if(cu[j]<mn)mn=cu[j]}if(mn>2)return false;pr=cu}return pr[b.length]<=2}
  function ingest(elements,src,prefer){let n=0;for(const e of elements){const t=e.tags||{};const c=classify(t);if(!c)continue;const la=(e.lat!=null?e.lat:(e.center&&e.center.lat)),lo=(e.lon!=null?e.lon:(e.center&&e.center.lon));if(la==null)continue;
   const d=hav(lat,lon,la,lo);if(d>mi*1.05)continue;const name=t.name||CATS[c][0];const k=c+"|"+name.toLowerCase();const p={name,c,lat:la,lon:lo,dist:d,tags:t,id:e.type+"/"+e.id,wiki:e.wiki};
-  if(seen[k]!=null){if(prefer)state.places[seen[k]]=p;continue}seen[k]=state.places.length;state.places.push(p);n++}
+  if(seen[k]!=null){if(prefer)state.places[seen[k]]=p;continue}
+  const nn=dupNorm(name);if(nn.length>=6){let dj=-1;for(let j=0;j<state.places.length;j++){const q=state.places[j];if(Math.abs(q.lat-la)>0.0015||hav(q.lat,q.lon,la,lo)>0.093)continue;const qn=dupNorm(q.name);if(qn.length>=6&&lev2(nn,qn)){dj=j;break}}
+   if(dj>=0){const q=state.places[dj];if(Object.keys(t).length>Object.keys(q.tags||{}).length)state.places[dj]=p;seen[k]=dj;continue}}
+  seen[k]=state.places.length;state.places.push(p);n++}
   if(n)used[src]=1;state.src=Object.keys(used).join(" + ");updAttrib();render();status()}
  function done(name,err){if(gen!==placeGen||state.placesFor!==key)return;delete pend[name];if(err)srcErr[name]=err;pending=Math.max(0,pending-1);status()}
  function status(){if(gen!==placeGen||state.placesFor!==key)return;const busy=pending>0;const el=Object.keys(srcErr).map(k=>k+": "+srcErr[k]);if(stopped)Object.keys(pend).forEach(k=>el.push(k+": no response after 45s"));
@@ -444,7 +596,7 @@ async function loadPlaces(){if(!state.loc)return;const gen=++placeGen;const {lat
  let ovFails=0;try{ovFails=+sessionStorage.getItem("dd_ov_fail")||0}catch(e){}
  if(ovFails<2){const mir=["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter"][(ovFails+Math.floor(Date.now()/1000))%2];
   const A=`(around:${r},${lat},${lon})`;
-  const q=`[out:json][timeout:8];(nwr${A}[leisure~"^(park|nature_reserve|bowling_alley|escape_game|amusement_arcade|water_park|ice_rink|swimming_pool|miniature_golf|golf_course|sports_centre|dog_park|garden)$"][name];nwr${A}[tourism~"^(museum|gallery|zoo|aquarium|theme_park|viewpoint|attraction)$"][name];nwr${A}[amenity~"^(cinema|planetarium|theatre|library|arts_centre|marketplace|pub|bar|cafe|restaurant)$"][name];nwr${A}[craft=brewery];nwr${A}[shop=farm][name];nwr${A}[natural=beach][name];);out center tags 600;`;
+  const q=`[out:json][timeout:8];(nwr${A}[leisure~"^(park|nature_reserve|bowling_alley|escape_game|amusement_arcade|water_park|ice_rink|swimming_pool|miniature_golf|golf_course|sports_centre|dog_park|garden|trampoline_park|adventure_park|high_ropes_course|hackerspace|dance)$"][name];nwr${A}[tourism~"^(museum|gallery|zoo|aquarium|theme_park|viewpoint|attraction)$"][name];nwr${A}[amenity~"^(cinema|planetarium|theatre|library|arts_centre|marketplace|pub|bar|cafe|restaurant|boat_rental|food_court|ice_cream|dancing_school)$"][name];nwr${A}[craft~"^(brewery|winery|cider|pottery)$"];nwr${A}[shop~"^(farm|books|tea|games|bakery|pastry|confectionery|chocolate)$"][name];nwr${A}[sport~"^(climbing|karting|axe_throwing)$"][name];nwr${A}[man_made=observatory][name];nwr${A}[aerialway=zip_line];nwr${A}[natural=beach][name];);out center tags 900;`;
   fetchJ(mir+"?data="+encodeURIComponent(q),{},8000).then(j=>{if(live())ingest(j.elements||[],"Overpass",true)},e=>{ovErrs.push("Overpass: "+e.message);try{sessionStorage.setItem("dd_ov_fail",ovFails+1)}catch(x){}})}}
 const CC_LANG={JP:"ja",FR:"fr",DE:"de",ES:"es",MX:"es",AR:"es",CO:"es",CL:"es",PE:"es",IT:"it",PT:"pt",BR:"pt",NL:"nl",BE:"fr",SE:"sv",NO:"no",DK:"da",FI:"fi",IS:"is",PL:"pl",CZ:"cs",RU:"ru",UA:"uk",CN:"zh",TW:"zh",KR:"ko",TR:"tr",GR:"el",IL:"he",AT:"de",CH:"de",HU:"hu",RO:"ro",TH:"th",VN:"vi",ID:"id",ZA:"af"};
 const WIKI_RULES=[[/\b(school|university|college|hospital|district|station|county|township|village|neighbou?rhood|suburb|company|plant|factory|radio|television|congressional|cemetery|highway|road|street|airport|railway|church|parish|ward|municipality|prefecture|census|electoral|constituency|corporation|headquarters|office|apartment|hotel|bank|pub|tavern|laboratory|laboratories|(city|town|suburb|area) (in|of))\b/i,null],[/\bstatue\b|sculpture/i,"tourism=attraction"],
@@ -469,15 +621,17 @@ async function nomSource(lat,lon,mi,key,onBatch,deadline){const dl=mi/69,dn=mi/(
   catch(e){last=e.message;if(/HTTP 429|HTTP 403/.test(last))break}}
  return ok?"":(last||"failed")}
 // Photon reverse lookups: location-agnostic (no keywords), nearest-first, filtered by OSM tags
-const PH=[["fun",["tourism:museum","tourism:gallery","amenity:cinema","amenity:planetarium","amenity:theatre","leisure:bowling_alley","leisure:amusement_arcade","leisure:escape_game","leisure:miniature_golf","tourism:zoo","tourism:aquarium","tourism:theme_park","leisure:water_park","amenity:arts_centre"]],
-["parks",["leisure:park","leisure:garden","leisure:nature_reserve","natural:beach","tourism:viewpoint","leisure:dog_park"]],["food",["amenity:restaurant","amenity:cafe"]],
-["drinks",["craft:brewery","amenity:pub","amenity:bar","amenity:marketplace","shop:farm"]],["more",["tourism:attraction","amenity:library","leisure:sports_centre","leisure:ice_rink","leisure:swimming_pool","leisure:golf_course","leisure:playground"]]];
+const PH=[["fun",["tourism:museum","tourism:gallery","amenity:cinema","amenity:planetarium","amenity:theatre","leisure:bowling_alley","leisure:amusement_arcade","leisure:escape_game","leisure:miniature_golf","tourism:zoo","tourism:aquarium","tourism:theme_park","leisure:water_park","amenity:arts_centre","leisure:trampoline_park","amenity:boat_rental","leisure:hackerspace","man_made:observatory"]],
+["parks",["leisure:park","leisure:garden","leisure:nature_reserve","natural:beach","tourism:viewpoint","leisure:dog_park"]],["food",["amenity:restaurant","amenity:cafe","shop:bakery","amenity:ice_cream","amenity:food_court"]],
+["drinks",["craft:brewery","amenity:pub","amenity:bar","amenity:marketplace","shop:farm"]],["more",["tourism:attraction","amenity:library","leisure:sports_centre","leisure:ice_rink","leisure:swimming_pool","leisure:golf_course","leisure:playground","shop:books","shop:games","shop:tea"]]];
 
 // v1.8: Nominatim/Overpass go through our caching Worker when it has those routes; direct call if the proxy errors.
 const API_BASE=EVENTS_PROXY_URL?EVENTS_PROXY_URL.replace(/\/events\/?$/,""):"";let osmProxyOff=false;
 function osmProxied(url){if(!API_BASE||osmProxyOff)return "";let m=url.match(/^https:\/\/nominatim\.openstreetmap\.org\/(search|reverse|lookup)\?(.*)$/);if(m)return API_BASE+"/osm/nominatim/"+m[1]+"?"+m[2];
  m=url.match(/^https:\/\/overpass(?:-api\.de|\.kumi\.systems)\/api\/interpreter\?(.*)$/);if(m)return API_BASE+"/osm/overpass?"+m[1];return ""}
-async function fetchJ(url,opt,ms){const px=osmProxied(url);if(px){try{return await fetchJ0(px,opt,ms)}catch(e){if(/HTTP (403|404|405)/.test(e.message))osmProxyOff=true}}return fetchJ0(url,opt,ms)}
+// v1.14.1: go direct only if our relay route is missing (403/404/405) or the relay itself is unreachable. If the relay answered with an
+// upstream error (502/429/timeout), the public server is down too, and a direct browser call would just fail CORS (Safari) and log errors.
+async function fetchJ(url,opt,ms){const px=osmProxied(url);if(px){try{return await fetchJ0(px,opt,ms)}catch(e){if(/HTTP (403|404|405)/.test(e.message))osmProxyOff=true;else if(!/network blocked\/unreachable/.test(e.message))throw e}}return fetchJ0(url,opt,ms)}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function photon(lat,lon,mi,key,onBatch,deadline){const km=Math.max(1,Math.min(mi*1.609,50)).toFixed(1);let ok=0,last="";
  let ix=0;async function worker(w){await sleep(w*400);while(ix<PH.length){const k=ix++;if(state.placesFor!==key||Date.now()>deadline)return;const tags=PH[k][1];
@@ -495,7 +649,7 @@ function dealsFor(p,dow){const out=[];const nm=((p.tags&&p.tags.brand)||"")+" "+
  return out.slice(0,1)}
 function score(item,ctx){const [label,,io,moods,mn,mx,cost]=item.meta;let s=0,why=[],miss=0;
  const set=ctx.setting;if(set==="indoor"){if(io==="out"){s-=4;miss++}else{s+=2;why.push(ctx.auto?"good pick for "+ctx.wxWord:"indoor")}}
- else if(set==="outdoor"){if(io==="in"){s-=3;miss++}else{s+=2;why.push(ctx.auto?"enjoy the "+ctx.wxWord:"outdoors")}}
+ else if(set==="outdoor"){if(io==="in"){if(!(ctx.auto&&item.anywhere)){s-=3;miss++}}else{s+=ctx.auto&&item.anywhere?1.5:2;why.push(ctx.auto?"enjoy the "+ctx.wxWord:"outdoors")}} // v1.14: nice weather (auto) only gives outdoor a mild boost
  else if(ctx.wx&&io==="out"&&ctx.wx.cls==="mixed"){s+=0;why.push("weather is mixed — have a backup")}
  let hits=0;if(ctx.moods.size){const pf=moodProf(item,moods),hit=pf.filter(m=>ctx.moods.has(m));hits=hit.length;
   if(hits){hit.forEach(m=>{s+=m===pf[0]?5:2});if(hits>1)s+=2*(hits-1);why.push(hit.map(m=>m+": "+VIBE_WORD[m]).join(" + "))}else{s-=6;miss++}}
@@ -512,20 +666,24 @@ function mkCtx(){const w=curW();const dow=new Date(state.date+"T12:00").getDay()
  return {setting:wantSetting(),auto:fv("setting")==="auto",wx:w,wxWord:w?(w.cls==="nice"?`${w.hi}° and nice`:w.cls==="indoor"?"rough weather":w.cls==="unknown"?"unknown weather":"mixed weather"):"",
   moods:state.moods,people:+fv("people"),budget:+fv("budget"),radius:+fv("radius"),dow,date:state.date,lat:+state.loc.lat}}
 function moreBtn(id,shown,total,key){const b=$(id);const left=total-shown;b.hidden=left<=0;if(left>0)b.textContent="Show more ("+left+" more)";b.onclick=()=>{state.show[key]+=10;render()}}
+// v1.14 vibe divider: index of the first non-matching item (only when moods are picked and something non-matching remains)
+function moodCut(list,ctx){if(!ctx.moods.size)return -1;for(let k=0;k<list.length;k++)if(!list[k].hits)return k;return -1}
+function moodDiv(cut,other,kind,ctx){return `<div class="status evdiv" style="border-top:1px solid var(--bd);margin:10px 0 6px;padding-top:6px">${cut>0?other:"No "+kind+" found that match "+(ctx.moods.size>1?"those vibes":"that vibe")+", here are some others:"}</div>`}
 function render(){if(!state.loc)return;const ctx=mkCtx();
  // 1) places
  const items=state.places.map(p=>Object.assign({},p,{meta:CATS[p.c],deal:dealsFor(p,ctx.dow)}));
  items.forEach(i=>Object.assign(i,score(i,ctx)));const foodie=state.moods.has("foodie");
  const tier=i=>{const t=TIER[i.c]||2;if(state.moods.size&&t<3)return 1;return foodie?(t===3?0:t):t};
  items.sort((a,b)=>b.hits-a.hits||a.miss-b.miss||tier(a)-tier(b)||b.s-a.s);
- const cnt={},pool=[];for(const i of items){cnt[i.c]=(cnt[i.c]||0)+1;if(cnt[i.c]<=4)pool.push(i);if(pool.length>=40)break}
+ const cnt={},pool=[];const mx=state.moods.size?8:4;for(const i of items){cnt[i.c]=(cnt[i.c]||0)+1;if(cnt[i.c]<=(i.hits?mx:4))pool.push(i);if(pool.length>=40&&!i.hits)break}
  // diversify first 5: max 1 per category, then 2, then anything
  const out=[],used={};for(const cap of [1,2,99]){for(const i of pool){if(out.length>=5)break;if(out.indexOf(i)<0&&(used[i.c]||0)<cap&&(cap<99||true)){if(cap<99&&pool.some(j=>out.indexOf(j)<0&&j.hits>i.hits))continue;
    if(cap<99&&!foodie&&tier(i)===3&&pool.some(j=>out.indexOf(j)<0&&tier(j)<3&&(used[j.c]||0)<cap))continue;out.push(i);used[i.c]=(used[i.c]||0)+1}}}
  pool.forEach(i=>{if(out.indexOf(i)<0)out.push(i)});
  ranked=out;$("plCount").textContent=state.places.length?`(${state.places.length})`:"";
- let h=out.length&&!out.some(i=>i.miss===0)?`<p class="status">Nothing matches every filter — here are the closest options.</p>`:"";
- h+=out.slice(0,state.show.pl).map(x=>card(x)).join("");$("results").innerHTML=h;moreBtn("plMore",state.show.pl,out.length,"pl");
+ const pCut=moodCut(out,ctx);
+ let h=out.length&&pCut<0&&!out.some(i=>i.miss===0)?`<p class="status">Nothing matches every filter — here are the closest options.</p>`:"";
+ h+=out.slice(0,state.show.pl).map((x,k)=>(k===pCut?moodDiv(pCut,"Other things nearby","places",ctx):"")+card(x)).join("");$("results").innerHTML=h;moreBtn("plMore",state.show.pl,out.length,"pl");
  renderIdeas(ctx);renderEvents(ctx)}
 function nearestOf(cats){let best=null;if(!cats)return null;for(const p of state.places)if(cats.indexOf(p.c)>=0&&(!best||p.dist<best.dist))best=p;return best}
 function rnd(seed){let x=seed*9301+49297;return function(){x=(x*9301+49297)%233280;return x/233280}}
@@ -547,14 +705,17 @@ function ideaFit(o,ctx){let m=+(ctx.date||"").slice(5,7)||(new Date().getMonth()
  if(o.home&&cls==="indoor"){r.s+=1.5;r.why.push("cozy at-home pick")}
  return r}
 function renderIdeas(ctx){const ideas=ANYWHERE.map(a=>{const o=ideaOpt(a);return {name:a[0],anywhere:true,meta:a.slice(0,7),deal:[],link:a[7],home:!!o.home,opt:o}});
- ideas.forEach(i=>{Object.assign(i,score(i,ctx));const f=ideaFit(i.opt,ctx);if(i.home&&ctx.auto&&ctx.setting==="outdoor"){i.miss--;i.s+=3}i.s+=f.s;i.miss+=f.miss;i.why=i.why.concat(f.why);i.near=nearestOf(i.link);if(i.near){i.s+=1.5;i.why.push("nearby: "+i.near.name)}});
- ideas.sort((a,b)=>a.miss-b.miss||b.s-a.s);let pool=ideas.filter(i=>i.miss===0);if(pool.length<8)pool=ideas.slice(0,Math.max(12,pool.length));
- if(ctx.moods.size){const mt=ideas.filter(i=>i.hits&&i.miss<=1&&pool.indexOf(i)<0&&i.miss-(i.moodMiss||0)===0);pool=pool.concat(mt)}
+ ideas.forEach(i=>{Object.assign(i,score(i,ctx));const f=ideaFit(i.opt,ctx);i.s+=f.s;i.miss+=f.miss;i.why=i.why.concat(f.why);i.near=nearestOf(i.link);if(i.near){i.s+=1.5;i.why.push("nearby: "+i.near.name)}});
+ ideas.sort((a,b)=>a.miss-b.miss||b.s-a.s);let pool=ideas.filter(i=>i.miss===0);
+ // v1.14: with moods, matching ideas first, then ideas whose only miss is the mood (shown under the divider)
+ if(ctx.moods.size)pool=pool.concat(ideas.filter(i=>i.moodMiss&&i.miss===1));
+ if(pool.length<8)pool=ideas.slice(0,Math.max(12,pool.length));
  const r=rnd(state.ideaSeed);pool=pool.map(i=>[r()+(i.near?0.15:0)+i.s*(ctx.moods.size?0.08:0.03),i]).sort((a,b)=>(b[1].hits||0)-(a[1].hits||0)||b[0]-a[0]).map(x=>x[1]);
  // at-home slotting is applied within each mood-match group so a non-matching idea never jumps ahead of a matching one
  {const grp=[];pool.forEach(i=>{const h=i.hits||0;let g=grp.filter(x=>x.h===h)[0];if(!g){g={h,l:[]};grp.push(g)}g.l.push(i)});const every=ctx.wx&&ctx.wx.cls==="indoor"?2:3,mix=[];
   grp.forEach(g=>{const hm=g.l.filter(i=>i.home),ot=g.l.filter(i=>!i.home);let k=0;while(hm.length||ot.length){k++;if((k%every===0&&hm.length)||!ot.length)mix.push(hm.shift());else mix.push(ot.shift())}});pool=mix}ideaPicks=pool;
- $("idCount").textContent=`(${pool.length} match)`;$("ideas").innerHTML=pool.slice(0,state.show.id).map(x=>card(x)).join("");moreBtn("idMore",state.show.id,pool.length,"id")}
+ const iCut=moodCut(pool,ctx);$("idCount").textContent=`(${ctx.moods.size?pool.filter(i=>i.hits).length:pool.length} match)`;
+ $("ideas").innerHTML=pool.slice(0,state.show.id).map((x,k)=>(k===iCut?moodDiv(iCut,"Other ideas","ideas",ctx):"")+card(x)).join("");moreBtn("idMore",state.show.id,pool.length,"id")}
 $("shuffle").onclick=()=>{state.ideaSeed=Math.floor(Math.random()*1e6)+1;state.show.id=5;if(state.loc)render()};
 // ===== Events =====
 const MOOD_KW={social:["trivia","meetup","bar events"],creative:["workshop","art class","craft"],active:["fun run","fitness class","sports"],romantic:["live music","wine tasting","concert"],
@@ -562,9 +723,11 @@ const MOOD_KW={social:["trivia","meetup","bar events"],creative:["workshop","art
 const US_ST={"alabama":"al","alaska":"ak","arizona":"az","arkansas":"ar","california":"ca","colorado":"co","connecticut":"ct","delaware":"de","florida":"fl","georgia":"ga","hawaii":"hi","idaho":"id","illinois":"il","indiana":"in","iowa":"ia","kansas":"ks","kentucky":"ky","louisiana":"la","maine":"me","maryland":"md","massachusetts":"ma","michigan":"mi","minnesota":"mn","mississippi":"ms","missouri":"mo","montana":"mt","nebraska":"ne","nevada":"nv","new hampshire":"nh","new jersey":"nj","new mexico":"nm","new york":"ny","north carolina":"nc","north dakota":"nd","ohio":"oh","oklahoma":"ok","oregon":"or","pennsylvania":"pa","rhode island":"ri","south carolina":"sc","south dakota":"sd","tennessee":"tn","texas":"tx","utah":"ut","vermont":"vt","virginia":"va","washington":"wa","west virginia":"wv","wisconsin":"wi","wyoming":"wy","district of columbia":"dc"};
 const CC_NAME={GB:"united-kingdom",JP:"japan",CA:"canada",AU:"australia",FR:"france",DE:"germany",ES:"spain",IT:"italy",MX:"mexico",IE:"ireland",NL:"netherlands",NZ:"new-zealand",ZA:"south-africa",IS:"iceland",BR:"brazil",IN:"india",SG:"singapore"};
 function placeParts(){const parts=(state.loc.name||"").replace(/^📡\s*/,"").split(",").map(x=>x.trim()).filter(Boolean);let cc=state.loc.cc||"";
- if(!cc&&parts.length>1&&/^[A-Z]{2}$/.test(parts[parts.length-1]))cc=parts[parts.length-1];let city=parts[0]||"",region=parts[1]||"";
+ const last=parts.length>1?parts[parts.length-1]:""; // v1.14.1: "Garden City, MI" (US coords) = Michigan, not country code MI
+ const usAbbr=!cc&&/^[A-Z]{2}$/.test(last)&&Object.values(US_ST).indexOf(last.toLowerCase())>=0&&isUS(+state.loc.lat,+state.loc.lon);if(usAbbr)cc="US";
+ if(!cc&&/^[A-Z]{2}$/.test(last))cc=last;let city=parts[0]||"",region=parts[1]||"";
  if(region&&/^[A-Z]{2}$/.test(region)&&!cc){cc="US";}
- let st=US_ST[region.toLowerCase()]||(region.length===2?region.toLowerCase():"");if(!cc&&st)cc="US";return {city,region,cc,st}}
+ let st=US_ST[region.toLowerCase()]||(region.length===2?region.toLowerCase():"")||(usAbbr?last.toLowerCase():"");if(!cc&&st)cc="US";return {city,region,cc,st}}
 const holCache={},holPend={};
 function getHolidays(cc,yr){const k=cc+yr;if(holCache[k])return Promise.resolve(holCache[k]);if(holPend[k])return holPend[k];
  const p=fetchJ(`https://date.nager.at/api/v3/PublicHolidays/${yr}/${cc}`,{},10000).then(j=>{holCache[k]=j;delete holPend[k];return j},e=>{delete holPend[k];throw e});holPend[k]=p;return p}
@@ -716,8 +879,10 @@ function freeLegacy(){if(freeFeed)return Promise.resolve(freeFeed);if(!freeP)fre
 function freeGetIdx(){if(freeIdx)return Promise.resolve(freeIdx);if(!freeIdxP)freeIdxP=fetchJ("./data/free-events/index.json"+freeCb(),{},15000).then(j=>{const v=freeValidIdx(j);freeIdxP=null;if(v){freeIdx=v;return v}return "legacy"},()=>{freeIdxP=null;return "legacy"});return freeIdxP}
 function freeRegion(path){if(freeReg[path])return Promise.resolve(freeReg[path]);if(!freeRegP[path])freeRegP[path]=fetchJ("./data/"+path+freeCb(),{},15000).then(j=>{delete freeRegP[path];if(j&&Array.isArray(j.events)){freeReg[path]=j;return j}return null},()=>{delete freeRegP[path];return null});return freeRegP[path]}
 function freePick(idx,lat,lon,rad,d){const dl=rad/69,dn=rad/(69*Math.max(0.05,Math.cos(lat*Math.PI/180)));const c=[lat-dl,lon-dn,lat+dl,lon+dn];
- return idx.files.filter(f=>{const b=f.bbox;if(!Array.isArray(b)||b.length!==4||b.some(v=>typeof v!=="number"||!isFinite(v)))return false;
-  if(b[0]>c[2]||b[2]<c[0]||b[1]>c[3]||b[3]<c[1])return false;const r=f.date_range;if(Array.isArray(r)&&r.length===2&&r[0]&&r[1]&&(d<String(r[0]).slice(0,10)||d>String(r[1]).slice(0,10)))return false;return true}).map(f=>f.path)}
+ const ok4=b=>Array.isArray(b)&&b.length===4&&!b.some(v=>typeof v!=="number"||!isFinite(v));
+ return idx.files.filter(f=>{const u=f.bbox_unpadded,b=f.bbox;
+  if(ok4(u)){if(lat<u[0]-dl||lat>u[2]+dl||lon<u[1]-dn||lon>u[3]+dn)return false} // v1.14: tight bbox grown by the radius, tested against the point
+  else{if(!ok4(b))return false;if(b[0]>c[2]||b[2]<c[0]||b[1]>c[3]||b[3]<c[1])return false}const r=f.date_range;if(Array.isArray(r)&&r.length===2&&r[0]&&r[1]&&(d<String(r[0]).slice(0,10)||d>String(r[1]).slice(0,10)))return false;return true}).map(f=>f.path)}
 function loadFree(g){const t0=Date.now();
  (freeIdx||freeFeed?Promise.resolve():sleep(700)).then(freeGetIdx).then(idx=>{if(g!==evGen||!state.loc)return null;if(idx==="legacy")return freeLegacy().then(j=>j?[j]:null);
   const lat=+state.loc.lat,lon=+state.loc.lon,rad=+fv("radius");const paths=freePick(idx,lat,lon,rad,state.date);
@@ -754,9 +919,9 @@ function renderEvents(ctx){const ev=state.ev;$("evTitle").textContent="Happening
   if(mk.open.length&&mk.closed)h+=`<div class="status">${mk.closed} other nearby market${mk.closed>1?"s":""} closed that day.</div>`;
   if(mk.unk.length)h+=`<details class="unv"><summary>Hours unverified (${mk.unk.length}) — check before going</summary>`+mk.unk.slice(0,15).map(m=>`<div class="unvi">🧺 <b>${esc(m.name)}</b> · ${m.dist.toFixed(1)} mi${m.oh?` · listed hours: ${esc(m.oh)}`:" · no hours listed"} · <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.name)}%20${m.lat},${m.lon}" target="_blank" rel="noopener">Maps</a>${same.length&&!/\bPH\b/.test(m.oh||"")?" · 🎌 Holiday — hours may differ":""}</div>`).join("")+`</details>`;
   if(state.mk.err&&!mk.open.length&&!mk.unk.length)h+=`<div class="status">Markets: ${esc(state.mk.err)}</div>`}
- const st=[];if(ev.holBusy||ev.tmBusy)st.push("Loading events…");if(ev.holErr)st.push(ev.holErr);if(ev.tmErr)st.push(ev.tmErr);
+ const st=[];if(ev.holBusy||ev.tmBusy)st.push("Loading events…");if(ev.tmErr)st.push(ev.tmErr); /* v1.14.1: holiday lookup is a nice-to-have; a date.nager.at outage stays silent (state.ev.holErr kept for debugging) */
  if(tmMode()&&!ev.tmBusy&&!ev.tmErr&&!tm.length)st.push("No ticketed events found for this date nearby.");
- $("evStatus").innerHTML=st.map(esc).join("<br>")+(ev.holErr||ev.tmErr?' <button onclick="state.ev.key=\'\';loadEvents()">Retry</button>':"");
+ $("evStatus").innerHTML=st.map(esc).join("<br>")+(ev.tmErr?' <button onclick="state.ev.key=\'\';loadEvents()">Retry</button>':"");
  const nEv=all.length+same.length+mk.open.length;$("evCount").textContent=nEv?`(${nEv})`:"";$("events").innerHTML=h;moreBtn("evMore",state.show.ev,all.length,"ev");$("evLinks").innerHTML=evLinks();paintTm()}
 function evCard(e){return `<div class="res">${e.img?`<img class="evimg" src="${esc(e.img)}" alt="" loading="lazy">`:""}<h3>${e.market?"🧺":e.freeEv?"🆓":"🎟"} ${esc(e.name)}</h3><div class="meta">${esc(e.genre)}${e.time?" · 🕒 "+esc(e.time):""}${e.venue?" · 📍 "+esc(e.venue):""}${e.dist!=null?` · ${e.dist.toFixed(1)} mi`:""}${e.price?" · "+esc(e.price):""}${e.free?' <span class="badge free">Free</span>':""}</div>
  ${e.market?holNote(e.oh):""}<div class="why">✅ ${esc(e.why.join(" · ")||"happening that day")}</div><div class="links">${e.url?`<a href="${esc(e.url)}" target="_blank" rel="noopener">${e.freeEv?"ℹ️ Details":"🎫 Tickets"}</a>`:""}${e.lat?`<a href="https://www.google.com/maps/search/?api=1&query=${e.lat},${e.lon}" target="_blank" rel="noopener">🗺 Maps</a>`:""}</div><div style="clear:both"></div></div>`}
