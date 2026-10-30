@@ -1,0 +1,501 @@
+{
+ "schema": 1,
+ "updated": "2026-10-30T08:53:00-04:00",
+ "files": [
+  {
+   "region": "chicago-north",
+   "path": "free-events/chicago-north.json",
+   "city_list": [
+    "Chicago"
+   ],
+   "count": 1757,
+   "bbox": [
+    41.3768,
+    -88.3175,
+    42.5078,
+    -87.1041
+   ],
+   "center": [
+    41.9423,
+    -87.7108
+   ],
+   "region_center": [
+    41.8781,
+    -87.6298
+   ],
+   "bbox_unpadded": [
+    41.8768,
+    -87.8175,
+    42.0078,
+    -87.6041
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 721164
+  },
+  {
+   "region": "chicago-south",
+   "path": "free-events/chicago-south.json",
+   "city_list": [
+    "Chicago"
+   ],
+   "count": 1633,
+   "bbox": [
+    41.1573,
+    -88.2818,
+    42.3763,
+    -87.0336
+   ],
+   "center": [
+    41.7668,
+    -87.6577
+   ],
+   "region_center": [
+    41.8781,
+    -87.6298
+   ],
+   "bbox_unpadded": [
+    41.6573,
+    -87.7818,
+    41.8763,
+    -87.5336
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 669335
+  },
+  {
+   "region": "cincinnati",
+   "path": "free-events/cincinnati.json",
+   "city_list": [
+    "Cincinnati",
+    "Hamilton County"
+   ],
+   "count": 1681,
+   "bbox": [
+    38.585,
+    -85.2875,
+    39.7845,
+    -83.768
+   ],
+   "center": [
+    39.1031,
+    -84.512
+   ],
+   "region_center": [
+    39.1031,
+    -84.512
+   ],
+   "bbox_unpadded": [
+    39.085,
+    -84.7875,
+    39.2845,
+    -84.268
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-31"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 751798
+  },
+  {
+   "region": "cleveland-east",
+   "path": "free-events/cleveland-east.json",
+   "city_list": [
+    "Cleveland",
+    "Cuyahoga County suburbs"
+   ],
+   "count": 1761,
+   "bbox": [
+    40.8141,
+    -82.1487,
+    42.0808,
+    -80.8891
+   ],
+   "center": [
+    41.4475,
+    -81.5189
+   ],
+   "region_center": [
+    41.4993,
+    -81.6944
+   ],
+   "bbox_unpadded": [
+    41.3141,
+    -81.6487,
+    41.5808,
+    -81.3891
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 691275
+  },
+  {
+   "region": "cleveland-west",
+   "path": "free-events/cleveland-west.json",
+   "city_list": [
+    "Cleveland",
+    "Cuyahoga County suburbs"
+   ],
+   "count": 1780,
+   "bbox": [
+    40.8165,
+    -82.4208,
+    42.0012,
+    -81.1667
+   ],
+   "center": [
+    41.4089,
+    -81.7938
+   ],
+   "region_center": [
+    41.4993,
+    -81.6944
+   ],
+   "bbox_unpadded": [
+    41.3165,
+    -81.9208,
+    41.5012,
+    -81.6667
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 681861
+  },
+  {
+   "region": "columbus-east",
+   "path": "free-events/columbus-east.json",
+   "city_list": [
+    "Columbus",
+    "Franklin County suburbs"
+   ],
+   "count": 1792,
+   "bbox": [
+    39.3935,
+    -83.4683,
+    40.582,
+    -82.2868
+   ],
+   "center": [
+    39.9878,
+    -82.8775
+   ],
+   "region_center": [
+    39.9612,
+    -82.9988
+   ],
+   "bbox_unpadded": [
+    39.8935,
+    -82.9683,
+    40.082,
+    -82.7868
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 696480
+  },
+  {
+   "region": "columbus-west",
+   "path": "free-events/columbus-west.json",
+   "city_list": [
+    "Columbus",
+    "Franklin County suburbs"
+   ],
+   "count": 2091,
+   "bbox": [
+    39.3894,
+    -83.6366,
+    40.6013,
+    -82.4752
+   ],
+   "center": [
+    39.9954,
+    -83.0559
+   ],
+   "region_center": [
+    39.9612,
+    -82.9988
+   ],
+   "bbox_unpadded": [
+    39.8894,
+    -83.1366,
+    40.1013,
+    -82.9752
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 806184
+  },
+  {
+   "region": "detroit-metro",
+   "path": "free-events/detroit-metro.json",
+   "city_list": [
+    "Detroit",
+    "Dearborn",
+    "Dearborn Heights",
+    "Westland",
+    "Canton",
+    "Plymouth",
+    "Livonia",
+    "Redford",
+    "Garden City",
+    "Wayne",
+    "Inkster",
+    "Northville"
+   ],
+   "count": 1461,
+   "bbox": [
+    41.7693,
+    -83.9913,
+    42.9337,
+    -82.4372
+   ],
+   "center": [
+    42.3314,
+    -83.0458
+   ],
+   "region_center": [
+    42.3314,
+    -83.0458
+   ],
+   "bbox_unpadded": [
+    42.2693,
+    -83.4913,
+    42.4337,
+    -82.9372
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-31"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 617478
+  },
+  {
+   "region": "indianapolis",
+   "path": "free-events/indianapolis.json",
+   "city_list": [
+    "Indianapolis"
+   ],
+   "count": 812,
+   "bbox": [
+    39.1508,
+    -86.7897,
+    40.413,
+    -85.4955
+   ],
+   "center": [
+    39.7684,
+    -86.1581
+   ],
+   "region_center": [
+    39.7684,
+    -86.1581
+   ],
+   "bbox_unpadded": [
+    39.6508,
+    -86.2897,
+    39.913,
+    -85.9955
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 324444
+  },
+  {
+   "region": "kansas-city",
+   "path": "free-events/kansas-city.json",
+   "city_list": [
+    "Kansas City MO",
+    "Johnson County KS"
+   ],
+   "count": 424,
+   "bbox": [
+    38.243,
+    -95.4697,
+    39.5356,
+    -94.0321
+   ],
+   "center": [
+    39.0997,
+    -94.5786
+   ],
+   "region_center": [
+    39.0997,
+    -94.5786
+   ],
+   "bbox_unpadded": [
+    38.743,
+    -94.9697,
+    39.0356,
+    -94.5321
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-19"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 178629
+  },
+  {
+   "region": "madison",
+   "path": "free-events/madison.json",
+   "city_list": [
+    "Madison"
+   ],
+   "count": 209,
+   "bbox": [
+    42.5286,
+    -90.0176,
+    43.6329,
+    -88.7799
+   ],
+   "center": [
+    43.0731,
+    -89.4012
+   ],
+   "region_center": [
+    43.0731,
+    -89.4012
+   ],
+   "bbox_unpadded": [
+    43.0286,
+    -89.5176,
+    43.1329,
+    -89.2799
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-31"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 86369
+  },
+  {
+   "region": "milwaukee",
+   "path": "free-events/milwaukee.json",
+   "city_list": [
+    "Milwaukee"
+   ],
+   "count": 794,
+   "bbox": [
+    42.4735,
+    -88.5077,
+    43.6484,
+    -87.3867
+   ],
+   "center": [
+    43.0389,
+    -87.9065
+   ],
+   "region_center": [
+    43.0389,
+    -87.9065
+   ],
+   "bbox_unpadded": [
+    42.9735,
+    -88.0077,
+    43.1484,
+    -87.8867
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 298543
+  },
+  {
+   "region": "st-louis",
+   "path": "free-events/st-louis.json",
+   "city_list": [
+    "St. Louis"
+   ],
+   "count": 954,
+   "bbox": [
+    38.0547,
+    -90.7978,
+    39.2149,
+    -89.6994
+   ],
+   "center": [
+    38.627,
+    -90.1994
+   ],
+   "region_center": [
+    38.627,
+    -90.1994
+   ],
+   "bbox_unpadded": [
+    38.5547,
+    -90.2978,
+    38.7149,
+    -90.1994
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 369974
+  },
+  {
+   "region": "twin-cities",
+   "path": "free-events/twin-cities.json",
+   "city_list": [
+    "Minneapolis",
+    "Saint Paul",
+    "Hennepin County suburbs"
+   ],
+   "count": 1800,
+   "bbox": [
+    44.344,
+    -94.2434,
+    45.6916,
+    -92.5119
+   ],
+   "center": [
+    44.9537,
+    -93.18
+   ],
+   "region_center": [
+    44.9537,
+    -93.18
+   ],
+   "bbox_unpadded": [
+    44.844,
+    -93.7434,
+    45.1916,
+    -93.0119
+   ],
+   "date_range": [
+    "2026-10-30",
+    "2026-12-29"
+   ],
+   "updated": "2026-10-30T08:53:00-04:00",
+   "bytes": 717930
+  }
+ ]
+}
