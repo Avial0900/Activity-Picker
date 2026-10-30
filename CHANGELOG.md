@@ -1,5 +1,8 @@
 # Changelog
 
+## v1.14.2 — 2026-10-30
+- Added Impact site-verification meta tag in <head> (Fever affiliate program). Meta tag only, no script.
+
 ## v1.14.1 — 2026-10-30 (built on v1.14)
 - **No direct browser fallbacks when our relay answers with an upstream error:** Overpass and Nominatim calls go straight to `overpass-api.de` / `overpass.kumi.systems` / `nominatim.openstreetmap.org` only if the Worker route is missing (HTTP 403/404/405) or the Worker itself can't be reached. A Worker 502/429/timeout means the public server is down or limiting too, so the call now just fails quietly. Before, it was retried from the browser, which failed CORS in Safari, logged console errors and added up to ~8 s per call. Places still fill from Photon, Wikipedia and Nominatim while Overpass is down.
 - **MET Norway only through the Worker:** the direct `api.met.no` fallback was removed (MET requires an identifying User-Agent, which browsers can't send, and it failed CORS in Safari). NWS is unchanged for US forecasts.
