@@ -22,7 +22,7 @@ main{max-width:760px;margin:auto;padding:8px 12px 16px}
 h2{font-size:1rem;margin:0 0 8px}label{font-size:.85rem;color:var(--mut);display:block;margin:8px 0 4px}
 input,select,button{font:inherit;color:inherit}input[type=text],select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg)}
 button{cursor:pointer;border:0;border-radius:10px;padding:10px 14px;background:var(--chip)}
-button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{background:var(--acc2);color:#fff}
+button.pri{background:var(--acc);color:#fff;font-weight:600}#go.upd{box-shadow:0 0 0 3px rgba(232,103,60,.35);animation:ddpu 1.8s ease-in-out 3}#go[disabled]{opacity:.8;cursor:progress}@keyframes ddpu{50%{box-shadow:0 0 0 6px rgba(232,103,60,.12)}}#goHint{margin-top:6px;min-height:0}#goHint:empty{display:none}#resCard.ddfl{animation:ddfl .45s ease-out}@keyframes ddfl{from{opacity:.35}to{opacity:1}}@media(prefers-reduced-motion:reduce){#go.upd,#resCard.ddfl{animation:none}}button.sec{background:var(--acc2);color:#fff}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>div{min-width:0;max-width:100%}select{max-width:100%}.row>*{flex:1 1 140px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{padding:6px 11px;border-radius:999px;background:var(--chip);border:1px solid transparent;font-size:.88rem}
 .chip.on{background:var(--acc);color:#fff}
@@ -58,7 +58,7 @@ button.pri{background:var(--acc);color:#fff;font-weight:600}button.sec{backgroun
 <div><label>Budget</label><select id="budget"><option value="0">Free only</option><option value="1">$ cheap</option><option value="2" selected>$$ moderate</option><option value="3">$$$ splurge</option></select></div></div>
 <div class="row"><div><label>Radius: <b id="rv"></b> mi</label><input id="radius" type="range" min="1" max="25" value="8" style="width:100%"></div>
 <div><label>Setting</label><select id="setting"><option value="auto">Let the weather decide</option><option value="indoor">Indoor</option><option value="outdoor">Outdoor</option><option value="any">Either</option></select></div></div>
-<div class="row" style="margin-top:12px"><button class="pri" id="go">🔎 Find activities</button><button class="sec" id="surprise">🎲 Surprise me</button></div>
+<div class="row" style="margin-top:12px"><button class="pri" id="go">🔎 Find activities</button><button class="sec" id="surprise">🎲 Surprise me</button></div><div class="status" id="goHint" role="status" aria-live="polite"></div>
 </section>
 <section class="card" id="pickCard" hidden></section>
 <div id="shareRow" hidden style="text-align:right;margin:4px 2px -4px"><button type="button" id="shareBtn" style="padding:6px 12px;font-size:.85rem">🔗 Share</button> <span id="shareMsg" class="status" role="status" aria-live="polite"></span><input id="shareUrl" readonly hidden style="width:100%;margin-top:6px;font-size:.8rem" aria-label="Share link"></div>
@@ -266,13 +266,15 @@ async function fetchJ0(url,opt,ms){opt=opt||{};ms=ms||25000;var host=url.split("
  try{var r;try{r=await fetch(url,Object.assign({},opt,c?{signal:c.signal}:{}))}catch(e){if(e&&e.name==="AbortError")throw new Error(host+": timed out after "+Math.round(ms/1000)+"s");throw new Error(host+": network blocked/unreachable ("+(e&&e.message||e)+")"+(location.protocol==="file:"?" — open this file in Safari/Chrome instead of a previewer":""))}
  if(!r.ok)throw new Error(host+": HTTP "+r.status);try{return await r.json()}catch(e){throw new Error(host+": bad JSON response")}}finally{clearTimeout(t)}}
 function retryHtml(msg,fn){return `<span class="err">⚠ ${esc(msg)}</span> <button onclick="${fn}">Retry</button>`}
+// v1.13.1 (hotfix): results only (re)build on "Find activities". AP = settings applied at the last Find; PEND = picked-but-unsubmitted location/date.
+var AP=null,PEND={loc:null,date:null};function fv(id){return AP?AP[id]:$(id).value}
 // ---------- UI setup
-MOODS.forEach(m=>{const b=document.createElement("button");b.className="chip";b.textContent=m;b.onclick=()=>{state.moods.has(m)?state.moods.delete(m):state.moods.add(m);b.classList.toggle("on");savePrefs();render()};$("moods").append(b)});
+MOODS.forEach(m=>{const b=document.createElement("button");b.className="chip";b.textContent=m;b.onclick=()=>{b.classList.toggle("on");ddDirty()};$("moods").append(b)});
 for(let i=1;i<=12;i++)$("people").add(new Option(i===12?"12+":String(i),i));
 $("people").value=2;$("rv").textContent=$("radius").value;
 $("radius").oninput=()=>$("rv").textContent=$("radius").value;
-$("radius").onchange=()=>{savePrefs();loadPlaces()};
-["people","budget","setting"].forEach(id=>$(id).onchange=()=>{savePrefs();render();if(typeof shareVis==="function")shareVis()});
+$("radius").onchange=()=>ddDirty();
+["people","budget","setting"].forEach(id=>$(id).onchange=()=>ddDirty());
 function savePrefs(){save("dd_prefs",{m:[...state.moods],p:$("people").value,b:$("budget").value,r:$("radius").value,s:$("setting").value})}
 const pr=LS("dd_prefs");if(pr){(Array.isArray(pr.m)?pr.m:[]).forEach(m=>state.moods.add(m));[...$("moods").children].forEach(b=>b.classList.toggle("on",state.moods.has(b.textContent)));if(pr.p!=null)$("people").value=pr.p;if(pr.b!=null)$("budget").value=pr.b;if(pr.r!=null){$("radius").value=pr.r;$("rv").textContent=pr.r}if(pr.s)$("setting").value=pr.s}
 // ---------- location
@@ -293,19 +295,19 @@ let shown={q:"",list:[]};
 async function search(q){lastQ=q;const list=await geocode(q);
  if(q!==lastQ||$("loc").value.trim()!==q)return;shown={q,list};const ul=$("sl");ul.innerHTML="";
  if(!list.length){ul.innerHTML="<li>No matches</li>"}
- list.forEach(p=>{const li=document.createElement("li");li.textContent=p.name;li.onclick=()=>{ul.hidden=true;setLoc(p)};ul.append(li)});ul.hidden=false}
+ list.forEach(p=>{const li=document.createElement("li");li.textContent=p.name;li.onclick=()=>{ul.hidden=true;ddPick(p)};ul.append(li)});ul.hidden=false}
 async function resolveTyped(){const q=$("loc").value.trim();clearTimeout(dT);$("sl").hidden=true;
  if(!q||(state.loc&&q===state.loc.name)){if(state.loc)setLoc(state.loc);else $("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”.";return}
  let list=shown.q===q?shown.list:null;if(!list||!list.length){$("locStatus").textContent="Looking up “"+q+"”…";lastQ=q;list=await geocode(q)}
  if($("loc").value.trim()!==q)return;
  if(!list.length){$("locStatus").innerHTML=`<span class="err">Couldn't find “${esc(q)}”. Try adding a state or country, e.g. “Madison, WI”.</span>`;return}
  setLoc(list[0])}
-$("loc").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();resolveTyped()}});
+$("loc").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();ddFind()}});
 $("geo").onclick=()=>{if(!navigator.geolocation||(window.isSecureContext===false&&location.protocol!=="file:")){$("locStatus").innerHTML='<span class="err">Geolocation not supported.</span>';return}
  $("locStatus").textContent="Getting your location…";const lg=locGen;
  navigator.geolocation.getCurrentPosition(async p=>{const lat=+p.coords.latitude.toFixed(4),lon=+p.coords.longitude.toFixed(4);let name=`My location (${lat}, ${lon})`,gcc="";
   try{const j=await fetchJ(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${lat}&lon=${lon}`);const a=j.address||{};name="📡 "+[a.city||a.town||a.village||a.county,a.state].filter(Boolean).join(", ");gcc=(a.country_code||"").toUpperCase()}catch(e){}
-  if(lg!==locGen)return;setLoc({name,lat,lon,cc:gcc})},e=>{if(lg!==locGen)return;$("locStatus").innerHTML=`<span class="err">Couldn't get location (${esc(e.message)}). On file:// some browsers block it — try searching instead.</span>`},{timeout:15000,maximumAge:600000})};
+  if(lg!==locGen)return;ddPick({name,lat,lon,cc:gcc})},e=>{if(lg!==locGen)return;$("locStatus").innerHTML=`<span class="err">Couldn't get location (${esc(e.message)}). On file:// some browsers block it — try searching instead.</span>`},{timeout:15000,maximumAge:600000})};
 function setLoc(p){state.loc=p;(function(){const d=LS("dd_date");state.date=d&&d>=todayStr()?d:todayStr()})();save("dd_loc",p);$("loc").value=p.name;$("locStatus").textContent=`Using ${p.name} (${(+p.lat).toFixed(3)}, ${(+p.lon).toFixed(3)})`;loadWx();drawDays();ensureWx();loadPlaces()}
 // ---------- weather
 const WMO=c=>c===0?"☀️":c<=2?"🌤":c===3?"☁️":c<=48?"🌫":c<=67?"🌧":c<=77?"❄️":c<=82?"🌦":c<=86?"🌨":"⛈";
@@ -415,7 +417,7 @@ function ohClosed(oh,dow){if(!oh)return null;try{oh=oh.trim();if(/^24\/7$/.test(
   if(hit){if(/\b(off|closed)\b/i.test(m[2])){offHit=true;covered=false}else{covered=true;offHit=false}}}
  if(!any)return null;return offHit||!covered}catch(e){return null}}
 
-async function loadPlaces(){if(!state.loc)return;const gen=++placeGen;const {lat,lon}=state.loc;const mi=+$("radius").value;const r=Math.round(mi*1609.34);const key=`${lat},${lon},${r}`;state.placesFor=key;
+async function loadPlaces(){if(!state.loc)return;const gen=++placeGen;const {lat,lon}=state.loc;const mi=+fv("radius");const r=Math.round(mi*1609.34);const key=`${lat},${lon},${r}`;state.placesFor=key;
  const cached=LS("dd_pl_"+key);if(cached&&cached.p&&cached.p.length&&Date.now()-cached.t<36e5){state.places=cached.p;state.src=cached.s;$("plStatus").textContent=`${state.places.length} places within ${mi} mi (${cached.s}, cached).`;updAttrib();render();return}
  state.places=[];state.src="";const seen={},used={},srcErr={},ovErrs=[];let pending=3,stopped=false;const pend={Photon:1,Wikipedia:1,Nominatim:1};const deadline=Date.now()+45000;
  setTimeout(function(){if(gen!==placeGen||state.placesFor!==key||!(pending>0))return;stopped=true;pending=0;status()},45500);
@@ -487,7 +489,7 @@ async function photon(lat,lon,mi,key,onBatch,deadline){const km=Math.max(1,Math.
 function updAttrib(){const w=curW();const a=["Weather: "+(w?(w.src==="nws"?"National Weather Service":w.src==="met"?"MET Norway (CC BY 4.0)":"Visual Crossing"):"NWS / MET Norway"),"Places: "+(state.src||"OpenStreetMap"),"Search: Photon / Nominatim","Wikipedia (CC BY-SA)"];$("attrib").textContent=a.join(" · ")+" · © OpenStreetMap contributors"}
 function hav(a,b,c,d){const R=3958.8,r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 // ---------- scoring
-function wantSetting(){const s=$("setting").value;if(s!=="auto")return s;const w=curW();if(!w||w.cls==="unknown")return"any";return w.cls==="nice"?"outdoor":w.cls==="indoor"?"indoor":"any"}
+function wantSetting(){const s=fv("setting");if(s!=="auto")return s;const w=curW();if(!w||w.cls==="unknown")return"any";return w.cls==="nice"?"outdoor":w.cls==="indoor"?"indoor":"any"}
 function dealsFor(p,dow){const out=[];const nm=((p.tags&&p.tags.brand)||"")+" "+p.name;let specific=false;
  for(const [re,cat,days,txt] of DEALS){if(cat&&cat!==p.c)continue;if(re){if(re.test(nm)&&days.includes(dow)){out.push(txt);specific=true}}else if(!specific&&days.includes(dow))out.push(txt)}
  return out.slice(0,1)}
@@ -507,8 +509,8 @@ function score(item,ctx){const [label,,io,moods,mn,mx,cost]=item.meta;let s=0,wh
  return {s,why,miss,hits,moodMiss:ctx.moods.size&&!hits?1:0}}
 let ranked=[],ideaPicks=[],evItems=[];state.show={pl:5,id:5,ev:5,mk:5};state.ideaSeed=1;
 function mkCtx(){const w=curW();const dow=new Date(state.date+"T12:00").getDay();
- return {setting:wantSetting(),auto:$("setting").value==="auto",wx:w,wxWord:w?(w.cls==="nice"?`${w.hi}° and nice`:w.cls==="indoor"?"rough weather":w.cls==="unknown"?"unknown weather":"mixed weather"):"",
-  moods:state.moods,people:+$("people").value,budget:+$("budget").value,radius:+$("radius").value,dow,date:state.date,lat:+state.loc.lat}}
+ return {setting:wantSetting(),auto:fv("setting")==="auto",wx:w,wxWord:w?(w.cls==="nice"?`${w.hi}° and nice`:w.cls==="indoor"?"rough weather":w.cls==="unknown"?"unknown weather":"mixed weather"):"",
+  moods:state.moods,people:+fv("people"),budget:+fv("budget"),radius:+fv("radius"),dow,date:state.date,lat:+state.loc.lat}}
 function moreBtn(id,shown,total,key){const b=$(id);const left=total-shown;b.hidden=left<=0;if(left>0)b.textContent="Show more ("+left+" more)";b.onclick=()=>{state.show[key]+=10;render()}}
 function render(){if(!state.loc)return;const ctx=mkCtx();
  // 1) places
@@ -578,7 +580,7 @@ const TM_MOOD=[[/rock|pop|alternative|indie|country|r&b|hip-hop|rap|dance|electr
  [/comedy/i,["social","chill"]],[/theatre|theater|musical|opera|ballet|dance/i,["romantic","creative"]],[/family|children|circus|ice shows|magic/i,["family"]],[/sports|basketball|football|hockey|baseball|soccer|wrestling|running|marathon/i,["active","social"]],
  [/film|cinema/i,["cozy","chill"]],[/fair|festival/i,["adventurous","social"]],[/expo|convention|comic|gaming|lecture|science/i,["nerdy"]],[/art|craft|workshop/i,["creative"]]];
 async function loadTM(g){const {lat,lon}=state.loc;const d=state.date;
- const mode=tmMode();const qs=`latlong=${(+lat).toFixed(4)},${(+lon).toFixed(4)}&radius=${Math.max(5,Math.min(100,+$("radius").value*2))}&unit=miles&localStartDateTime=${d}T00:00:00,${d}T23:59:59&size=50&sort=relevance,desc`;
+ const mode=tmMode();const qs=`latlong=${(+lat).toFixed(4)},${(+lon).toFixed(4)}&radius=${Math.max(5,Math.min(100,+fv("radius")*2))}&unit=miles&localStartDateTime=${d}T00:00:00,${d}T23:59:59&size=50&sort=relevance,desc`;
  const url=mode==="proxy"?EVENTS_PROXY_URL+(EVENTS_PROXY_URL.indexOf("?")<0?"?":"&")+qs:`https://app.ticketmaster.com/discovery/v2/events.json?apikey=${encodeURIComponent(tmKey())}&`+qs;
  try{const j=await fetchJ(url,{},15000);if(g!==evGen)return;const evs=(j._embedded&&j._embedded.events)||[];
   state.ev.tm=evs.map(e=>{const cl=(e.classifications&&e.classifications[0])||{};const txt=[e.name,cl.segment&&cl.segment.name,cl.genre&&cl.genre.name,cl.subGenre&&cl.subGenre.name].filter(Boolean).join(" ");
@@ -645,7 +647,7 @@ function mkAdd(key,els){if(state.mk.key!==key)return;const L=state.mk.list;
  for(const e of els){if(!e.name||e.lat==null)continue;const id=e.id||"";let x=L.filter(m=>(id&&m.id===id)||(m.name.toLowerCase()===e.name.toLowerCase()&&hav(m.lat,m.lon,e.lat,e.lon)<0.3))[0];
   if(!x){x={id,name:e.name,lat:e.lat,lon:e.lon,oh:"",farmers:false,web:""};L.push(x)}if(e.oh&&!x.oh)x.oh=e.oh;if(e.farmers)x.farmers=true;if(e.web&&!x.web)x.web=e.web;if(id&&!x.id)x.id=id}}
 async function loadMarkets(){if(!state.loc)return;const key=locKey();if(state.mk.key===key&&(state.mk.busy||state.mk.list.length))return;const g=++mkGen;
- const {lat,lon}=state.loc;const mi=Math.max(+$("radius").value,5);state.mk={key,list:[],busy:true,err:""};
+ const {lat,lon}=state.loc;const mi=Math.max(+fv("radius"),5);state.mk={key,list:[],busy:true,err:""};
  const cached=LS("dd_mk_"+key+"_"+mi);if(cached&&cached.t>Date.now()-36e5&&cached.list&&cached.list.length){state.mk.list=cached.list;state.mk.busy=false;render();return}
  const live=()=>g===mkGen&&state.mk.key===key;const deadline=Date.now()+25000;let errs=[];const rr=()=>{if(live())render()};
  const kmr=Math.max(1,Math.min(mi*1.609,50)).toFixed(1);
@@ -669,7 +671,7 @@ async function loadMarkets(){if(!state.loc)return;const key=locKey();if(state.mk
    if(live())(Array.isArray(j)?j:[]).forEach(x=>{const id=(x.osm_type||"n")[0].toUpperCase()+x.osm_id;const m=state.mk.list.filter(y=>y.id===id)[0];const et=x.extratags||{};if(m){if(et.opening_hours)m.oh=et.opening_hours;if(et.marketplace==="farmers")m.farmers=true;if(!m.web)m.web=et.website||""}})}catch(e){errs.push("Hours lookup: "+e.message)}}}
  if(!live())return;state.mk.busy=false;if(!state.mk.list.length&&errs.length)state.mk.err=errs.join("; ");
  if(state.mk.list.length)save("dd_mk_"+key+"_"+mi,{t:Date.now(),list:state.mk.list});render()}
-function marketsFor(ctx){const out={open:[],unk:[],closed:0};if(state.mk.key!==locKey())return out;const {lat,lon}=state.loc;const rad=Math.max(+$("radius").value,5);
+function marketsFor(ctx){const out={open:[],unk:[],closed:0};if(state.mk.key!==locKey())return out;const {lat,lon}=state.loc;const rad=Math.max(+fv("radius"),5);
  const hol=state.ev.hol.some(h=>h.same);
  state.mk.list.forEach(m=>{const dist=hav(+lat,+lon,m.lat,m.lon);if(dist>rad*1.2)return;const r=ohEval(m.oh,state.date,hol);const fm=isFarmers(m);
   if(r.open===false){out.closed++;return}
@@ -718,9 +720,9 @@ function freePick(idx,lat,lon,rad,d){const dl=rad/69,dn=rad/(69*Math.max(0.05,Ma
   if(b[0]>c[2]||b[2]<c[0]||b[1]>c[3]||b[3]<c[1])return false;const r=f.date_range;if(Array.isArray(r)&&r.length===2&&r[0]&&r[1]&&(d<String(r[0]).slice(0,10)||d>String(r[1]).slice(0,10)))return false;return true}).map(f=>f.path)}
 function loadFree(g){const t0=Date.now();
  (freeIdx||freeFeed?Promise.resolve():sleep(700)).then(freeGetIdx).then(idx=>{if(g!==evGen||!state.loc)return null;if(idx==="legacy")return freeLegacy().then(j=>j?[j]:null);
-  const lat=+state.loc.lat,lon=+state.loc.lon,rad=+$("radius").value;const paths=freePick(idx,lat,lon,rad,state.date);
+  const lat=+state.loc.lat,lon=+state.loc.lon,rad=+fv("radius");const paths=freePick(idx,lat,lon,rad,state.date);
   if(!paths.length)return [];return Promise.all(paths.map(freeRegion)).then(a=>a.filter(Boolean))})
- .then(js=>{if(!js||g!==evGen||!state.loc)return;const d=state.date,{lat,lon}=state.loc,rad=+$("radius").value;
+ .then(js=>{if(!js||g!==evGen||!state.loc)return;const d=state.date,{lat,lon}=state.loc,rad=+fv("radius");
   const out=[];js.forEach(j=>freeIndex(j).forEach(x=>{try{if(x.s<=d&&d<=x.en&&hav(+lat,+lon,+x.e.lat,+x.e.lon)<=rad)out.push(freeItem(x.e,lat,lon))}catch(z){}}));
   // collapse exact duplicates (same title, same venue/time)
   const seen={};state.ev.free=out.filter(i=>{const k=i.name.toLowerCase()+"|"+i.time+"|"+i.venue.toLowerCase();if(seen[k])return false;seen[k]=1;return true});state.ev.freeMs=Date.now()-t0;render()},()=>{})}
@@ -769,12 +771,12 @@ function card(i,isPick){const [label,emo,io]=i.meta;const city=(state.loc.name||
  const cost=["Free","$","$$","$$$"][i.meta[6]];
  return `<div class="res ${isPick?"":""}"><h3>${emo} ${nameHtml(i)}</h3><div class="meta">${i.anywhere?(i.near?`Near ${esc(i.near.name)} (${i.near.dist.toFixed(1)} mi)`:i.home?"At home":"Anywhere idea"):esc(label)} · ${io==="in"?"Indoor":io==="out"?"Outdoor":"In/Out"} · ~${cost}${i.dist!=null?` · ${i.dist.toFixed(1)} mi`:""}${t.opening_hours?` · 🕒 ${esc(t.opening_hours)}`:""}</div>
  ${!i.anywhere&&t.opening_hours?holNote(t.opening_hours):""}${i.closed?`<div class="closed">⛔ Likely closed that day (per listed hours — verify)</div>`:""}<div class="why">✅ ${esc(i.why.join(" · ")||"a solid option")}</div>${i.deal.map(d=>`<div class="deal">🏷 ${esc(d)} — <b>typical, verify</b></div>`).join("")}<div class="links">${links}</div></div>`}
-$("go").onclick=()=>resolveTyped();
+$("go").onclick=()=>ddFind();
 $("surprise").onclick=()=>{const pool=[];ranked.filter(i=>i.miss===0).slice(0,10).forEach(i=>pool.push(i));ideaPicks.slice(0,8).forEach(i=>pool.push(i));evItems.filter(i=>i.miss===0).slice(0,6).forEach(i=>pool.push(i));
  if(!pool.length){ranked.slice(0,6).concat(ideaPicks.slice(0,6)).forEach(i=>pool.push(i))}if(!pool.length)return;const p=pool[Math.floor(Math.random()*pool.length)];
  const c=$("pickCard");c.hidden=false;c.className="card pick";c.innerHTML="<h2>🎲 Surprise pick</h2>"+(p.event?evCard(p):card(p,true));const k=p.event||p.market||p.freeEv?"ev":ideaPicks.indexOf(p)>=0?"id":"pl";c.setAttribute("data-tab",k);if(typeof setTab==="function")setTab(k);c.scrollIntoView({behavior:"smooth",block:"center"})};
 (function(){const _sl=setLoc,_sd=selectDate;setLoc=function(p){state.show={pl:5,id:5,ev:5,mk:5};state.ev.key="";state.mk.key="";_sl(p);loadEvents()};selectDate=function(d,u){_sd(d,u);if(state.loc)loadEvents()}})();
-(function(){const l=LS("dd_loc");if(l&&l.lat!=null)setLoc(l);else{drawDays();$("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”.";$("wxStatus").textContent="Pick a location to see the weather.";$("plStatus").textContent="Pick a location to find places nearby."}})();
+(function(){const l=LS("dd_loc");drawDays();$("wxStatus").textContent="Pick a location to see the weather.";$("plStatus").textContent="Fill in what you can, then tap “Find activities”.";if(l&&l.lat!=null){PEND.loc=l;$("loc").value=l.name;$("locStatus").textContent="Last place: "+l.name+". Tap “Find activities” when you’re ready."}else $("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”."})();
 
 // v1.7 results tabs
 const TABS=["pl","id","ev"],TPAN={pl:"secPlaces",id:"secIdeas",ev:"secEvents"};let curTab="pl";
@@ -804,7 +806,7 @@ function clrVis(){$("locClr").hidden=!$("loc").value;shareVis()}
 // v1.11 Share. Coordinates are rounded to 3 decimals (~100 m) on purpose, also for "use my location", so a shared link never carries precise GPS.
 function shareLink(){if(!state.loc)return location.href;const T={pl:"places",id:"date",ev:"events"};const sp=new URLSearchParams();
  sp.set("q",(state.loc.name||"").replace(/^📡\s*/,""));sp.set("lat",(+state.loc.lat).toFixed(3));sp.set("lon",(+state.loc.lon).toFixed(3));
- if(state.date)sp.set("date",state.date);const m=Array.from(state.moods);if(m.length)sp.set("mood",m.join(","));if($("budget").value!=="2")sp.set("budget",$("budget").value);if($("setting").value!=="auto")sp.set("setting",$("setting").value);sp.set("tab",T[curTab]||"places");
+ if(state.date)sp.set("date",state.date);const m=Array.from(state.moods);if(m.length)sp.set("mood",m.join(","));if(fv("budget")!=="2")sp.set("budget",fv("budget"));if(fv("setting")!=="auto")sp.set("setting",fv("setting"));sp.set("tab",T[curTab]||"places");
  return location.origin+location.pathname+"?"+sp.toString()}
 function syncUrl(){try{if(!history.replaceState)return;history.replaceState(history.state,"",state.loc?shareLink():location.pathname)}catch(e){}}
 function shareVis(){$("shareRow").hidden=!state.loc;if(!state.loc){$("shareUrl").hidden=true;$("shareMsg").textContent=""}if(URLP.has||shareVis.on)syncUrl()}
@@ -823,8 +825,38 @@ function clearLoc(){locGen++;wxGen++;state.wxBusy=false;placeGen++;evGen++;mkGen
  try{drawDays()}catch(e){}$("wxStatus").textContent="Pick a location to see the weather.";
  ["results","ideas","events","evLinks"].forEach(id=>{$(id).innerHTML=""});["plCount","idCount","evCount"].forEach(id=>{$(id).textContent=""});["plMore","idMore","evMore"].forEach(id=>{$(id).hidden=true});
  $("evStatus").textContent="";$("plStatus").textContent="Pick a location to find places nearby.";refreshTabs();$("loc").focus()}
-$("locClr").onclick=clearLoc;
+$("locClr").onclick=ddClr;
 (function(){const _sl=setLoc;setLoc=function(p){_sl(p);clrVis()}})();clrVis();
 (function(){const _st=setTab,_sd=selectDate;setTab=function(k,f,sc){_st(k,f,sc);shareVis()};selectDate=function(d,u){_sd(d,u);shareVis()};$("moods").addEventListener("click",()=>setTimeout(shareVis,0))})();
 if(SHOW_PRIVACY_LINK)$("privacyLink").hidden=false;
+// v1.13.1 Find-to-search: editing fields never rebuilds results; "Find activities" applies a snapshot of the form.
+function ddMoods(){return [].slice.call($("moods").children).filter(function(b){return b.classList.contains("on")}).map(function(b){return b.textContent})}
+function ddForm(){return {loc:$("loc").value.trim(),date:PEND.date||state.date,moods:ddMoods().sort().join(","),people:$("people").value,budget:$("budget").value,setting:$("setting").value,radius:$("radius").value}}
+function ddIsDirty(){if(!state.loc||!AP)return false;var f=ddForm();return f.loc!==state.loc.name||f.date!==state.date||f.moods!==Array.from(state.moods).sort().join(",")||f.people!==AP.people||f.budget!==AP.budget||f.setting!==AP.setting||f.radius!==AP.radius}
+function ddDirty(){if(ddFind.busy)return;var d=ddIsDirty(),g=$("go");g.classList.toggle("upd",d);$("goHint").textContent=d?"Settings changed. Tap “Find activities” to update the results.":""}
+function ddPick(p){PEND.loc=p;$("loc").value=p.name;$("sl").hidden=true;clrVis();$("locStatus").textContent=(state.loc?"Selected ":"")+p.name+(state.loc?". Tap “Find activities” to update.":". Tap “Find activities” when you’re ready.");ddDirty()}
+function ddClr(){clearTimeout(dT);lastQ="";PEND.loc=null;$("loc").value="";$("sl").hidden=true;clrVis();$("locStatus").textContent=state.loc?"Results are still for "+state.loc.name+". Type a new place, then tap “Find activities”.":"👋 Where are we headed? Type a place or tap “Use my location”.";$("loc").focus();ddDirty()}
+function ddMarkDays(){var d=PEND.date||state.date;$("dateIn").value=d;[].slice.call($("days").children).forEach(function(b,i){b.classList.toggle("on",addDays(todayStr(),i)===d)})}
+(function(){var _dd=drawDays,_sd=selectDate;drawDays=function(){_dd();if(PEND.date)ddMarkDays()};
+ selectDate=function(d,u){if(u&&state.loc){if(!d||d<todayStr())d=todayStr();PEND.date=d===state.date?null:d;ddMarkDays();ddDirty();return}_sd(d,u)}})();
+$("loc").addEventListener("input",function(){if($("loc").value.trim()!==(PEND.loc&&PEND.loc.name))PEND.loc=null;ddDirty()});
+function ddBusy(on){var g=$("go");ddFind.busy=on;g.disabled=on;g.setAttribute("aria-busy",on?"true":"false");g.textContent=on?"⏳ Finding…":"🔎 Find activities";if(on){g.classList.remove("upd");$("goHint").textContent=""}}
+function ddMsg(h){$("goHint").innerHTML=h}
+async function ddFind(auto){if(ddFind.busy)return;var S=ddForm(),same=!!state.loc&&!ddIsDirty();S.moodList=ddMoods();ddBusy(true);var t0=Date.now();
+ try{var q=S.loc,p=null;clearTimeout(dT);$("sl").hidden=true;
+  if(!q){ddBusy(false);ddMsg('<span class="err">Add a place in “Where” first (or tap 📡 Use my location), then tap Find activities.</span>');$("locStatus").textContent="👋 Where are we headed? Type a place or tap “Use my location”.";if(!auto)$("loc").focus();return}
+  if(PEND.loc&&q===PEND.loc.name)p=PEND.loc;else if(state.loc&&q===state.loc.name)p=state.loc;
+  else{var list=shown.q===q?shown.list:null;if(!list||!list.length){$("locStatus").textContent="Looking up “"+q+"”…";lastQ=q;list=await geocode(q)}
+   if($("loc").value.trim()!==q){ddBusy(false);ddDirty();return}
+   if(!list.length){ddBusy(false);var m='<span class="err">Couldn’t find “'+esc(q)+'”. Try adding a state or country, e.g. “Madison, WI”.</span>';$("locStatus").innerHTML=m;ddMsg(m);return}p=list[0]}
+  AP={people:S.people,budget:S.budget,setting:S.setting,radius:S.radius};state.moods.clear();S.moodList.forEach(function(x){state.moods.add(x)});
+  save("dd_date",S.date);PEND.date=null;PEND.loc=null;savePrefs();if(same)state.ideaSeed=Math.floor(Math.random()*1e6)+1;
+  $("pickCard").hidden=true;setLoc(p);shareVis();
+  var rc=$("resCard");rc.classList.remove("ddfl");void rc.offsetWidth;rc.classList.add("ddfl");
+  await new Promise(function(r){requestAnimationFrame(function(){setTimeout(r,Math.max(0,450-(Date.now()-t0)))})});
+  ddBusy(false);ddDirty();
+  if(!auto){var r=rc.getBoundingClientRect();if(r.top>window.innerHeight*0.6||r.bottom<0){rc.scrollIntoView({behavior:"smooth",block:"start"});try{$("tab-"+curTab).focus({preventScroll:true})}catch(e){}}}
+ }catch(e){ddBusy(false);ddMsg('<span class="err">Something went wrong: '+esc(e&&e.message||String(e))+'. Please try again.</span>')}}
+if(URLP.has&&PEND.loc)ddFind(true);
+
 </script></body></html>
